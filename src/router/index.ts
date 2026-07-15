@@ -8,6 +8,7 @@ import AboutPage from "@/views/about/AboutPage.vue";
 import MainCommandPage from "@/views/command/MainCommandPage.vue";
 import PluginManagePage from "@/views/plugin/PluginManagePage.vue";
 import StoreManagePage from "@/views/store/StoreManagePage.vue";
+import AgentPage from "@/views/agent/AgentPage.vue";
 // 定义路由类型
 const routes: Array<RouteRecordRaw> = [
   {
@@ -58,6 +59,12 @@ const routes: Array<RouteRecordRaw> = [
         name: "关于我们",
         component: AboutPage,
         meta: { requiresAuth: true, title: "关于我们" },
+      },
+      {
+        path: "/agent",
+        name: "AI模型设置",
+        component: AgentPage,
+        meta: { requiresAuth: true, title: "AI模型设置" },
       },
     ],
   },

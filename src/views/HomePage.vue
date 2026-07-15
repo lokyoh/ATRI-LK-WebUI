@@ -120,7 +120,7 @@
                     </el-icon>
                     <span :style="{ color: 'var(--text-color)' }">{{
                       theme.label
-                    }}</span>
+                      }}</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>

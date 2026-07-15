@@ -48,22 +48,46 @@ function handleResize() {
 <style lang="scss" scoped>
 .base {
   @apply transition-all duration-300;
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .base-info {
   @apply bg-opacity-80 backdrop-blur-sm;
   border: 1px solid var(--el-border-color-light);
+  display: flex;
+  flex-direction: column;
 }
 
 .main-info {
   @apply bg-opacity-80 backdrop-blur-sm;
   border: 1px solid var(--el-border-color-light);
+  display: flex;
+  flex-direction: column;
 }
 
 .config-info {
   @apply bg-opacity-80 backdrop-blur-sm;
   border: 1px solid var(--el-border-color-light);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure the inner column content stretches and becomes independently scrollable */
+.el-col>div {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.base-info>*,
+.main-info>*,
+.config-info>* {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* allow overflow to work inside flex */
+  overflow: auto;
 }
 
 /* 响应式设计 */

@@ -395,8 +395,12 @@ function getActiveGroupData(date_type: string | null = null, no_loading = false)
         // --- 主题化修改 End ---
 
         const optData = tmpOpt as any
-        if (optData.xAxis && Array.isArray(optData.xAxis)) {
-          optData.xAxis[0].data = group_list
+        if (optData.xAxis) {
+          if (Array.isArray(optData.xAxis)) {
+            optData.xAxis[0].data = group_list
+          } else {
+            optData.xAxis.data = group_list
+          }
         }
         if (optData.series && Array.isArray(optData.series) && optData.series[0]) {
           const series0 = optData.series[0] as any
@@ -488,8 +492,12 @@ function getHotPlugin(date_type: string | null = null) {
         // --- 主题化修改 End ---
 
         const optData = tmpOpt as any
-        if (optData.xAxis && Array.isArray(optData.xAxis)) {
-          optData.xAxis[0].data = hotPluginList
+        if (optData.xAxis) {
+          if (Array.isArray(optData.xAxis)) {
+            optData.xAxis[0].data = hotPluginList
+          } else {
+            optData.xAxis.data = hotPluginList
+          }
         }
         if (optData.series && Array.isArray(optData.series) && optData.series[0]) {
           const series0 = optData.series[0] as any
