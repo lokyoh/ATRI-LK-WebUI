@@ -43,9 +43,8 @@
       </div>
 
       <div class="p-6 sm:p-8">
-        <!-- 标题 -->
         <div class="relative mb-8">
-          <h1 class="text-xxl sm:text-xxl font-bold text-center tracking-wide" :style="{
+          <h1 class="text-2xl sm:text-3xl font-bold text-center tracking-wide" :style="{
             color: 'var(--el-color-primary)',
             textShadow: '2px 2px 4px var(--el-color-primary-light-9)',
           }">
@@ -57,76 +56,68 @@
             :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"></div>
         </div>
 
-        <!-- 表单区域 -->
         <div class="space-y-6">
-          <!-- IP:PORT 标签 -->
-          <div class="text-xl font-medium transition-all duration-500 ease-in-out relative inline-block"
-            :class="{ 'translate-x-4': rightShow }" :style="{ color: 'var(--el-color-primary)' }">
-            <span class="relative z-10">IP:PORT</span>
-            <span class="absolute -bottom-1 left-0 w-full h-1 rounded-full z-0"
-              :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"></span>
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-lg sm:text-xl font-semibold transition-all duration-500 ease-in-out relative inline-block"
+              :class="{ 'translate-x-2': rightShow }" :style="{ color: 'var(--el-color-primary)' }">
+              <span class="relative z-10">服务器地址</span>
+              <span class="absolute -bottom-1 left-0 w-full h-1 rounded-full z-0"
+                :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"></span>
+            </div>
+            <div class="flex items-center gap-2 rounded-full px-3 py-1 text-sm shadow-sm"
+              :style="{ backgroundColor: 'var(--el-fill-color-light)', color: 'var(--el-text-color-secondary)' }">
+              <span class="w-2 h-2 rounded-full"
+                :class="testing === 1 ? 'bg-emerald-500' : testing === 0 ? 'bg-rose-500' : 'bg-sky-400'"></span>
+              <span>{{ testing === 1 ? '连接正常' : testing === 0 ? '连接异常' : testing === 2 ? '检测中' : '未检测' }}</span>
+            </div>
           </div>
 
-          <!-- 输入框组 -->
-          <div class="flex items-center gap-4">
-            <div class="flex-1 relative">
-              <div class="relative flex items-center">
-                <span v-if="!apiUrl.startsWith('http')" class="absolute left-4 select-none"
-                  :style="{ color: 'var(--el-color-primary-light-3)' }">http://</span>
-                <input v-model.trim="apiUrl" @focus="inpOnfocus" @blur="inpOnBlur" type="text" placeholder="请输入IP地址"
-                  spellcheck="false" :class="{ 'with-http-prefix': !apiUrl.startsWith('http') }"
-                  class="w-full px-4 py-3 rounded-lg border-2 focus:ring-2 transition-all duration-300 shadow-sm text-xl"
-                  :style="{
-                    backgroundColor: 'var(--bg-color-secondary)',
-                    color: 'var(--el-text-color-primary)',
-                    borderColor: 'var(--el-border-color)',
-                    '--tw-ring-color': 'var(--el-color-primary-light-9)',
-                    '--tw-ring-offset-shadow': 'var(--el-box-shadow-light)',
-                    '--tw-ring-shadow': 'var(--el-box-shadow-lighter)',
-                  }" />
-              </div>
-              <div class="absolute -bottom-2 -right-2 w-4 h-4 rounded-full"
-                :style="{ backgroundColor: 'var(--el-color-primary)' }"></div>
-            </div>
-            <div class="w-38 relative">
-              <input v-model.trim="port" @focus="inpOnfocus" @blur="inpOnBlur" type="text" placeholder="端口号"
-                spellcheck="false"
-                class="w-full px-4 py-3 rounded-lg border-2 focus:ring-2 transition-all duration-300 shadow-sm text-xl"
+          <div class="relative">
+            <div class="relative flex items-center rounded-2xl border-2 px-2 py-2 shadow-sm transition-all duration-300"
+              :style="{
+                backgroundColor: 'var(--bg-color-secondary)',
+                borderColor: 'var(--el-border-color)',
+              }">
+              <span class="ml-3 mr-2 text-sm font-medium whitespace-nowrap"
+                :style="{ color: 'var(--el-color-primary)' }">地址</span>
+              <input v-model.trim="apiUrl" @focus="inpOnfocus" @blur="inpOnBlur" type="text"
+                placeholder="请输入服务器地址，如 http://127.0.0.1:20000" spellcheck="false"
+                class="w-full border-0 bg-transparent px-2 py-3 text-base sm:text-lg outline-none transition-all duration-300"
                 :style="{
-                  backgroundColor: 'var(--bg-color-secondary)',
                   color: 'var(--el-text-color-primary)',
-                  borderColor: 'var(--el-border-color)',
-                  '--tw-ring-color': 'var(--el-color-primary-light-9)',
-                  '--tw-ring-offset-shadow': 'var(--el-box-shadow-light)',
-                  '--tw-ring-shadow': 'var(--el-box-shadow-lighter)',
                 }" />
-              <div class="absolute -bottom-2 -right-2 w-4 h-4 rounded-full"
-                :style="{ backgroundColor: 'var(--el-color-primary-light-3)' }"></div>
+              <div class="mr-2 flex items-center rounded-full px-3 py-1 text-sm font-medium"
+                :style="{ backgroundColor: 'var(--el-fill-color-light)', color: 'var(--el-color-primary)' }">
+                <span v-if="testing === 1" class="mr-1">
+                  <el-icon class="text-sm">
+                    <CircleCheck />
+                  </el-icon>
+                </span>
+                <span v-else-if="testing === 0" class="mr-1">
+                  <el-icon class="text-sm">
+                    <CircleClose />
+                  </el-icon>
+                </span>
+                <span v-else-if="testing === 2" class="mr-1">
+                  <el-icon class="text-sm border-t-transparent animate-spin">
+                    <Loading />
+                  </el-icon>
+                </span>
+                <span>连接</span>
+              </div>
             </div>
-            <!-- 连接状态图标 -->
-            <div class="flex items-center">
-              <div v-if="testing === 2" class="w-5 h-5"></div>
-              <el-icon v-else-if="testing === 1" class="text-lg" :style="{ color: 'var(--el-color-success)' }">
-                <CircleCheck />
-              </el-icon>
-              <el-icon v-else-if="testing === 0" class="text-lg" :style="{ color: 'var(--el-color-danger)' }">
-                <CircleClose />
-              </el-icon>
-              <el-icon v-else class="text-lg border-t-transparent animate-spin"
-                :style="{ color: 'var(--el-color-primary-light-3)' }">
-                <Loading />
-              </el-icon>
-            </div>
+            <div class="absolute -bottom-2 -right-2 w-4 h-4 rounded-full"
+              :style="{ backgroundColor: 'var(--el-color-primary)' }"></div>
           </div>
 
-          <!-- 注意事项 -->
-          <div class="rounded-lg p-4 border shadow-inner relative overflow-hidden" :style="{
+          <div class="rounded-xl p-4 border shadow-inner relative overflow-hidden" :style="{
             backgroundColor: 'var(--el-fill-color-light)',
             borderColor: 'var(--el-border-color)',
           }">
             <div class="absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-30"
               :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"></div>
-            <h3 class="font-medium mb-2 flex items-center text-3xl" :style="{ color: 'var(--el-color-primary)' }">
+            <h3 class="font-semibold mb-2 flex items-center text-lg sm:text-xl"
+              :style="{ color: 'var(--el-color-primary)' }">
               <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
@@ -134,7 +125,7 @@
               </svg>
               注意事项：
             </h3>
-            <ul class="text-lg space-y-2" :style="{ color: 'var(--el-text-color-primary)' }">
+            <ul class="text-sm sm:text-base space-y-2" :style="{ color: 'var(--el-text-color-primary)' }">
               <li class="flex items-start">
                 <span class="mr-2 font-bold" :style="{ color: 'var(--el-color-primary)' }">①</span>
                 <span>开发环境中修改api地址一样生效，即覆盖代理服务器的转发</span>
@@ -142,7 +133,7 @@
               <li class="flex items-start">
                 <span class="mr-2 font-bold" :style="{ color: 'var(--el-color-primary)' }">②</span>
                 <span>
-                  如果生产环境部署的资源和真寻本体<ins class="no-underline font-bold"
+                  如果生产环境部署的资源和本体<ins class="no-underline font-bold"
                     :style="{ color: 'var(--el-color-primary)' }">不在</ins>
                   同一个机器上，则输入你的服务器接口地址以及ATRI的端口。最后记得修改防火墙设置哦
                 </span>
@@ -150,12 +141,12 @@
             </ul>
           </div>
 
-          <!-- 按钮组 -->
-          <div class="flex flex-col sm:flex-row gap-4 pt-4">
-            <el-button type="default" icon="back2" @click="goBack" class="flex-1 text-lg">
+          <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <el-button type="default" icon="back2" @click="goBack" class="flex-1 h-11 text-base sm:text-lg">
               返回
             </el-button>
-            <el-button type="primary" icon="edit" @click="changeUrl" class="flex-1 text-lg" ref="myapi">
+            <el-button type="primary" icon="edit" @click="changeUrl" class="flex-1 h-11 text-base sm:text-lg"
+              ref="myapi">
               修改
             </el-button>
           </div>
@@ -168,7 +159,7 @@
 <script lang="ts" setup>
 import { ref, inject } from "vue";
 import { useRouter } from "vue-router";
-import { getBaseApiUrl, setBaseApiUrl, getPort, setPort } from "@/utils/api";
+import { getBaseApiUrl, setBaseApiUrl } from "@/utils/api";
 import { message } from "@/utils/message";
 import { useRouteStore } from "@/stores/route";
 import { getRequest } from "@/utils/api";
@@ -176,15 +167,34 @@ import { Loading, CircleCheck, CircleClose } from "@element-plus/icons-vue"
 
 const router = useRouter();
 const routeStore = useRouteStore();
-const port = ref(getPort());
 const apiUrl = ref(getBaseApiUrl());
-const prefix = inject<string>('prefix');
+const prefix = inject<string>('prefix', "");
 const rightShow = ref(false);
 const fromPageName = ref(routeStore.fromName);
 const fromPage = ref(routeStore.fromPath);
 const clickEffect = ref(false);
 const testing = ref<number>(3); // 0:失败 1:成功 2:测试中 3:未测试
 const lastTestTime = ref(0);
+
+function normalizeApiUrl(input: string): string {
+  const trimmedValue = (input || "").trim();
+
+  if (!trimmedValue) {
+    return "http://localhost";
+  }
+
+  const withoutTrailingSlash = trimmedValue.replace(/[\\/]+$/, "");
+  const withProtocol = /^https?:\/\//i.test(withoutTrailingSlash)
+    ? withoutTrailingSlash
+    : `http://${withoutTrailingSlash}`;
+
+  try {
+    const parsedUrl = new URL(withProtocol);
+    return `${parsedUrl.protocol}//${parsedUrl.host}`;
+  } catch {
+    return withProtocol;
+  }
+}
 
 function goBack() {
   if (fromPageName.value) {
@@ -197,12 +207,10 @@ function goBack() {
 function changeUrl() {
   setTimeout(() => {
     clickEffect.value = false
-    if (!apiUrl.value.startsWith("http")) {
-      apiUrl.value = "http://" + apiUrl.value
-    }
-    setBaseApiUrl(apiUrl.value)
-    setPort(port.value)
-    message.success("修改地址端口成功！")
+    const normalizedUrl = normalizeApiUrl(apiUrl.value)
+    apiUrl.value = normalizedUrl
+    setBaseApiUrl(normalizedUrl)
+    message.success("修改地址成功！")
     if (fromPageName.value == "Configure") {
       goBack()
     } else {
@@ -225,23 +233,19 @@ async function testConnection() {
   if (now - lastTestTime.value < 2000) {
     return
   }
-  if (!apiUrl.value || !port.value) {
+  if (!apiUrl.value) {
     return
   }
   lastTestTime.value = now
 
-  if (!apiUrl.value || !port.value) {
+  if (!apiUrl.value) {
     testing.value = 3 // 未测试
     return
   }
 
   testing.value = 2 // 测试中
   try {
-    let testUrl = apiUrl.value
-    if (!testUrl.startsWith("http")) {
-      testUrl = "http://" + testUrl
-    }
-    testUrl = `${testUrl}:${port.value}${prefix}/system/ping`
+    const testUrl = `${normalizeApiUrl(apiUrl.value)}${prefix}/ping`
     const resp = await getRequest(testUrl)
     if (resp.data.suc) {
       message.success("连接成功！")

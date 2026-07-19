@@ -32,6 +32,13 @@ import StoreTemplate from "@/components/store/StoreTemplate.vue"
 .plugin-list-container {
   position: relative;
   width: 100%;
+  min-height: calc(100vh - 2rem);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 1.5rem 1.25rem 1rem;
   background: linear-gradient(135deg,
       var(--el-bg-color) 0%,
       var(--el-fill-color-light) 50%,
@@ -54,6 +61,12 @@ import StoreTemplate from "@/components/store/StoreTemplate.vue"
   .main-content {
     position: relative;
     z-index: 10;
+    width: 100%;
+    max-width: 1280px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-top: 1rem;
 
     // 添加可爱的边框效果
     &::after {
@@ -66,14 +79,34 @@ import StoreTemplate from "@/components/store/StoreTemplate.vue"
     }
   }
 
+  .decoration-top,
+  .decoration-bottom {
+    pointer-events: none;
+  }
+
   // 响应式调整
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
+    padding: 2rem 1rem 1.5rem;
+
     .main-content {
-      padding: 0.5rem;
+      padding-top: 0.75rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 1.5rem 0.75rem 1rem;
+
+    .main-content {
+      padding: 0.75rem;
 
       &::after {
         border-radius: 12px;
       }
+    }
+
+    .decoration-top,
+    .decoration-bottom {
+      height: 4rem;
     }
   }
 }

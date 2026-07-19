@@ -100,33 +100,55 @@ axios.interceptors.response.use(
   },
 );
 
-let baseApiUrl: string = "http://localhost";
+let baseApiUrl: string =
+  typeof window !== "undefined" ? window.location.origin : "http://localhost";
+
+const normalizeApiUrl = (value: string): string => {
+  const trimmedValue = (value || "").trim();
+
+  if (!trimmedValue) {
+    return typeof window !== "undefined" ? window.location.origin : "http://localhost";
+  }
+
+  const withoutTrailingSlash = trimmedValue.replace(/[\\/]+$/, "");
+  const withProtocol = /^https?:\/\//i.test(withoutTrailingSlash)
+    ? withoutTrailingSlash
+    : `http://${withoutTrailingSlash}`;
+
+  try {
+    const parsedUrl = new URL(withProtocol);
+    return `${parsedUrl.protocol}//${parsedUrl.host}`;
+  } catch {
+    return withProtocol;
+  }
+};
+
+const getPortFromUrl = (value: string): string => {
+  try {
+    const parsedUrl = new URL(value);
+    return parsedUrl.port || "";
+  } catch {
+    return "";
+  }
+};
 
 export const getBaseUrl = (): string => {
-  return getBaseApiUrl() + ":" + getPort();
+  return getBaseApiUrl();
 };
 
 export const setPort = (port: string): void => {
-  localStorage.setItem("port", port);
+  localStorage.setItem("port", port || "");
 };
 
 export const getPort = (): string => {
-  return localStorage.getItem("port") || "20000";
+  return localStorage.getItem("port") || "";
 };
 
 export const setBaseApiUrl = (url: string): void => {
-  if (url && (url[url.length - 1] === "/" || url[url.length - 1] === "\\")) {
-    url = url.slice(0, -1);
-  }
-
-  if (url && url !== "") {
-    baseApiUrl = url;
-    setBaseUrlLocalStorage(baseApiUrl);
-  } else {
-    baseApiUrl = "http://localhost";
-    setBaseUrlLocalStorage(baseApiUrl);
-    setPort("20000");
-  }
+  const normalizedUrl = normalizeApiUrl(url);
+  baseApiUrl = normalizedUrl;
+  setBaseUrlLocalStorage(baseApiUrl);
+  setPort(getPortFromUrl(baseApiUrl));
 };
 
 export const getBaseApiUrl = (): string => {

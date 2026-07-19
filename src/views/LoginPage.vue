@@ -167,11 +167,11 @@ const handleForgotPassword = () => {
 
 /* 输入框自定义样式 */
 .custom-input :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(59, 130, 246, 0.24);
   box-shadow: none;
-  padding: 4px 12px;
+  padding: 6px 14px;
   transition: all 0.2s;
 }
 
@@ -182,47 +182,48 @@ const handleForgotPassword = () => {
 
 .custom-input :deep(.el-input__wrapper.is-focus) {
   border-color: #c99e6b;
-  box-shadow: 0 0 0 2px rgba(201, 158, 107, 0.2);
+  box-shadow: 0 0 0 2px rgba(201, 158, 107, 0.22);
 }
 
 .custom-input :deep(.el-input__inner) {
-  font-size: 16px;
-  height: 48px;
+  font-size: 18px;
+  height: 54px;
   color: #1e3a8a;
 }
 
 .custom-input :deep(.el-input__inner::placeholder) {
-  color: #94a3b8;
+  color: #7b93bd;
 }
 
 .custom-input :deep(.el-input__prefix) {
   color: #c99e6b;
-  font-size: 18px;
-  margin-right: 8px;
+  font-size: 20px;
+  margin-right: 10px;
 }
 
 /* 响应式输入框 */
 @media (min-width: 640px) {
   .responsive-input :deep(.el-input__inner) {
-    font-size: 18px;
-    height: 52px;
+    font-size: 20px;
+    height: 60px;
   }
 }
 
 @media (min-width: 1024px) {
   .responsive-input :deep(.el-input__inner) {
-    font-size: 18px;
-    height: 56px;
+    font-size: 22px;
+    height: 66px;
   }
 }
 
 /* 按钮自定义样式 - 适配更大尺寸 */
 .responsive-button :deep(.el-button) {
   border: none;
-  transition: all 0.2s;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  min-height: 56px;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  letter-spacing: 0.35px;
+  min-height: 60px;
+  padding: 0 28px;
 }
 
 .responsive-button :deep(.el-button--primary) {
@@ -232,7 +233,7 @@ const handleForgotPassword = () => {
 .responsive-button :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
 }
 
 .responsive-button :deep(.el-button--warning) {
@@ -243,27 +244,39 @@ const handleForgotPassword = () => {
 .responsive-button :deep(.el-button--warning:hover) {
   background: #b88b56;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(201, 158, 107, 0.4);
+  box-shadow: 0 10px 24px rgba(201, 158, 107, 0.28);
 }
 
 /* 响应式按钮尺寸增强 */
 @media (min-width: 640px) {
   .responsive-button :deep(.el-button) {
-    min-height: 64px;
+    min-height: 70px;
     font-size: 20px;
   }
 }
 
 @media (min-width: 1024px) {
   .responsive-button :deep(.el-button) {
-    min-height: 72px;
+    min-height: 78px;
     font-size: 22px;
   }
 }
 
-/* 链接自定义样式 */
+/* 标题、标签、链接样式 */
+h2 {
+  font-size: 2.35rem;
+  line-height: 1.1;
+}
+
+label {
+  color: #1e3a8a;
+  font-size: 1.05rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
 :deep(.el-link) {
-  font-size: 16px;
+  font-size: 1rem;
   color: #2563eb;
   transition: all 0.2s;
 }
@@ -273,15 +286,18 @@ const handleForgotPassword = () => {
 }
 
 @media (min-width: 640px) {
+  h2 {
+    font-size: 2.5rem;
+  }
+
   :deep(.el-link) {
-    font-size: 18px;
+    font-size: 1.1rem;
   }
 }
 
-/* 标签样式 */
-label {
-  color: #1e3a8a;
-  font-weight: 500;
-  transition: all 0.2s;
+@media (min-width: 1024px) {
+  h2 {
+    font-size: 2.8rem;
+  }
 }
 </style>

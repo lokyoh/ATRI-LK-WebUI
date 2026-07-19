@@ -21,9 +21,8 @@ class StatusWebSocket {
   }
 
   initWebSocket(callback: (event: MessageEvent) => void) {
-    const baseUrlSplit = getBaseUrl().split("//");
-    const baseUrl = baseUrlSplit[1];
-    this.url = `ws://${baseUrl}/atri/socket/system_status`;
+    const baseUrl = new URL(getBaseUrl());
+    this.url = `${baseUrl.protocol === "https:" ? "wss:" : "ws:"}//${baseUrl.host}/atri/socket/system_status`;
     this.ws = new WebSocket(this.url);
     this.startHeartbeat();
 

@@ -1,33 +1,35 @@
 <template>
   <div class="main p-4 md:p-6" :style="{ background: 'var(--el-bg-color)' }">
     <!-- 标题部分 -->
-    <div class="title text-center mb-6">
-      <h1 class="text-3xl md:text-4xl font-bold animate-bounce" :style="{ color: 'var(--el-color-primary)' }">
+    <div class="title text-center mb-4">
+      <h1 class="text-2xl md:text-3xl font-semibold" :style="{ color: 'var(--el-color-primary)' }">
         <span class="inline-block transform rotate-3">✨</span>
         插件商店
         <span class="inline-block transform -rotate-3">✨</span>
       </h1>
-      <div class="mt-2" :style="{ color: 'var(--el-color-primary-light-3)' }">
+      <div class="mt-1 text-sm" :style="{ color: 'var(--el-color-primary-light-3)' }">
         发现更多有趣的功能吧~
       </div>
     </div>
 
     <!-- 筛选部分 -->
-    <div class="filter mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="filter mb-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
       <!-- 搜索框 -->
-      <div class="search-input w-full md:w-1/3 relative">
-        <el-input v-model="search" placeholder="搜索插件..." class="rounded-full">
+      <div class="search-input w-full lg:w-1/2">
+        <el-input v-model="search" placeholder="搜索插件..." clearable size="medium" class="rounded-full">
           <template #prefix>
-            <svg-icon name="search" :style="{ color: 'var(--el-color-primary-light-3)' }" />
+            <el-icon class="search-icon">
+              <Search />
+            </el-icon>
           </template>
         </el-input>
       </div>
 
       <!-- 右侧按钮组 -->
-      <div class="flex items-center gap-4">
+      <div class="search-actions flex flex-wrap items-center gap-3 justify-end w-full lg:w-auto">
         <!-- 重启按钮 -->
         <div class="restart-button">
-          <my-button icon="refresh" text="重启" :iconHeight="20" :height="32" :width="90" @click="handleRestart"
+          <my-button icon="refresh" text="重启" :iconHeight="20" :height="36" :width="100" @click="handleRestart"
             type="warning" rounded="full" :style="{
               borderColor: 'var(--el-border-color)',
             }" />
@@ -35,7 +37,8 @@
 
         <!-- 作者筛选 -->
         <div class="search-tag">
-          <el-dropdown @command="handleCommand" trigger="click" class="cursor-pointer">
+          <el-dropdown @command="handleCommand" trigger="click" teleported popper-class="store-dropdown-popper"
+            class="cursor-pointer">
             <div class="filter-button flex items-center px-4 py-2 rounded-full transition-all duration-300" :style="{
               backgroundColor: 'var(--el-fill-color-blank)',
               border: '1px solid var(--el-border-color-darker)',
@@ -83,16 +86,7 @@
       }">
         <el-table :data="filterTableData" stripe :height="tableHeight" border style="width: 100%"
           class="rounded-lg overflow-hidden flex-1" :row-class-name="tableRowClassName" :key="tableKey">
-          <el-table-column prop="id" label="ID" width="70" align="center" header-align="center">
-            <template #header>
-              <span :style="{
-                color: 'var(--el-color-primary)',
-                fontWeight: 'bold',
-              }">ID</span>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="name" label="名称" width="200px" header-align="center">
+          <el-table-column prop="name" label="插件" min-width="200" align="center" header-align="center">
             <template #header>
               <span :style="{
                 color: 'var(--el-color-primary)',
@@ -100,48 +94,24 @@
               }">名称</span>
             </template>
             <template #default="scope">
-              <div class="name-border flex items-center">
-                <el-tooltip :content="scope.row.name" placement="top" effect="light">
-                  <span class="truncate max-w-30 md:max-w-40 ml-2 font-medium"
-                    :style="{ color: 'var(--el-text-color-primary)' }">
-                    {{ scope.row.name }}
-                  </span>
-                </el-tooltip>
-
-                <a v-if="scope.row.github_url" :href="scope.row.github_url" target="_blank"
-                  class="ml-2 hover:scale-110 transform transition-transform">
-                  <svg-icon class="github-icon w-6 h-6" :style="{ color: 'var(--el-text-color-regular)' }"
-                    name="github" />
-                </a>
-
-                <span v-if="installPlugin.includes(scope.row.name)"
-                  class="is-install ml-2 px-2 py-1 rounded-full flex items-center text-xs" :style="{
-                    background: 'var(--el-color-success-light-9)',
-                    color: 'var(--el-color-success)',
-                  }">
-                  <svg-icon name="check" class="mr-1 w-3 h-3" />
-                  已安装
-                </span>
+              <div class="name-border flex flex-col sm:flex-row sm:items-center justify-center gap-2">
+                <div class="flex items-center justify-center min-w-0">
+                  <a v-if="scope.row.github_url" :href="scope.row.github_url" target="_blank"
+                    class="mr-2 hover:scale-110 transform transition-transform">
+                    <svg-icon class="github-icon w-5 h-5" :style="{ color: 'var(--el-text-color-regular)' }"
+                      name="github" />
+                  </a>
+                  <el-tooltip :content="scope.row.name" placement="top" effect="light">
+                    <span class="truncate font-medium" :style="{ color: 'var(--el-text-color-primary)' }">
+                      {{ scope.row.name }}
+                    </span>
+                  </el-tooltip>
+                </div>
               </div>
             </template>
           </el-table-column>
 
-          <el-table-column prop="author" label="作者" width="180px" header-align="center">
-            <template #header>
-              <span :style="{
-                color: 'var(--el-color-primary)',
-                fontWeight: 'bold',
-              }">作者</span>
-            </template>
-            <template #default="scope">
-              <div class="flex items-center">
-                <svg-icon name="user" class="mr-2 w-4 h-4" :style="{ color: 'var(--el-color-primary-light-3)' }" />
-                <span :style="{ color: 'var(--el-text-color-primary)' }">{{ scope.row.author }}</span>
-              </div>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="version" label="版本" width="100px" align="center" header-align="center">
+          <el-table-column prop="version" label="版本" width="110" align="center" header-align="center">
             <template #header>
               <span :style="{
                 color: 'var(--el-color-primary)',
@@ -159,7 +129,36 @@
             </template>
           </el-table-column>
 
-          <el-table-column prop="plugin_type" label="类型" width="120px" align="center" header-align="center">
+          <el-table-column label="状态" width="110" align="center" header-align="center">
+            <template #header>
+              <span :style="{
+                color: 'var(--el-color-primary)',
+                fontWeight: 'bold',
+              }">状态</span>
+            </template>
+            <template #default="scope">
+              <el-tag :type="getPluginStatus(scope.row).type" size="small" effect="plain">
+                {{ getPluginStatus(scope.row).label }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="author" label="作者" width="160" header-align="center">
+            <template #header>
+              <span :style="{
+                color: 'var(--el-color-primary)',
+                fontWeight: 'bold',
+              }">作者</span>
+            </template>
+            <template #default="scope">
+              <div class="flex items-center justify-center">
+                <svg-icon name="user" class="mr-2 w-4 h-4" :style="{ color: 'var(--el-color-primary-light-3)' }" />
+                <span :style="{ color: 'var(--el-text-color-primary)' }">{{ scope.row.author }}</span>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="plugin_type" label="类型" width="120" align="center" header-align="center">
             <template #header>
               <span :style="{
                 color: 'var(--el-color-primary)',
@@ -173,7 +172,7 @@
             </template>
           </el-table-column>
 
-          <el-table-column prop="description" label="简介" header-align="center">
+          <el-table-column prop="description" label="简介" min-width="260" align="center" header-align="center">
             <template #header>
               <span :style="{
                 color: 'var(--el-color-primary)',
@@ -181,15 +180,17 @@
               }">简介</span>
             </template>
             <template #default="scope">
-              <el-tooltip :content="scope.row.description" placement="top" effect="light">
-                <span class="line-clamp-2" :style="{ color: 'var(--el-text-color-secondary)' }">
-                  {{ scope.row.description }}
-                </span>
-              </el-tooltip>
+              <div class="flex justify-center">
+                <el-tooltip :content="scope.row.description" placement="top" effect="light">
+                  <span class="line-clamp-2" :style="{ color: 'var(--el-text-color-secondary)' }">
+                    {{ scope.row.description || '暂无介绍' }}
+                  </span>
+                </el-tooltip>
+              </div>
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" width="420px" align="center" header-align="center">
+          <el-table-column label="操作" width="290" align="center" header-align="center">
             <template #header>
               <span :style="{
                 color: 'var(--el-color-primary)',
@@ -198,21 +199,17 @@
             </template>
             <template #default="scope">
               <div class="flex flex-wrap justify-center gap-1 md:gap-2">
-                <my-button icon="readme" text="说明" :iconHeight="20" :height="28" :width="80" @click="handleReadme()"
-                  type="info" :disabled="true" rounded="full" :style="{
-                    borderColor: 'var(--el-border-color)',
-                  }" />
-                <my-button icon="download" text="安装" :iconHeight="20" :height="28" :width="80"
+                <my-button icon="download" text="安装" :iconHeight="20" :height="28" :width="70"
                   @click="handleInstall(scope.$index, scope.row)" type="primary"
                   :disabled="installPlugin.includes(scope.row.name)" rounded="full" :style="{
                     borderColor: 'var(--el-border-color)',
                   }" />
-                <my-button icon="update" text="更新" :iconHeight="20" :height="28" :width="80"
+                <my-button icon="update" text="更新" :iconHeight="20" :height="28" :width="70"
                   @click="handleUpdate(scope.$index, scope.row)" type="warning"
-                  :disabled="!installPlugin.includes(scope.row.name)" rounded="full" :style="{
+                  :disabled="!installPlugin.includes(scope.row.name) || !scope.row.need_update" rounded="full" :style="{
                     borderColor: 'var(--el-border-color)',
                   }" />
-                <my-button icon="remove" text="删除" :iconHeight="20" :height="28" :width="80"
+                <my-button icon="remove" text="删除" :iconHeight="20" :height="28" :width="70"
                   @click="handleRemove(scope.$index, scope.row)" type="danger"
                   :disabled="!installPlugin.includes(scope.row.name)" rounded="full" :style="{
                     borderColor: 'var(--el-border-color)',
@@ -228,6 +225,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, inject, h, render } from 'vue'
+import { Search } from '@element-plus/icons-vue'
 import MyButton from "../ui/MyButton.vue"
 import SvgIcon from "@/components/SvgIcon/SvgIcon.vue"
 import CuteConfirm from "../ui/CuteConfirm.vue"
@@ -298,6 +296,7 @@ interface PluginData {
   plugin_type: string
   description: string
   github_url?: string
+  need_update?: boolean
   module: string
   [key: string]: unknown
 }
@@ -383,15 +382,20 @@ const getPluginTypeColor = (type: string) => {
   const typeMap: Record<string, string> = {
     "功能": "success",
     "娱乐": "warning",
-    "工具": "",
+    "工具": "info",
     "管理": "danger",
+    "其他插件": "info",
     "其他": "info",
   }
-  return typeMap[type] || ""
+  return typeMap[type] || "info"
 }
 
-const handleReadme = () => {
-  message?.info("README 功能开发中，敬请期待~")
+const getPluginStatus = (plugin: PluginData) => {
+  const installed = installPlugin.value.includes(plugin.name)
+  if (installed) {
+    return plugin.need_update ? { label: "可更新", type: "warning" } : { label: "已安装", type: "success" }
+  }
+  return { label: "未安装", type: "info" }
 }
 
 const handleRestart = async () => {
@@ -599,17 +603,27 @@ const isMobile = () => {
 
 <style lang="scss" scoped>
 .main {
-  transition: background-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .title {
+  margin-bottom: 1rem;
+
   h1 {
     transition: color 0.3s ease;
+    font-size: 1.8rem;
 
     span {
       display: inline-block;
       transition: transform 0.3s ease;
     }
+  }
+
+  div {
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
   }
 }
 
@@ -752,10 +766,12 @@ const isMobile = () => {
   }
 
   .search-input {
+    width: 100%;
+
     :deep(.el-input__inner) {
       border-radius: 9999px;
       border: 1px solid var(--el-border-color);
-      padding-left: 35px;
+      padding-left: 42px;
       background-color: var(--el-bg-color-overlay);
       transition: all 0.3s;
 
@@ -764,14 +780,14 @@ const isMobile = () => {
         box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
       }
     }
+
+    .search-icon {
+      color: var(--el-color-primary-light-3);
+    }
   }
 
   .table-border {
     :deep(.el-table) {
-      --el-table-border-color: var(--el-border-color);
-      --el-table-header-bg-color: var(--el-fill-color-light);
-      --el-table-row-hover-bg-color: var(--el-fill-color);
-
       th {
         font-weight: bold;
         color: var(--el-color-primary);
@@ -840,31 +856,51 @@ const isMobile = () => {
 }
 
 // 响应式调整
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .main {
-    padding: 2px;
+    padding: 1rem;
 
     .title h1 {
-      font-size: 1.8rem;
+      font-size: 2rem;
     }
 
     .filter {
       flex-direction: column;
+      align-items: stretch;
 
-      .search-input {
+      .search-input,
+      .search-actions {
         width: 100%;
       }
+
+      .search-actions {
+        justify-content: flex-start;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 0.75rem;
+
+    .title h1 {
+      font-size: 1.7rem;
+    }
+
+    .filter {
+      gap: 0.75rem;
     }
 
     .table-border {
-      padding: 8px;
+      padding: 0.75rem;
 
       :deep(.el-table) {
-        font-size: 0.85rem;
+        font-size: 0.82rem;
 
         th,
         td {
-          padding: 8px 4px;
+          padding: 8px 6px;
         }
       }
     }
