@@ -1,5 +1,5 @@
 <template>
-  <div class="main p-4 md:p-6" :style="{ background: 'var(--el-bg-color)' }">
+  <div class="main p-4 md:p-6 flex flex-col min-h-0" :style="{ background: 'var(--el-bg-color)' }">
     <!-- 标题部分 -->
     <div class="title text-center mb-4">
       <h1 class="text-2xl md:text-3xl font-semibold" :style="{ color: 'var(--el-color-primary)' }">
@@ -16,7 +16,7 @@
     <div class="filter mb-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
       <!-- 搜索框 -->
       <div class="search-input w-full lg:w-1/2">
-        <el-input v-model="search" placeholder="搜索插件..." clearable size="medium" class="rounded-full">
+        <el-input v-model="search" placeholder="搜索插件..." clearable size="default" class="rounded-full">
           <template #prefix>
             <el-icon class="search-icon">
               <Search />
@@ -75,156 +75,82 @@
       </div>
     </div>
 
-    <!-- 表格部分 -->
-    <div class="table-container flex flex-col flex-1 min-h-0" :style="{ height: getTableBorderHeight() + 'px' }">
-      <div ref="tableWrapper" class="table-border flex-1 flex flex-col" :style="{
+    <!-- 卡片列表 -->
+    <div class="plugin-card-container flex flex-col flex-1 min-h-0">
+      <div class="plugin-card-list flex-1 min-h-0" :style="{
         background: 'var(--el-bg-color)',
         borderRadius: '12px',
         padding: '1rem',
         boxShadow: 'var(--el-box-shadow-light)',
         border: '1px solid var(--el-border-color-light)',
       }">
-        <el-table :data="filterTableData" stripe :height="tableHeight" border style="width: 100%"
-          class="rounded-lg overflow-hidden flex-1" :row-class-name="tableRowClassName" :key="tableKey">
-          <el-table-column prop="name" label="插件" min-width="200" align="center" header-align="center">
-            <template #header>
-              <span :style="{
-                color: 'var(--el-color-primary)',
-                fontWeight: 'bold',
-              }">名称</span>
-            </template>
-            <template #default="scope">
-              <div class="name-border flex flex-col sm:flex-row sm:items-center justify-center gap-2">
-                <div class="flex items-center justify-center min-w-0">
-                  <a v-if="scope.row.github_url" :href="scope.row.github_url" target="_blank"
-                    class="mr-2 hover:scale-110 transform transition-transform">
-                    <svg-icon class="github-icon w-5 h-5" :style="{ color: 'var(--el-text-color-regular)' }"
-                      name="github" />
-                  </a>
-                  <el-tooltip :content="scope.row.name" placement="top" effect="light">
-                    <span class="truncate font-medium" :style="{ color: 'var(--el-text-color-primary)' }">
-                      {{ scope.row.name }}
-                    </span>
-                  </el-tooltip>
+        <div v-if="filterTableData.length" class="card-grid">
+          <div v-for="plugin in filterTableData" :key="plugin.name" class="plugin-card">
+            <div class="plugin-card__header">
+              <div class="plugin-card__title">
+                <a v-if="plugin.github_url" :href="plugin.github_url" target="_blank" class="plugin-card__link">
+                  <svg-icon class="github-icon" :style="{ color: 'var(--el-text-color-regular)' }" name="github" />
+                </a>
+                <div class="plugin-card__name-wrap">
+                  <div class="plugin-card__name">{{ plugin.name }}</div>
+                  <div class="plugin-card__meta">
+                    <el-tag size="small" effect="plain" class="plugin-card__tag version-tag">
+                      v{{ plugin.version }}
+                    </el-tag>
+                    <el-tag :type="getPluginStatus(plugin).type" size="small" effect="plain" class="plugin-card__tag">
+                      {{ getPluginStatus(plugin).label }}
+                    </el-tag>
+                  </div>
                 </div>
               </div>
-            </template>
-          </el-table-column>
+            </div>
 
-          <el-table-column prop="version" label="版本" width="110" align="center" header-align="center">
-            <template #header>
-              <span :style="{
-                color: 'var(--el-color-primary)',
-                fontWeight: 'bold',
-              }">版本</span>
-            </template>
-            <template #default="scope">
-              <el-tag size="small" effect="plain" :style="{
-                border: '1px solid var(--el-color-primary-light-5)',
-                background: 'var(--el-color-primary-light-9)',
-                color: 'var(--el-color-primary)',
-              }">
-                v{{ scope.row.version }}
-              </el-tag>
-            </template>
-          </el-table-column>
-
-          <el-table-column label="状态" width="110" align="center" header-align="center">
-            <template #header>
-              <span :style="{
-                color: 'var(--el-color-primary)',
-                fontWeight: 'bold',
-              }">状态</span>
-            </template>
-            <template #default="scope">
-              <el-tag :type="getPluginStatus(scope.row).type" size="small" effect="plain">
-                {{ getPluginStatus(scope.row).label }}
-              </el-tag>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="author" label="作者" width="160" header-align="center">
-            <template #header>
-              <span :style="{
-                color: 'var(--el-color-primary)',
-                fontWeight: 'bold',
-              }">作者</span>
-            </template>
-            <template #default="scope">
-              <div class="flex items-center justify-center">
-                <svg-icon name="user" class="mr-2 w-4 h-4" :style="{ color: 'var(--el-color-primary-light-3)' }" />
-                <span :style="{ color: 'var(--el-text-color-primary)' }">{{ scope.row.author }}</span>
+            <div class="plugin-card__body">
+              <div class="plugin-card__row">
+                <span class="plugin-card__label">作者</span>
+                <span class="plugin-card__value">{{ plugin.author }}</span>
               </div>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="plugin_type" label="类型" width="120" align="center" header-align="center">
-            <template #header>
-              <span :style="{
-                color: 'var(--el-color-primary)',
-                fontWeight: 'bold',
-              }">类型</span>
-            </template>
-            <template #default="scope">
-              <el-tag :type="getPluginTypeColor(scope.row.plugin_type)" size="small" effect="dark">
-                {{ scope.row.plugin_type }}
-              </el-tag>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="description" label="简介" min-width="260" align="center" header-align="center">
-            <template #header>
-              <span :style="{
-                color: 'var(--el-color-primary)',
-                fontWeight: 'bold',
-              }">简介</span>
-            </template>
-            <template #default="scope">
-              <div class="flex justify-center">
-                <el-tooltip :content="scope.row.description" placement="top" effect="light">
-                  <span class="line-clamp-2" :style="{ color: 'var(--el-text-color-secondary)' }">
-                    {{ scope.row.description || '暂无介绍' }}
-                  </span>
-                </el-tooltip>
+              <div class="plugin-card__row">
+                <span class="plugin-card__label">类型</span>
+                <el-tag :type="getPluginTypeColor(plugin.plugin_type)" size="small" effect="dark">
+                  {{ plugin.plugin_type }}
+                </el-tag>
               </div>
-            </template>
-          </el-table-column>
-
-          <el-table-column label="操作" width="290" align="center" header-align="center">
-            <template #header>
-              <span :style="{
-                color: 'var(--el-color-primary)',
-                fontWeight: 'bold',
-              }">操作</span>
-            </template>
-            <template #default="scope">
-              <div class="flex flex-wrap justify-center gap-1 md:gap-2">
-                <my-button icon="download" text="安装" :iconHeight="20" :height="28" :width="70"
-                  @click="handleInstall(scope.$index, scope.row)" type="primary"
-                  :disabled="installPlugin.includes(scope.row.name)" rounded="full" :style="{
-                    borderColor: 'var(--el-border-color)',
-                  }" />
-                <my-button icon="update" text="更新" :iconHeight="20" :height="28" :width="70"
-                  @click="handleUpdate(scope.$index, scope.row)" type="warning"
-                  :disabled="!installPlugin.includes(scope.row.name) || !scope.row.need_update" rounded="full" :style="{
-                    borderColor: 'var(--el-border-color)',
-                  }" />
-                <my-button icon="remove" text="删除" :iconHeight="20" :height="28" :width="70"
-                  @click="handleRemove(scope.$index, scope.row)" type="danger"
-                  :disabled="!installPlugin.includes(scope.row.name)" rounded="full" :style="{
-                    borderColor: 'var(--el-border-color)',
-                  }" />
+              <div class="plugin-card__desc">
+                {{ plugin.description || '暂无介绍' }}
               </div>
-            </template>
-          </el-table-column>
-        </el-table>
+            </div>
+
+            <div class="plugin-card__actions">
+              <my-button icon="download" text="安装" :iconHeight="20" :height="32" :width="74"
+                @click="handleInstall(0, plugin)" type="primary" :disabled="installPlugin.includes(plugin.name)"
+                rounded="full" :style="{
+                  borderColor: 'var(--el-border-color)',
+                }" />
+              <my-button icon="update" text="更新" :iconHeight="20" :height="32" :width="74"
+                @click="handleUpdate(0, plugin)" type="warning"
+                :disabled="!installPlugin.includes(plugin.name) || !plugin.need_update" rounded="full" :style="{
+                  borderColor: 'var(--el-border-color)',
+                }" />
+              <my-button icon="remove" text="删除" :iconHeight="20" :height="32" :width="74"
+                @click="handleRemove(0, plugin)" type="danger" :disabled="!installPlugin.includes(plugin.name)"
+                rounded="full" :style="{
+                  borderColor: 'var(--el-border-color)',
+                }" />
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-state">
+          <div class="empty-state__icon">✨</div>
+          <div class="empty-state__text">暂无匹配的插件</div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, inject, h, render } from 'vue'
+import { ref, computed, onMounted, inject, h, render } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import MyButton from "../ui/MyButton.vue"
 import SvgIcon from "@/components/SvgIcon/SvgIcon.vue"
@@ -308,10 +234,6 @@ const authorList = ref<string[]>([])
 const tableData = ref<PluginData[]>([])
 const search = ref("")
 const installPlugin = ref<string[]>([])
-const tableHeight = ref<number | null>(null)
-const resizeObserver = ref<ResizeObserver | null>(null)
-const tableKey = ref(0)
-const tableWrapper = ref<HTMLElement | null>(null)
 
 const filterTableData = computed(() => {
   const searchValue = search.value.trim()
@@ -326,57 +248,7 @@ const filterTableData = computed(() => {
 
 onMounted(() => {
   getPluginList()
-  calculateTableHeight()
-  setupResizeObserver()
 })
-
-onBeforeUnmount(() => {
-  if (resizeObserver.value) {
-    resizeObserver.value.disconnect()
-  }
-})
-
-const getTableBorderHeight = () => {
-  if (isMobile()) {
-    return (tableHeight.value || 0) - 160
-  }
-  return (tableHeight.value || 0) - 239
-}
-
-const calculateTableHeight = () => {
-  setTimeout(() => {
-    const headerElement = document.querySelector(".title") as HTMLElement | null
-    const filterElement = document.querySelector(".filter") as HTMLElement | null
-    const headerHeight = headerElement?.offsetHeight || 100
-    const filterHeight = filterElement?.offsetHeight || 80
-    const padding = 32
-
-    const windowHeight = window.innerHeight
-    const availableHeight = windowHeight - headerHeight - filterHeight - padding
-    const newHeight = Math.max(availableHeight, 300)
-
-    if (tableHeight.value !== newHeight) {
-      tableHeight.value = newHeight
-      tableKey.value += 1
-    }
-  }, 0)
-}
-
-const setupResizeObserver = () => {
-  resizeObserver.value = new ResizeObserver(() => {
-    calculateTableHeight()
-  })
-
-  if (tableWrapper.value) {
-    resizeObserver.value.observe(tableWrapper.value)
-  }
-
-  window.addEventListener("resize", calculateTableHeight)
-}
-
-const tableRowClassName = ({ row }: { row: PluginData }) => {
-  return installPlugin.value.includes(row.name) ? "installed-row" : ""
-}
 
 const getPluginTypeColor = (type: string) => {
   const typeMap: Record<string, string> = {
@@ -596,9 +468,6 @@ const getPluginList = () => {
     })
 }
 
-const isMobile = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-}
 </script>
 
 <style lang="scss" scoped>
@@ -855,6 +724,165 @@ const isMobile = () => {
   box-shadow: var(--el-box-shadow-light);
 }
 
+// 卡片列表样式
+.plugin-card-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.plugin-card-list {
+  transition: all 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.plugin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color-page);
+  box-shadow: var(--el-box-shadow-light);
+}
+
+.plugin-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.plugin-card__title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.plugin-card__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+
+  .github-icon {
+    width: 1rem;
+    height: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  &:hover .github-icon {
+    color: var(--el-color-primary) !important;
+    transform: scale(1.08);
+  }
+}
+
+.plugin-card__name-wrap {
+  min-width: 0;
+}
+
+.plugin-card__name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plugin-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.plugin-card__tag {
+  margin: 0;
+}
+
+.version-tag {
+  border: 1px solid var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+}
+
+.plugin-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.plugin-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.plugin-card__label {
+  color: var(--el-text-color-secondary);
+}
+
+.plugin-card__value {
+  color: var(--el-text-color-primary);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plugin-card__desc {
+  color: var(--el-text-color-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.plugin-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.empty-state {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--el-text-color-secondary);
+  gap: 0.5rem;
+}
+
+.empty-state__icon {
+  font-size: 1.5rem;
+}
+
+.empty-state__text {
+  font-size: 0.95rem;
+}
+
 // 响应式调整
 @media (max-width: 1024px) {
   .main {
@@ -892,16 +920,24 @@ const isMobile = () => {
       gap: 0.75rem;
     }
 
-    .table-border {
+    .plugin-card-list {
       padding: 0.75rem;
+    }
 
-      :deep(.el-table) {
-        font-size: 0.82rem;
+    .card-grid {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
 
-        th,
-        td {
-          padding: 8px 6px;
-        }
+    .plugin-card {
+      padding: 0.9rem;
+    }
+
+    .plugin-card__actions {
+      gap: 0.4rem;
+
+      :deep(.my-button) {
+        width: calc(50% - 0.2rem) !important;
       }
     }
   }

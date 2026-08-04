@@ -32,7 +32,8 @@ import StoreTemplate from "@/components/store/StoreTemplate.vue"
 .plugin-list-container {
   position: relative;
   width: 100%;
-  min-height: calc(100vh - 2rem);
+  height: calc(100vh - 2rem);
+  max-height: calc(100vh - 2rem);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -61,8 +62,10 @@ import StoreTemplate from "@/components/store/StoreTemplate.vue"
   .main-content {
     position: relative;
     z-index: 10;
+    flex: 1;
+    min-height: 0;
     width: 100%;
-    max-width: 1280px;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     gap: 1rem;

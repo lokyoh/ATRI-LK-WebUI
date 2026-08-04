@@ -58,7 +58,7 @@
 
       <!-- 主内容区 -->
       <div class="flex-1 flex flex-col transition-all duration-500 ease-in-out" :style="{
-        width: isCollapsed ? 'calc(100% - 5.5rem)' : 'calc(100% - 18.5rem)',
+        width: isCollapsed ? 'calc(100% - 5.5rem)' : 'calc(100% - 16rem)',
         overflow: 'hidden',
       }">
         <!-- 顶部导航 -->
@@ -331,9 +331,9 @@ function dropdownClick(command: string) {
 
 function getMenuWidth() {
   if (isCollapsed.value) {
-    return isMobile.value ? "0rem" : "6.5rem"
+    return isMobile.value ? "0rem" : "5.5rem"
   }
-  return "20rem"
+  return "16rem"
 }
 
 function getTransform() {
@@ -580,13 +580,14 @@ onUnmounted(() => {
 
 /* 折叠菜单样式 */
 :deep(.el-menu--collapse) {
-  width: 73px;
+  width: 100%;
 }
 
 :deep(.el-menu--collapse .el-menu-item) {
   display: flex;
   justify-content: center;
   padding: 0 10px !important;
+  width: 100%;
 }
 
 :deep(.el-menu--collapse .el-menu-item) {

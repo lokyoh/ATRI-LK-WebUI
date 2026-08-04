@@ -12,7 +12,7 @@
         </p>
       </div>
 
-      <div id="main" ref="mainContent" :style="{ height: mainHeight + 'px' }" class="overflow-auto px-0">
+      <div id="main" ref="mainContent" class="overflow-auto px-0">
         <div ref="mainStatus" class="overflow-auto overflow-x-visible">
           <!-- 系统状态 -->
           <div ref="systemCard" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -499,6 +499,21 @@ function getChatAndCallCount(no_loading = false) {
 .mid-info {
   font-size: var(--font-size-md);
   line-height: var(--line-height-normal);
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.top-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#main {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* 欢迎标题 */

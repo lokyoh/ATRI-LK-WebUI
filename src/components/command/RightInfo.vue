@@ -1,5 +1,6 @@
 <template>
-  <div class="right-info p-2 md:p-4 h-full" ref="rightInfo" :style="{ backgroundColor: 'var(--bg-color)' }">
+  <div class="right-info p-2 md:p-4 h-full flex flex-col min-h-0" ref="rightInfo"
+    :style="{ backgroundColor: 'var(--bg-color)' }">
     <!-- 机器人信息卡片 - 三行垂直布局 -->
     <div class="base-info rounded-xl p-3 shadow-md mb-4" :style="{
       backgroundColor: 'var(--bg-color-secondary)',
@@ -28,11 +29,12 @@
     </div>
 
     <!-- 图表区域 - 自适应高度 -->
-    <div class="chart-area" :style="{ height: chartAreaHeight + 'px' }">
+    <div class="chart-area flex flex-col gap-3 flex-1" :style="{ minHeight: '360px' }">
       <!-- 活跃群聊图表 -->
-      <div class="active-group chart-container rounded-xl p-4 shadow-md" :style="{
+      <div class="active-group chart-container rounded-xl p-4 shadow-md flex flex-col overflow-hidden" :style="{
         backgroundColor: 'var(--bg-color-secondary)',
         border: '2px solid var(--border-color-light)',
+        minHeight: '280px',
       }">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
           <p class="text-base font-bold mb-1 md:mb-0 flex items-center" :style="{ color: 'var(--primary-color)' }">
@@ -57,13 +59,14 @@
           </div>
         </div>
 
-        <div ref="groupChart" class="w-full" :style="{ height: chartHeight + 'px' }"></div>
+        <div ref="groupChart" class="w-full flex-1" :style="{ minHeight: '240px' }"></div>
       </div>
 
       <!-- 热门插件图表 -->
-      <div class="hot-plugin chart-container rounded-xl p-4 shadow-md" :style="{
+      <div class="hot-plugin chart-container rounded-xl p-4 shadow-md flex flex-col overflow-hidden" :style="{
         backgroundColor: 'var(--bg-color-secondary)',
         border: '2px solid var(--border-color-light)',
+        minHeight: '280px',
       }">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
           <p class="text-base font-bold mb-1 md:mb-0 flex items-center" :style="{ color: 'var(--primary-color)' }">
@@ -88,7 +91,7 @@
           </div>
         </div>
 
-        <div ref="hotPluginChart" class="w-full h-full min-h-50" :style="{ height: chartHeight + 'px' }"></div>
+        <div ref="hotPluginChart" class="w-full flex-1" :style="{ minHeight: '240px' }"></div>
       </div>
     </div>
   </div>
@@ -232,15 +235,15 @@ const handleResize = debounce(() => {
     const baseInfoEl = rightInfo.value.querySelector(".base-info") as HTMLElement
     if (baseInfoEl) {
       const infoHeight = baseInfoEl.offsetHeight
-      chartAreaHeight.value = rightInfo.value.offsetHeight - infoHeight - 49
-      chartAreaHeight.value = Math.max(chartAreaHeight.value, 300)
+      const availableHeight = rightInfo.value.clientHeight - infoHeight - 36
+      chartAreaHeight.value = Math.max(availableHeight, 360)
 
       if (window.innerWidth <= 640) {
-        chartAreaHeight.value = Math.max(chartAreaHeight.value, 400)
+        chartAreaHeight.value = Math.max(chartAreaHeight.value, 420)
       }
 
       if (groupTypeRef.value) {
-        chartHeight.value = chartAreaHeight.value / 2 - groupTypeRef.value.offsetHeight - 20
+        chartHeight.value = Math.max(chartAreaHeight.value / 2 - groupTypeRef.value.offsetHeight - 28, 240)
       }
 
       // 延迟调整图表大小
@@ -430,10 +433,10 @@ onMounted(() => {
 
   setupResizeListener()
   startTimers()
-  handleResize()
 
   // 初始化图表
   initCharts()
+  handleResize()
 
   EventBus.on("sidebar-aside", handleResize)
   EventBus.on("change-theme", debounce(updateChartTheme, 200))
@@ -468,6 +471,8 @@ watch(() => store.botInfo, (newVal) => {
 .right-info {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb-color) var(--bg-color);
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .right-info::-webkit-scrollbar {
@@ -488,11 +493,14 @@ watch(() => store.botInfo, (newVal) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1;
+  min-height: 360px;
 }
 
 .chart-container {
   flex: 1;
-  min-height: 200px;
+  height: 100%;
+  min-height: 240px;
   display: flex;
   flex-direction: column;
   overflow: hidden;

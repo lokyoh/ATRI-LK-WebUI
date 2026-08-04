@@ -47,28 +47,31 @@ function handleResize() {
 
 <style lang="scss" scoped>
 .base {
-  @apply transition-all duration-300;
+  transition: all 0.3s;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .base-info {
-  @apply bg-opacity-80 backdrop-blur-sm;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
 }
 
 .main-info {
-  @apply bg-opacity-80 backdrop-blur-sm;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
 }
 
 .config-info {
-  @apply bg-opacity-80 backdrop-blur-sm;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
@@ -94,38 +97,46 @@ function handleResize() {
 @media (max-width: 1280px) {
   .el-col {
     &:nth-child(1) {
-      @apply w-full pr-0;
+      width: 100%;
+      padding-right: 0;
     }
 
     &:nth-child(2) {
-      @apply w-full px-0;
+      width: 100%;
+      padding-left: 0;
+      padding-right: 0;
     }
 
     &:nth-child(3) {
-      @apply w-full pl-0;
+      width: 100%;
+      padding-left: 0;
     }
   }
 }
 
 @media (max-width: 768px) {
   .el-row {
-    @apply flex-col;
+    display: flex;
+    flex-direction: column;
   }
 
   .el-col {
-    @apply w-full h-auto px-0 py-2;
+    width: 100%;
+    height: auto;
+    padding: 0.5rem 0;
 
     &:nth-child(1),
     &:nth-child(2),
     &:nth-child(3) {
-      @apply h-auto;
+      height: auto;
     }
   }
 
   .base-info,
   .main-info,
   .config-info {
-    @apply px-2;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 }
 </style>
