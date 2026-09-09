@@ -91,6 +91,27 @@ onUnmounted(() => {
 /* 响应式设计 */
 @media (max-width: 1024px) {
 
+  .base {
+    overflow: auto;
+  }
+
+  .el-row.h-full,
+  .el-col.h-full,
+  .el-col>div,
+  .base-info>*,
+  .main-info>*,
+  .config-info>* {
+    height: auto !important;
+  }
+
+  .el-row.h-full {
+    min-height: 0;
+  }
+
+  .el-col.h-full {
+    flex: none;
+  }
+
   .el-col:nth-child(1),
   .el-col:nth-child(2),
   .el-col:nth-child(3) {

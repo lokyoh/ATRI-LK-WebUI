@@ -26,8 +26,8 @@
           <el-icon v-if="loading" class="is-loading">
             <SvgIcon name="loading" class="animate-spin" :color="getIconColor()" />
           </el-icon>
-          <SvgIcon v-else-if="icon" :name="icon" class="button-icon" :color="getIconColor()" :width="getIconSize()"
-            :height="getIconSize()" />
+          <SvgIcon v-else-if="icon" :name="icon" class="button-icon" :color="getIconColor()"
+            :size="getIconSize()" />
           <span class="button-text" :style="{
             fontSize: `${getFontSize()}px`,
           }">{{ text }}</span>
@@ -51,8 +51,8 @@
         <el-icon v-if="loading" class="is-loading">
           <SvgIcon name="loading" class="animate-spin" :color="getIconColor()" />
         </el-icon>
-        <SvgIcon v-else-if="icon" :name="icon" class="button-icon" :color="getIconColor()" :width="getIconSize()"
-          :height="getIconSize()" />
+        <SvgIcon v-else-if="icon" :name="icon" class="button-icon" :color="getIconColor()"
+          :size="getIconSize()" />
         <span class="button-text" :style="{
           fontSize: `${getFontSize()}px`,
         }">{{ text }}</span>

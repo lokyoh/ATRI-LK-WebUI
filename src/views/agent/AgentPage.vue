@@ -23,9 +23,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import SettingsPanel from '@/components/agent/SettingsPanel.vue';
 import ModelsPanel from '@/components/agent/ModelsPanel.vue';
+import { getLoading } from '@/utils/loading';
 
 const tabs = [
   { key: 'settings', label: '设置' },
@@ -33,6 +34,31 @@ const tabs = [
 ];
 
 const currentTab = ref('settings');
+let loadingInstance: ReturnType<typeof getLoading> | null = null;
+
+const startContentLoading = () => {
+  loadingInstance?.close();
+  loadingInstance = getLoading('.tab-content');
+};
+
+const stopContentLoading = () => {
+  loadingInstance?.close();
+  loadingInstance = null;
+};
+
+watch(currentTab, () => {
+  startContentLoading();
+  setTimeout(() => {
+    stopContentLoading();
+  }, 500);
+});
+
+onMounted(() => {
+  startContentLoading();
+  setTimeout(() => {
+    stopContentLoading();
+  }, 600);
+});
 </script>
 
 <style scoped>

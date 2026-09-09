@@ -9,6 +9,7 @@ import MainCommandPage from "@/views/command/MainCommandPage.vue";
 import PluginManagePage from "@/views/plugin/PluginManagePage.vue";
 import StoreManagePage from "@/views/store/StoreManagePage.vue";
 import AgentPage from "@/views/agent/AgentPage.vue";
+import LogPage from "@/views/log/LogPage.vue";
 // 定义路由类型
 const routes: Array<RouteRecordRaw> = [
   {
@@ -65,6 +66,12 @@ const routes: Array<RouteRecordRaw> = [
         name: "AI模型设置",
         component: AgentPage,
         meta: { requiresAuth: true, title: "AI模型设置" },
+      },
+      {
+        path: "/log",
+        name: "日志",
+        component: LogPage,
+        meta: { requiresAuth: true, title: "日志" },
       },
     ],
   },

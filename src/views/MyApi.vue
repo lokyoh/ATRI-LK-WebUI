@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+  <div class="min-h-screen flex items-center justify-center p-2 sm:p-3 md:p-4 relative overflow-hidden"
     :style="{ background: 'var(--bg-color)' }">
     <!-- 二次元云朵背景 -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden">
@@ -22,7 +22,7 @@
 
     <!-- 主容器 -->
     <div
-      class="w-full max-w-4xl backdrop-blur-sm rounded-xl shadow-xl overflow-hidden transition-all duration-300 relative"
+      class="w-full max-w-3xl backdrop-blur-sm rounded-xl shadow-xl overflow-hidden transition-all duration-300 relative"
       :style="{
         backgroundColor: 'var(--bg-color-secondary)',
         border: '2px solid var(--el-border-color)',
@@ -42,9 +42,9 @@
         </svg>
       </div>
 
-      <div class="p-6 sm:p-8">
-        <div class="relative mb-8">
-          <h1 class="text-2xl sm:text-3xl font-bold text-center tracking-wide" :style="{
+      <div class="p-4 sm:p-5">
+        <div class="relative mb-6">
+          <h1 class="text-xl sm:text-2xl font-bold text-center tracking-wide" :style="{
             color: 'var(--el-color-primary)',
             textShadow: '2px 2px 4px var(--el-color-primary-light-9)',
           }">
@@ -58,7 +58,8 @@
 
         <div class="space-y-6">
           <div class="flex items-center justify-between gap-3">
-            <div class="text-lg sm:text-xl font-semibold transition-all duration-500 ease-in-out relative inline-block"
+            <div
+              class="text-base sm:text-lg font-semibold transition-all duration-500 ease-in-out relative inline-block"
               :class="{ 'translate-x-2': rightShow }" :style="{ color: 'var(--el-color-primary)' }">
               <span class="relative z-10">服务器地址</span>
               <span class="absolute -bottom-1 left-0 w-full h-1 rounded-full z-0"
@@ -82,11 +83,11 @@
                 :style="{ color: 'var(--el-color-primary)' }">地址</span>
               <input v-model.trim="apiUrl" @focus="inpOnfocus" @blur="inpOnBlur" type="text"
                 placeholder="请输入服务器地址，如 http://127.0.0.1:20000" spellcheck="false"
-                class="w-full border-0 bg-transparent px-2 py-3 text-base sm:text-lg outline-none transition-all duration-300"
+                class="w-full border-0 bg-transparent px-2 py-2.5 text-sm sm:text-base outline-none transition-all duration-300"
                 :style="{
                   color: 'var(--el-text-color-primary)',
                 }" />
-              <div class="mr-2 flex items-center rounded-full px-3 py-1 text-sm font-medium"
+              <div class="mr-2 flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                 :style="{ backgroundColor: 'var(--el-fill-color-light)', color: 'var(--el-color-primary)' }">
                 <span v-if="testing === 1" class="mr-1">
                   <el-icon class="text-sm">
@@ -110,13 +111,13 @@
               :style="{ backgroundColor: 'var(--el-color-primary)' }"></div>
           </div>
 
-          <div class="rounded-xl p-4 border shadow-inner relative overflow-hidden" :style="{
+          <div class="rounded-xl p-3 border shadow-inner relative overflow-hidden" :style="{
             backgroundColor: 'var(--el-fill-color-light)',
             borderColor: 'var(--el-border-color)',
           }">
             <div class="absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-30"
               :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"></div>
-            <h3 class="font-semibold mb-2 flex items-center text-lg sm:text-xl"
+            <h3 class="font-semibold mb-2 flex items-center text-base sm:text-lg"
               :style="{ color: 'var(--el-color-primary)' }">
               <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd"
@@ -125,7 +126,7 @@
               </svg>
               注意事项：
             </h3>
-            <ul class="text-sm sm:text-base space-y-2" :style="{ color: 'var(--el-text-color-primary)' }">
+            <ul class="text-sm space-y-1.5" :style="{ color: 'var(--el-text-color-primary)' }">
               <li class="flex items-start">
                 <span class="mr-2 font-bold" :style="{ color: 'var(--el-color-primary)' }">①</span>
                 <span>开发环境中修改api地址一样生效，即覆盖代理服务器的转发</span>
@@ -141,11 +142,11 @@
             </ul>
           </div>
 
-          <div class="flex flex-col sm:flex-row gap-3 pt-2">
-            <el-button type="default" icon="back2" @click="goBack" class="flex-1 h-11 text-base sm:text-lg">
+          <div class="flex flex-col sm:flex-row gap-3 pt-1">
+            <el-button type="default" icon="back2" @click="goBack" class="flex-1 h-10 text-sm sm:text-base">
               返回
             </el-button>
-            <el-button type="primary" icon="edit" @click="changeUrl" class="flex-1 h-11 text-base sm:text-lg"
+            <el-button type="primary" icon="edit" @click="changeUrl" class="flex-1 h-10 text-sm sm:text-base"
               ref="myapi">
               修改
             </el-button>

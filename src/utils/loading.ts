@@ -1,14 +1,19 @@
 import { ElLoading } from "element-plus";
 import type { LoadingInstance } from "element-plus/es/components/loading/src/loading";
 
-export const getLoading = (target: unknown): LoadingInstance => {
+export const getLoading = (
+  target: unknown,
+  options: Record<string, unknown> = {},
+): LoadingInstance => {
   const loading = ElLoading.service({
     target: target as string | HTMLElement,
-    lock: true,
+    lock: false,
+    fullscreen: false,
     text: "(>ω<) 正在努力加载中喵~",
     spinner: "el-icon-star-on",
     background: "var(--el-bg-color-overlay)",
     customClass: "kawaii-loading",
+    ...options,
   });
 
   setTimeout(() => {

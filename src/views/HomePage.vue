@@ -97,6 +97,19 @@
               </el-icon>
               <span>地址设置</span>
             </router-link>
+
+            <!-- 文档链接 -->
+            <a href="https://lokyoh.github.io/ATRI-LK-docs/" target="_blank" rel="noopener noreferrer"
+              class="hidden md:flex items-center px-4 py-2 rounded-full transition-all duration-300 shadow-sm text-md"
+              :style="{
+                background: `linear-gradient(to right, var(--primary-color-light-9), var(--primary-color-light-8))`,
+                color: 'var(--primary-color)',
+              }">
+              <el-icon color="var(--el-color-primary)">
+                <document />
+              </el-icon>
+              <span>文档</span>
+            </a>
           </div>
 
           <!-- 右侧功能区 -->
@@ -120,7 +133,7 @@
                     </el-icon>
                     <span :style="{ color: 'var(--text-color)' }">{{
                       theme.label
-                      }}</span>
+                    }}</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -220,6 +233,7 @@ import {
   Moon,
   Sunny,
   Monitor,
+  Document,
 } from '@element-plus/icons-vue'
 import SvgIcon from '@/components/SvgIcon/SvgIcon.vue'
 

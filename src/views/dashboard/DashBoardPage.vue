@@ -30,7 +30,7 @@ import LeftInfo from "@/components/dashboard/LeftInfo.vue"
 import MidInfo from "@/components/dashboard/MidInfo.vue"
 import RightInfo from "@/components/dashboard/RightInfo.vue"
 import { getHeaderHeight } from "@/utils/utils"
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, onUnmounted } from "vue"
 
 const windowHeight = ref(window.innerHeight)
 const computedHeight = computed(() => {
@@ -40,9 +40,14 @@ const computedHeight = computed(() => {
 onMounted(() => {
   window.addEventListener("resize", handleResize)
 })
+
 function handleResize() {
   windowHeight.value = window.innerHeight
 }
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -137,6 +142,29 @@ function handleResize() {
   .config-info {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
+  }
+}
+
+@media (max-width: 1280px) {
+  .base {
+    overflow: auto;
+  }
+
+  .el-row.h-full,
+  .el-col.h-full,
+  .el-col>div,
+  .base-info>*,
+  .main-info>*,
+  .config-info>* {
+    height: auto !important;
+  }
+
+  .el-row.h-full {
+    min-height: 0;
+  }
+
+  .el-col.h-full {
+    flex: none;
   }
 }
 </style>

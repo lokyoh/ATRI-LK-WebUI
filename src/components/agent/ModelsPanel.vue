@@ -34,6 +34,7 @@
             </div>
             <div class="detail-actions">
               <el-button size="small" type="primary" @click="openModelDialog">添加模型</el-button>
+              <el-button size="small" plain @click="openProviderDialog(activeProvider)">编辑 Provider</el-button>
               <el-button size="small" type="danger" plain @click="handleDeleteProvider">删除 Provider</el-button>
             </div>
           </div>
@@ -53,7 +54,10 @@
                 </div>
                 <div class="model-meta">{{ model.model }} · temp {{ model.temperature }}</div>
               </div>
-              <el-button size="small" type="danger" plain @click="handleDeleteModel(model.name)">删除</el-button>
+              <div style="display:flex;gap:8px">
+                <el-button size="small" plain @click="openModelDialog(model)">编辑</el-button>
+                <el-button size="small" type="danger" plain @click="handleDeleteModel(model.name)">删除</el-button>
+              </div>
             </div>
             <div v-else class="empty-state">当前 Provider 暂无模型</div>
           </div>
@@ -63,7 +67,7 @@
 
     <div v-else class="empty-state">暂无 Provider，请先添加一个。</div>
 
-    <el-dialog v-model="providerDialogVisible" title="添加 Provider" width="560px">
+    <el-dialog v-model="providerDialogVisible" :title="providerEditMode ? '编辑 Provider' : '添加 Provider'" width="560px">
       <el-form :model="providerForm" label-position="top">
         <el-form-item label="Provider 名称">
           <el-input v-model="providerForm.provider_name" placeholder="例如 siliconflow" />
@@ -81,12 +85,12 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="providerDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitting" @click="handleAddProvider">确认</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSaveProvider">确认</el-button>
         </span>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="modelDialogVisible" title="添加模型" width="560px">
+    <el-dialog v-model="modelDialogVisible" :title="modelEditMode ? '编辑模型' : '添加模型'" width="560px">
       <el-form :model="modelForm" label-position="top">
         <el-form-item label="显示名称">
           <el-input v-model="modelForm.name" placeholder="例如 my-model" />
@@ -104,7 +108,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="modelDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitting" @click="handleAddModel">确认</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSaveModel">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -146,6 +150,10 @@ const providers = ref<LLMProvider[]>([]);
 const activeProviderName = ref('');
 const providerDialogVisible = ref(false);
 const modelDialogVisible = ref(false);
+const providerEditMode = ref(false);
+const providerOriginalName = ref('');
+const modelEditMode = ref(false);
+const modelOriginalName = ref('');
 
 const providerForm = reactive<LLMProvider>({
   provider_name: '',
@@ -207,32 +215,57 @@ const selectProvider = (providerName: string) => {
   activeProviderName.value = providerName;
 };
 
-const openProviderDialog = () => {
+const openProviderDialog = (provider?: LLMProvider | null) => {
+  providerEditMode.value = !!provider;
   providerDialogVisible.value = true;
-  Object.assign(providerForm, {
-    provider_name: '',
-    provider_type: '',
-    url: '',
-    api_key: '',
-    models: [],
-  });
+  if (provider) {
+    providerOriginalName.value = provider.provider_name;
+    Object.assign(providerForm, {
+      provider_name: provider.provider_name,
+      provider_type: provider.provider_type,
+      url: provider.url,
+      api_key: provider.api_key,
+      models: provider.models || [],
+    });
+  } else {
+    providerOriginalName.value = '';
+    Object.assign(providerForm, {
+      provider_name: '',
+      provider_type: '',
+      url: '',
+      api_key: '',
+      models: [],
+    });
+  }
 };
 
-const openModelDialog = () => {
+const openModelDialog = (model?: LLMModel | null) => {
   if (!activeProvider.value) {
     message.warning('请先选择一个 Provider');
     return;
   }
+  modelEditMode.value = !!model;
   modelDialogVisible.value = true;
-  Object.assign(modelForm, {
-    name: '',
-    model: '',
-    temperature: 0.7,
-    type: 'chat',
-  });
+  if (model) {
+    modelOriginalName.value = model.name;
+    Object.assign(modelForm, {
+      name: model.name,
+      model: model.model,
+      temperature: model.temperature,
+      type: model.type,
+    });
+  } else {
+    modelOriginalName.value = '';
+    Object.assign(modelForm, {
+      name: '',
+      model: '',
+      temperature: 0.7,
+      type: 'chat',
+    });
+  }
 };
 
-const handleAddProvider = async () => {
+const handleSaveProvider = async () => {
   if (!providerForm.provider_name.trim()) {
     message.warning('请输入 Provider 名称');
     return;
@@ -240,30 +273,71 @@ const handleAddProvider = async () => {
 
   submitting.value = true;
   try {
-    const payload = await postRequest(`${prefix}/agent/add_provider`, {
-      provider_name: providerForm.provider_name,
-      provider_type: providerForm.provider_type,
-      url: providerForm.url,
-      api_key: providerForm.api_key,
-      models: [],
-    });
-
-    if (payload.data?.suc) {
-      message.success(payload.data.info || '添加 Provider 成功');
-      providerDialogVisible.value = false;
-      await loadProviders();
+    if (providerEditMode.value) {
+      // renaming: if name changed, delete old then add new
+      if (providerForm.provider_name !== providerOriginalName.value && providerOriginalName.value) {
+        // delete old
+        await postRequest(`${prefix}/agent/del_provider?provider_name=${encodeURIComponent(providerOriginalName.value)}`);
+        // add new
+        const addResp = await postRequest(`${prefix}/agent/add_provider`, {
+          provider_name: providerForm.provider_name,
+          provider_type: providerForm.provider_type,
+          url: providerForm.url,
+          api_key: providerForm.api_key,
+          models: providerForm.models || [],
+        });
+        if (addResp.data?.suc) {
+          message.success(addResp.data.info || '修改 Provider 成功');
+          providerDialogVisible.value = false;
+          await loadProviders();
+        } else {
+          message.error(addResp.data?.info || '修改 Provider 失败');
+        }
+      } else {
+        // same name, use set_provider
+        const resp = await postRequest(`${prefix}/agent/set_provider?provider_name=${encodeURIComponent(providerOriginalName.value || providerForm.provider_name)}`, {
+          provider_name: providerForm.provider_name,
+          provider_type: providerForm.provider_type,
+          url: providerForm.url,
+          api_key: providerForm.api_key,
+          models: providerForm.models || [],
+        });
+        if (resp.data?.suc) {
+          message.success(resp.data.info || '修改 Provider 成功');
+          providerDialogVisible.value = false;
+          await loadProviders();
+        } else {
+          message.error(resp.data?.info || '修改 Provider 失败');
+        }
+      }
     } else {
-      message.error(payload.data?.info || '添加 Provider 失败');
+      // add new
+      const payload = await postRequest(`${prefix}/agent/add_provider`, {
+        provider_name: providerForm.provider_name,
+        provider_type: providerForm.provider_type,
+        url: providerForm.url,
+        api_key: providerForm.api_key,
+        models: [],
+      });
+      if (payload.data?.suc) {
+        message.success(payload.data.info || '添加 Provider 成功');
+        providerDialogVisible.value = false;
+        await loadProviders();
+      } else {
+        message.error(payload.data?.info || '添加 Provider 失败');
+      }
     }
   } catch (error) {
-    console.error('addProvider error', error);
-    message.error('添加 Provider 失败');
+    console.error('saveProvider error', error);
+    message.error('保存 Provider 失败');
   } finally {
     submitting.value = false;
+    providerEditMode.value = false;
+    providerOriginalName.value = '';
   }
 };
 
-const handleAddModel = async () => {
+const handleSaveModel = async () => {
   if (!activeProvider.value) {
     message.warning('请先选择 Provider');
     return;
@@ -275,6 +349,11 @@ const handleAddModel = async () => {
 
   submitting.value = true;
   try {
+    if (modelEditMode.value && modelOriginalName.value) {
+      // delete old then add new (handles rename)
+      await postRequest(`${prefix}/agent/del_model?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}&model_name=${encodeURIComponent(modelOriginalName.value)}`);
+    }
+
     const payload = await postRequest(`${prefix}/agent/add_model?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}`, {
       name: modelForm.name,
       model: modelForm.model,
@@ -283,17 +362,19 @@ const handleAddModel = async () => {
     });
 
     if (payload.data?.suc) {
-      message.success(payload.data.info || '添加模型成功');
+      message.success(payload.data.info || (modelEditMode.value ? '修改模型成功' : '添加模型成功'));
       modelDialogVisible.value = false;
       await loadProviders();
     } else {
-      message.error(payload.data?.info || '添加模型失败');
+      message.error(payload.data?.info || (modelEditMode.value ? '修改模型失败' : '添加模型失败'));
     }
   } catch (error) {
-    console.error('addModel error', error);
-    message.error('添加模型失败');
+    console.error('saveModel error', error);
+    message.error(modelEditMode.value ? '修改模型失败' : '添加模型失败');
   } finally {
     submitting.value = false;
+    modelEditMode.value = false;
+    modelOriginalName.value = '';
   }
 };
 
@@ -400,6 +481,7 @@ onMounted(() => {
   border: 1px solid var(--el-border-color-light);
   border-radius: 10px;
   background: var(--el-bg-color);
+  color: var(--text-color);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -467,7 +549,9 @@ onMounted(() => {
   margin-bottom: 16px;
   padding: 12px;
   border-radius: 10px;
-  background: rgba(64, 158, 255, 0.06);
+  border: 1px solid var(--el-border-color-lighter);
+  background: var(--bg-color);
+  color: var(--text-color);
 }
 
 .detail-info span {
@@ -491,6 +575,7 @@ onMounted(() => {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 10px;
   background: var(--el-bg-color);
+  color: var(--text-color);
   gap: 10px;
 }
 

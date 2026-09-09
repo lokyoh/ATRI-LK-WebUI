@@ -1,5 +1,5 @@
 <template>
-  <div class="main p-4 md:p-6 flex flex-col min-h-0" :style="{ background: 'var(--el-bg-color)' }">
+  <div class="main flex flex-col min-h-0" :style="{ background: 'var(--el-bg-color)' }">
     <!-- 标题部分 -->
     <div class="title text-center mb-4">
       <h1 class="text-2xl md:text-3xl font-semibold" :style="{ color: 'var(--el-color-primary)' }">
@@ -29,7 +29,7 @@
       <div class="search-actions flex flex-wrap items-center gap-3 justify-end w-full lg:w-auto">
         <!-- 重启按钮 -->
         <div class="restart-button">
-          <my-button icon="refresh" text="重启" :iconHeight="20" :height="36" :width="100" @click="handleRestart"
+          <my-button icon="refresh" text="重启" :iconHeight="18" :height="34" :width="84" @click="handleRestart"
             type="warning" rounded="full" :style="{
               borderColor: 'var(--el-border-color)',
             }" />
@@ -39,18 +39,19 @@
         <div class="search-tag">
           <el-dropdown @command="handleCommand" trigger="click" teleported popper-class="store-dropdown-popper"
             class="cursor-pointer">
-            <div class="filter-button flex items-center px-4 py-2 rounded-full transition-all duration-300" :style="{
+            <div class="filter-button flex items-center px-3 py-1.5 rounded-full transition-all duration-300" :style="{
               backgroundColor: 'var(--el-fill-color-blank)',
               border: '1px solid var(--el-border-color-darker)',
               boxShadow: 'var(--el-box-shadow)',
             }">
-              <svg-icon :name="authorIcon" class="mr-2" :color="'var(--el-color-primary)'" />
+              <svg-icon :name="authorIcon" class="mr-1.5" :color="'var(--el-color-primary)'"
+                :style="{ width: '20px', height: '20px' }" />
               <span :style="{
                 color: 'var(--el-text-color-primary)',
                 fontWeight: 500,
               }">作者筛选</span>
-              <svg-icon name="arrow-down" class="ml-2 transform transition-transform duration-300"
-                :color="'var(--el-color-primary)'" />
+              <svg-icon name="arrow-down" class="ml-1.5 transform transition-transform duration-300"
+                :style="{ width: '20px', height: '20px' }" :color="'var(--el-color-primary)'" />
             </div>
 
             <template #dropdown>
@@ -77,7 +78,7 @@
 
     <!-- 卡片列表 -->
     <div class="plugin-card-container flex flex-col flex-1 min-h-0">
-      <div class="plugin-card-list flex-1 min-h-0" :style="{
+      <div class="plugin-card-list store-content-panel flex-1 min-h-0" :style="{
         background: 'var(--el-bg-color)',
         borderRadius: '12px',
         padding: '1rem',
@@ -95,7 +96,7 @@
                   <div class="plugin-card__name">{{ plugin.name }}</div>
                   <div class="plugin-card__meta">
                     <el-tag size="small" effect="plain" class="plugin-card__tag version-tag">
-                      v{{ plugin.version }}
+                      {{ getPluginVersionLabel(plugin) }}
                     </el-tag>
                     <el-tag :type="getPluginStatus(plugin).type" size="small" effect="plain" class="plugin-card__tag">
                       {{ getPluginStatus(plugin).label }}
@@ -122,17 +123,17 @@
             </div>
 
             <div class="plugin-card__actions">
-              <my-button icon="download" text="安装" :iconHeight="20" :height="32" :width="74"
+              <my-button icon="download" text="安装" :iconSize="16" :height="28" :width="72"
                 @click="handleInstall(0, plugin)" type="primary" :disabled="installPlugin.includes(plugin.name)"
                 rounded="full" :style="{
                   borderColor: 'var(--el-border-color)',
                 }" />
-              <my-button icon="update" text="更新" :iconHeight="20" :height="32" :width="74"
+              <my-button icon="update" text="更新" :iconSize="16" :height="28" :width="72"
                 @click="handleUpdate(0, plugin)" type="warning"
                 :disabled="!installPlugin.includes(plugin.name) || !plugin.need_update" rounded="full" :style="{
                   borderColor: 'var(--el-border-color)',
                 }" />
-              <my-button icon="remove" text="删除" :iconHeight="20" :height="32" :width="74"
+              <my-button icon="remove" text="删除" :iconSize="16" :height="28" :width="72"
                 @click="handleRemove(0, plugin)" type="danger" :disabled="!installPlugin.includes(plugin.name)"
                 rounded="full" :style="{
                   borderColor: 'var(--el-border-color)',
@@ -223,6 +224,8 @@ interface PluginData {
   description: string
   github_url?: string
   need_update?: boolean
+  local_version?: string
+  remote_version?: string
   module: string
   [key: string]: unknown
 }
@@ -270,6 +273,13 @@ const getPluginStatus = (plugin: PluginData) => {
   return { label: "未安装", type: "info" }
 }
 
+const getPluginVersionLabel = (plugin: PluginData) => {
+  if (plugin.need_update && plugin.local_version && plugin.remote_version) {
+    return `v${plugin.local_version} -> v${plugin.remote_version}`
+  }
+  return `v${plugin.version}`
+}
+
 const handleRestart = async () => {
   const result = await showCuteConfirm({
     title: "重启确认",
@@ -280,7 +290,7 @@ const handleRestart = async () => {
   })
 
   if (result) {
-    const loading = getLoading(".table-border")
+    const loading = getLoading(".store-content-panel")
 
     postRequest(`${prefix}/configure/restart`, {})
       .then((response) => {
@@ -312,7 +322,7 @@ const handleUpdate = async (_i: number, data: PluginData) => {
   })
 
   if (result) {
-    const loading = getLoading(".table-border")
+    const loading = getLoading(".store-content-panel")
 
     postRequest(`${prefix}/store/update_plugin`, {
       service: data.name,
@@ -350,7 +360,7 @@ const handleRemove = async (_i: number, data: PluginData) => {
     type: "warning"
   })
   if (result) {
-    const loading = getLoading(".table-border")
+    const loading = getLoading(".store-content-panel")
 
     postRequest(`${prefix}/store/remove_plugin`, {
       service: data.name,
@@ -388,7 +398,7 @@ const handleInstall = async (_i: number, data: PluginData) => {
     type: "warning"
   })
   if (result) {
-    const loading = getLoading(".table-border")
+    const loading = getLoading(".store-content-panel")
 
     postRequest(`${prefix}/store/install_plugin`, {
       service: data.name,
@@ -423,7 +433,7 @@ const handleCommand = (s: string) => {
 }
 
 const getPluginList = () => {
-  const loading = getLoading(".table-border")
+  const loading = getLoading(".store-content-panel")
   getRequest(`${prefix}/store/get_plugin_store`)
     .then((response) => {
       loading.close()
@@ -475,14 +485,16 @@ const getPluginList = () => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  padding: 0.75rem 1rem 1rem;
 }
 
 .title {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 
   h1 {
     transition: color 0.3s ease;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
+    line-height: 1.25;
 
     span {
       display: inline-block;
@@ -491,8 +503,9 @@ const getPluginList = () => {
   }
 
   div {
-    margin-top: 0.25rem;
-    font-size: 0.9rem;
+    margin-top: 0.125rem;
+    font-size: 0.8rem;
+    line-height: 1.25;
   }
 }
 
@@ -502,6 +515,15 @@ const getPluginList = () => {
   &:hover {
     background: var(--el-fill-color-light);
     border-color: var(--el-border-color);
+  }
+}
+
+.search-actions {
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+
+  .filter-button {
+    white-space: nowrap;
   }
 }
 
@@ -655,6 +677,10 @@ const getPluginList = () => {
     }
   }
 
+  .filter {
+    margin-bottom: 0.75rem;
+  }
+
   .table-border {
     :deep(.el-table) {
       th {
@@ -742,10 +768,11 @@ const getPluginList = () => {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 420px));
+  gap: 0.75rem;
   overflow-y: auto;
   padding-right: 0.25rem;
+  justify-content: center;
 }
 
 .plugin-card {
@@ -757,6 +784,9 @@ const getPluginList = () => {
   border: 1px solid var(--el-border-color-lighter);
   background: var(--el-bg-color-page);
   box-shadow: var(--el-box-shadow-light);
+  width: 100%;
+  max-width: 420px;
+  justify-self: center;
 }
 
 .plugin-card__header {
@@ -861,8 +891,12 @@ const getPluginList = () => {
 .plugin-card__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
   margin-top: auto;
+
+  :deep(.my-button) {
+    flex: 0 0 72px;
+  }
 }
 
 .empty-state {
@@ -925,7 +959,7 @@ const getPluginList = () => {
     }
 
     .card-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 420px);
       gap: 0.75rem;
     }
 
@@ -937,7 +971,7 @@ const getPluginList = () => {
       gap: 0.4rem;
 
       :deep(.my-button) {
-        width: calc(50% - 0.2rem) !important;
+        width: 72px !important;
       }
     }
   }
