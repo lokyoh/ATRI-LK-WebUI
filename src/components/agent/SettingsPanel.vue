@@ -28,7 +28,7 @@
           <el-input v-model="form.search.provider" placeholder="例如 tavily" />
         </el-form-item>
         <el-form-item label="API Key">
-          <el-input v-model="form.search.api_key" type="password" show-password placeholder="请输入搜索接口密钥" />
+          <el-input v-model="form.search.api_key" type="password" show-password placeholder="留空则保留当前密钥" />
         </el-form-item>
       </div>
 
@@ -47,7 +47,23 @@
           <el-input v-model="form.tts.voice_id" placeholder="请输入 voice id" />
         </el-form-item>
         <el-form-item label="API Key">
-          <el-input v-model="form.tts.api_key" type="password" show-password placeholder="请输入 TTS 接口密钥" />
+          <el-input v-model="form.tts.api_key" type="password" show-password placeholder="留空则保留当前密钥" />
+        </el-form-item>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">Embedding 配置</div>
+        <el-form-item label="启用 Embedding">
+          <el-switch v-model="form.embedding.enable" />
+        </el-form-item>
+        <el-form-item label="模型名称">
+          <el-input v-model="form.embedding.model" placeholder="请输入 Embedding 模型名称" />
+        </el-form-item>
+        <el-form-item label="服务地址">
+          <el-input v-model="form.embedding.url" placeholder="http://localhost:8000" />
+        </el-form-item>
+        <el-form-item label="API Key">
+          <el-input v-model="form.embedding.api_key" type="password" show-password placeholder="留空则保留当前密钥" />
         </el-form-item>
       </div>
     </el-form>
@@ -73,10 +89,18 @@ interface TTSConfig {
   api_key: string;
 }
 
+interface EmbeddingConfig {
+  enable: boolean;
+  model: string;
+  url: string;
+  api_key: string;
+}
+
 interface AgentSettings {
   max_history: number;
   search: SearchConfig;
   tts: TTSConfig;
+  embedding: EmbeddingConfig;
 }
 
 interface SettingsResponse {
@@ -105,12 +129,19 @@ const defaultForm: AgentSettings = {
     voice_id: '',
     api_key: '',
   },
+  embedding: {
+    enable: false,
+    model: '',
+    url: '',
+    api_key: '',
+  },
 };
 
 const form = reactive<AgentSettings>({
   max_history: defaultForm.max_history,
   search: { ...defaultForm.search },
   tts: { ...defaultForm.tts },
+  embedding: { ...defaultForm.embedding },
 });
 
 const loadSettings = async () => {
@@ -133,6 +164,12 @@ const loadSettings = async () => {
         url: data.tts?.url || defaultForm.tts.url,
         voice_id: data.tts?.voice_id || defaultForm.tts.voice_id,
         api_key: data.tts?.api_key || defaultForm.tts.api_key,
+      };
+      form.embedding = {
+        enable: Boolean(data.embedding?.enable),
+        model: data.embedding?.model || defaultForm.embedding.model,
+        url: data.embedding?.url || defaultForm.embedding.url,
+        api_key: data.embedding?.api_key || defaultForm.embedding.api_key,
       };
     } else {
       message.error(payload.info || '获取配置失败');

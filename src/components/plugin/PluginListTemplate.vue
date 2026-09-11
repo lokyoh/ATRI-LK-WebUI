@@ -28,7 +28,7 @@
           <p class="text-sm mb-2 truncate" :style="{ color: 'var(--text-color-secondary)' }">
             <span class="font-mono">{{ data.module }}</span>
             <span v-if="data.author" class="ml-2" :style="{ color: 'var(--primary-color-light)' }">@{{ data.author
-            }}</span>
+              }}</span>
           </p>
 
           <!-- 底部按钮区域 - 右侧横向排列 -->
@@ -159,6 +159,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, inject, h, render } from "vue"
+import { useRouter } from "vue-router"
 import UpdateDialog from "./UpdateDialog.vue"
 import NormalButton from "@/components/ui/NormalButton.vue"
 import MySwitch from "@/components/ui/MySwitch.vue"
@@ -170,6 +171,7 @@ import { getLoading } from "@/utils/loading"
 import { message } from "@/utils/message"
 
 const prefix = inject<string>('prefix') as string
+const router = useRouter()
 
 // 创建确认对话框的辅助函数
 const showCuteConfirm = (options: {
@@ -317,6 +319,10 @@ function onSwitchChange(data: PluginData, newStatus: boolean) {
 }
 
 function openSetting(data: PluginData) {
+  if (data.plugin_name === 'agent') {
+    router.push('/agent')
+    return
+  }
   pluginModule.value = data.plugin_name
   dialogVisible.value = true
 }

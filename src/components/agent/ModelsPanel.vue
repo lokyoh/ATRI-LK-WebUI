@@ -41,24 +41,24 @@
 
           <div class="detail-info">
             <div><span>地址</span><strong>{{ activeProvider.url || '未配置' }}</strong></div>
-            <div><span>API Key</span><strong>{{ activeProvider.api_key ? '已配置' : '未配置' }}</strong></div>
           </div>
 
           <div class="model-list">
-            <div v-if="activeProvider.models?.length" v-for="model in activeProvider.models" :key="model.name"
-              class="model-item">
-              <div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                  <div class="model-name">{{ model.name }}</div>
-                  <el-tag size="small" :type="typeColor(model.type)">{{ model.type }}</el-tag>
+            <template v-if="activeProvider.models?.length">
+              <div v-for="model in activeProvider.models" :key="model.name" class="model-item">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <div class="model-name">{{ model.name }}</div>
+                    <el-tag size="small" :type="typeColor(model.type)">{{ model.type }}</el-tag>
+                  </div>
+                  <div class="model-meta">{{ model.model }} · temp {{ model.temperature }}</div>
                 </div>
-                <div class="model-meta">{{ model.model }} · temp {{ model.temperature }}</div>
+                <div style="display:flex;gap:8px">
+                  <el-button size="small" plain @click="openModelDialog(model)">编辑</el-button>
+                  <el-button size="small" type="danger" plain @click="handleDeleteModel(model.name)">删除</el-button>
+                </div>
               </div>
-              <div style="display:flex;gap:8px">
-                <el-button size="small" plain @click="openModelDialog(model)">编辑</el-button>
-                <el-button size="small" type="danger" plain @click="handleDeleteModel(model.name)">删除</el-button>
-              </div>
-            </div>
+            </template>
             <div v-else class="empty-state">当前 Provider 暂无模型</div>
           </div>
         </div>
@@ -224,7 +224,7 @@ const openProviderDialog = (provider?: LLMProvider | null) => {
       provider_name: provider.provider_name,
       provider_type: provider.provider_type,
       url: provider.url,
-      api_key: provider.api_key,
+      api_key: '',
       models: provider.models || [],
     });
   } else {
@@ -268,6 +268,10 @@ const openModelDialog = (model?: LLMModel | null) => {
 const handleSaveProvider = async () => {
   if (!providerForm.provider_name.trim()) {
     message.warning('请输入 Provider 名称');
+    return;
+  }
+  if (!providerEditMode.value && !providerForm.api_key.trim()) {
+    message.warning('请输入 API Key');
     return;
   }
 
