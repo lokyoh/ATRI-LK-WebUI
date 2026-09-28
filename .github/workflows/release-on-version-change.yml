@@ -37,7 +37,7 @@ jobs:
         run: npm run build
 
       - name: Create version file in build output
-        run: printf '%s' "${{ steps.version.outputs.version }}" > dist/version
+        run: printf '%s' "v${{ steps.version.outputs.version }}" > dist/version
 
       - name: Compress build output to public.zip
         working-directory: dist
