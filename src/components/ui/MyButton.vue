@@ -1,61 +1,109 @@
 <template>
-  <div :class="[
-    'my-button-container',
-    customClass,
-    disabled || loading
-      ? 'opacity-70 cursor-not-allowed'
-      : 'transform hover:scale-102 active:scale-98',
-    `button-size-${size}`,
-  ]" :style="{
-    width: computedWidth,
-    height: computedHeight,
-  }">
-    <el-tooltip v-if="content" effect="light" :content="content" placement="top" popper-class="button-tooltip">
-      <button :type="nativeType" class="button-class" :class="[
-        typeClass,
-        roundedClass,
-        shadowClass,
-        disabled || loading ? 'pointer-events-none' : '',
-        glowEffect,
-      ]" @click="handleClick" :disabled="disabled || loading" :style="{
-        '--button-bg-color': getButtonColor(),
-        '--button-hover-color': getButtonHoverColor(),
-        '--button-border-color': getButtonBorderColor(),
-      }">
+  <div
+    :class="[
+      'my-button-container',
+      customClass,
+      disabled || loading
+        ? 'opacity-70 cursor-not-allowed'
+        : 'transform hover:scale-102 active:scale-98',
+      `button-size-${size}`,
+    ]"
+    :style="{
+      width: computedWidth,
+      height: computedHeight,
+    }"
+  >
+    <el-tooltip
+      v-if="content"
+      effect="light"
+      :content="content"
+      placement="top"
+      popper-class="button-tooltip"
+    >
+      <button
+        :type="nativeType"
+        class="button-class"
+        :class="[
+          typeClass,
+          roundedClass,
+          shadowClass,
+          disabled || loading ? 'pointer-events-none' : '',
+          glowEffect,
+        ]"
+        @click="handleClick"
+        :disabled="disabled || loading"
+        :style="{
+          '--button-bg-color': getButtonColor(),
+          '--button-hover-color': getButtonHoverColor(),
+          '--button-border-color': getButtonBorderColor(),
+          '--button-text-color':
+            type === 'default'
+              ? 'var(--el-text-color-primary)'
+              : 'var(--button-icon-color-primary)',
+        }"
+      >
         <span class="button-content">
           <el-icon v-if="loading" class="is-loading">
             <SvgIcon name="loading" class="animate-spin" :color="getIconColor()" />
           </el-icon>
-          <SvgIcon v-else-if="icon" :name="icon" class="button-icon" :color="getIconColor()"
-            :size="getIconSize()" />
-          <span class="button-text" :style="{
-            fontSize: `${getFontSize()}px`,
-          }">{{ text }}</span>
+          <SvgIcon
+            v-else-if="icon"
+            :name="icon"
+            class="button-icon"
+            :color="getIconColor()"
+            :size="getIconSize()"
+          />
+          <span
+            class="button-text"
+            :style="{
+              fontSize: `${getFontSize()}px`,
+            }"
+            >{{ text }}</span
+          >
         </span>
         <div class="button-background"></div>
       </button>
     </el-tooltip>
 
-    <button v-else :type="nativeType" class="button-class" :class="[
-      typeClass,
-      roundedClass,
-      shadowClass,
-      disabled || loading ? 'pointer-events-none' : '',
-      glowEffect,
-    ]" @click="handleClick" :disabled="disabled || loading" :style="{
-      '--button-bg-color': getButtonColor(),
-      '--button-hover-color': getButtonHoverColor(),
-      '--button-border-color': getButtonBorderColor(),
-    }">
+    <button
+      v-else
+      :type="nativeType"
+      class="button-class"
+      :class="[
+        typeClass,
+        roundedClass,
+        shadowClass,
+        disabled || loading ? 'pointer-events-none' : '',
+        glowEffect,
+      ]"
+      @click="handleClick"
+      :disabled="disabled || loading"
+      :style="{
+        '--button-bg-color': getButtonColor(),
+        '--button-hover-color': getButtonHoverColor(),
+        '--button-border-color': getButtonBorderColor(),
+        '--button-text-color':
+          type === 'default' ? 'var(--el-text-color-primary)' : 'var(--button-icon-color-primary)',
+      }"
+    >
       <span class="button-content">
         <el-icon v-if="loading" class="is-loading">
           <SvgIcon name="loading" class="animate-spin" :color="getIconColor()" />
         </el-icon>
-        <SvgIcon v-else-if="icon" :name="icon" class="button-icon" :color="getIconColor()"
-          :size="getIconSize()" />
-        <span class="button-text" :style="{
-          fontSize: `${getFontSize()}px`,
-        }">{{ text }}</span>
+        <SvgIcon
+          v-else-if="icon"
+          :name="icon"
+          class="button-icon"
+          :color="getIconColor()"
+          :size="getIconSize()"
+        />
+        <span
+          class="button-text"
+          :style="{
+            fontSize: `${getFontSize()}px`,
+          }"
+          >{{ text }}</span
+        >
       </span>
       <div class="button-background"></div>
     </button>
@@ -64,7 +112,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import SvgIcon from "../SvgIcon/SvgIcon.vue"
+import SvgIcon from '../SvgIcon/SvgIcon.vue'
 
 interface Props {
   text?: string
@@ -115,14 +163,6 @@ if (props.text && props.text.length > 20) {
   console.warn('MyButton: text length should not exceed 20 characters')
 }
 
-const sizeData = ref({
-  iconWidth: 0,
-  iconHeight: 0,
-  fontSize: 0,
-  width: 0,
-  height: 0,
-})
-
 const buttonSize = computed(() => {
   const sizes = {
     small: {
@@ -144,6 +184,14 @@ const buttonSize = computed(() => {
   return sizes[props.size] || sizes.default
 })
 
+const sizeData = ref({
+  iconWidth: Number(props.iconSize) || buttonSize.value.iconSize,
+  iconHeight: Number(props.iconSize) || buttonSize.value.iconSize,
+  fontSize: Number(props.fontSize) || buttonSize.value.fontSize,
+  width: Number(props.width),
+  height: Number(props.height),
+})
+
 const computedWidth = computed(() => {
   return sizeData.value.width === 0 ? '100%' : `${sizeData.value.width}px`
 })
@@ -152,22 +200,7 @@ const computedHeight = computed(() => {
   return sizeData.value.height === 0 ? '100%' : `${sizeData.value.height}px`
 })
 
-const typeClass = computed(() => {
-  const classes: Record<string, string> = {
-    default:
-      'bg-fill-color text-text-color border border-border-color hover:bg-fill-color-light',
-    primary:
-      'bg-primary-color text-white hover:bg-primary-color-light border border-primary-color-light',
-    success:
-      'bg-success-color text-white hover:bg-success-color-light border border-success-color-light',
-    warning:
-      'bg-warning-color text-white hover:bg-warning-color-light border border-warning-color-light',
-    danger:
-      'bg-danger-color text-white hover:bg-danger-color-light border border-danger-color-light',
-    info: 'bg-info-color text-white hover:bg-info-color-light border border-info-color-light',
-  }
-  return classes[props.type] || classes.default
-})
+const typeClass = computed(() => `button-variant-${props.type}`)
 
 const roundedClass = computed(() => {
   return {
@@ -201,8 +234,9 @@ const glowEffect = computed(() => {
     info: 'hover:shadow-info-color-light',
   }
 
-  return `transition-shadow duration-300 ${glowColors[props.type] || glowColors.default
-    } hover:shadow-lg`
+  return `transition-shadow duration-300 ${
+    glowColors[props.type] || glowColors.default
+  } hover:shadow-lg`
 })
 
 const handleResize = () => {
@@ -235,12 +269,12 @@ const getButtonColor = () => {
 
 const getButtonHoverColor = () => {
   const colors: Record<string, string> = {
-    default: 'var(--el-bg-color-page)',
-    primary: 'var(--el-color-primary-light-3)',
-    success: 'var(--el-color-success-light-3)',
-    warning: 'var(--el-color-warning-light-3)',
-    danger: 'var(--el-color-danger-light-3)',
-    info: 'var(--el-color-info-light-3)',
+    default: 'var(--el-fill-color-light)',
+    primary: 'var(--primary-color-light)',
+    success: 'var(--success-color-light)',
+    warning: 'var(--warning-color-light)',
+    danger: 'var(--danger-color-light)',
+    info: 'var(--info-color-light)',
   }
   return colors[props.type] || colors.default
 }
@@ -248,11 +282,11 @@ const getButtonHoverColor = () => {
 const getButtonBorderColor = () => {
   const colors: Record<string, string> = {
     default: 'var(--el-border-color)',
-    primary: 'var(--el-color-primary-light-5)',
-    success: 'var(--el-color-success-light-5)',
-    warning: 'var(--el-color-warning-light-5)',
-    danger: 'var(--el-color-danger-light-5)',
-    info: 'var(--el-color-info-light-5)',
+    primary: 'var(--primary-color-light-7)',
+    success: 'var(--success-color-light)',
+    warning: 'var(--warning-color-light)',
+    danger: 'var(--danger-color-light)',
+    info: 'var(--info-color-light)',
   }
   return colors[props.type] || colors.default
 }
@@ -314,38 +348,16 @@ onBeforeUnmount(() => {
   overflow: hidden;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: v-bind('sizeData.fontSize + "px"');
-  position: relative;
+  color: var(--button-text-color);
+  background-color: var(--button-bg-color);
+  border: 1px solid var(--button-border-color);
 
-  &:not(.bg-bg-color-secondary) {
-    color: #ffffff;
-    background-color: var(--el-color-primary);
-    border-color: var(--el-color-primary-light-3);
-
-    &:hover {
-      background-color: var(--el-color-primary-light-3);
-      border-color: var(--el-color-primary-light-5);
-    }
-
-    &:active {
-      background-color: var(--el-color-primary-light-5);
-      border-color: var(--el-color-primary-light-7);
-    }
+  &:hover:not(:disabled) {
+    background-color: var(--button-hover-color);
   }
 
-  &.bg-bg-color-secondary {
-    color: var(--el-text-color-primary);
-    background-color: var(--el-fill-color);
-    border-color: var(--el-border-color);
-
-    &:hover {
-      background-color: var(--el-fill-color-light);
-      border-color: var(--el-border-color-darker);
-    }
-
-    &:active {
-      background-color: var(--el-fill-color-dark);
-      border-color: var(--el-border-color-darker);
-    }
+  &:active:not(:disabled) {
+    filter: brightness(0.96);
   }
 
   &:not(:disabled) {
@@ -393,10 +405,12 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: linear-gradient(45deg,
-      transparent 25%,
-      rgba(255, 255, 255, 0.1) 50%,
-      transparent 75%);
+  background: linear-gradient(
+    45deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 75%
+  );
   background-size: 200% 200%;
   transition: all 0.3s ease;
   opacity: 0;

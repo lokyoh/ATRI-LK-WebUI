@@ -16,8 +16,12 @@
     <div class="log-panel">
       <div class="panel-toolbar">
         <div class="filter-group">
-          <button v-for="level in levels" :key="level" :class="['filter-btn', { active: activeLevel === level }]"
-            @click="activeLevel = level">
+          <button
+            v-for="level in levels"
+            :key="level"
+            :class="['filter-btn', { active: activeLevel === level }]"
+            @click="activeLevel = level"
+          >
             {{ level === 'all' ? '全部' : levelMap[level] }}
           </button>
         </div>
@@ -25,7 +29,12 @@
       </div>
 
       <div ref="consoleShell" class="console-shell">
-        <div v-for="log in filteredLogs" :key="log.id" class="console-line" :class="[`level-${log.level}`]">
+        <div
+          v-for="log in filteredLogs"
+          :key="log.id"
+          class="console-line"
+          :class="[`level-${log.level}`]"
+        >
           <pre class="console-message">{{ log.message }}</pre>
         </div>
         <div v-if="!filteredLogs.length" class="empty-state">暂无符合条件的日志</div>
@@ -35,17 +44,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { getBaseUrl } from '@/utils/api';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { getBaseUrl } from '@/utils/api'
 
-type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+type LogLevel = 'info' | 'warn' | 'error' | 'debug'
+
+const ansiColorPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g')
 
 interface LogEntry {
-  id: number;
-  time: string;
-  level: LogLevel;
-  source: string;
-  message: string;
+  id: number
+  time: string
+  level: LogLevel
+  source: string
+  message: string
 }
 
 const levelMap: Record<LogLevel | 'all', string> = {
@@ -54,29 +65,35 @@ const levelMap: Record<LogLevel | 'all', string> = {
   warn: 'WARN',
   error: 'ERROR',
   debug: 'DEBUG',
-};
+}
 
-const levels = ['all', 'info', 'warn', 'error', 'debug'] as const;
-const activeLevel = ref<(typeof levels)[number]>('all');
-const logData = ref<LogEntry[]>([]);
-const wsRef = ref<WebSocket | null>(null);
-const consoleShell = ref<HTMLElement | null>(null);
-let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+const levels = ['all', 'info', 'warn', 'error', 'debug'] as const
+const activeLevel = ref<(typeof levels)[number]>('all')
+const logData = ref<LogEntry[]>([])
+const wsRef = ref<WebSocket | null>(null)
+const consoleShell = ref<HTMLElement | null>(null)
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
 const scrollToBottom = () => {
   nextTick(() => {
-    if (!consoleShell.value) return;
-    consoleShell.value.scrollTop = consoleShell.value.scrollHeight;
-  });
-};
+    if (!consoleShell.value) return
+    consoleShell.value.scrollTop = consoleShell.value.scrollHeight
+  })
+}
 
 const parseBackendLog = (raw: string): LogEntry | null => {
-  const cleaned = raw.replace(/\u001b\[[0-9;]*m/g, '').replace(/\r/g, '').trim();
-  if (!cleaned) return null;
+  const cleaned = raw.replace(ansiColorPattern, '').replace(/\r/g, '').trim()
+  if (!cleaned) return null
 
-  const level = /\b(ERROR|WARN|WARNING|DEBUG|INFO|TRACE)\b/i.test(cleaned) ?
-    (/\bERROR\b/i.test(cleaned) ? 'error' : /\b(WARN|WARNING)\b/i.test(cleaned) ? 'warn' : /\bDEBUG\b/i.test(cleaned) ? 'debug' : 'info') :
-    'info';
+  const level = /\b(ERROR|WARN|WARNING|DEBUG|INFO|TRACE)\b/i.test(cleaned)
+    ? /\bERROR\b/i.test(cleaned)
+      ? 'error'
+      : /\b(WARN|WARNING)\b/i.test(cleaned)
+        ? 'warn'
+        : /\bDEBUG\b/i.test(cleaned)
+          ? 'debug'
+          : 'info'
+    : 'info'
 
   return {
     id: Date.now() + Math.random(),
@@ -84,80 +101,80 @@ const parseBackendLog = (raw: string): LogEntry | null => {
     level,
     source: 'backend',
     message: cleaned,
-  };
-};
+  }
+}
 
 const appendLogEntry = (raw: string) => {
-  const parsed = parseBackendLog(raw);
-  if (!parsed) return;
+  const parsed = parseBackendLog(raw)
+  if (!parsed) return
 
-  logData.value = [...logData.value, parsed].slice(-500);
-  scrollToBottom();
-};
+  logData.value = [...logData.value, parsed].slice(-500)
+  scrollToBottom()
+}
 
 const closeSocket = () => {
   if (reconnectTimer) {
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
+    clearTimeout(reconnectTimer)
+    reconnectTimer = null
   }
   if (wsRef.value) {
-    wsRef.value.close();
-    wsRef.value = null;
+    wsRef.value.close()
+    wsRef.value = null
   }
-};
+}
 
 const connectSocket = () => {
-  closeSocket();
+  closeSocket()
 
-  const baseUrl = new URL(getBaseUrl());
-  const socketUrl = `${baseUrl.protocol === 'https:' ? 'wss:' : 'ws:'}//${baseUrl.host}/atri/socket/logs`;
-  const socket = new WebSocket(socketUrl);
-  wsRef.value = socket;
+  const baseUrl = new URL(getBaseUrl())
+  const socketUrl = `${baseUrl.protocol === 'https:' ? 'wss:' : 'ws:'}//${baseUrl.host}/atri/socket/logs`
+  const socket = new WebSocket(socketUrl)
+  wsRef.value = socket
 
   socket.onopen = () => {
-    console.log('Log WebSocket connected');
-  };
+    console.log('Log WebSocket connected')
+  }
 
   socket.onmessage = (event) => {
-    const payload = typeof event.data === 'string' ? event.data : String(event.data);
-    appendLogEntry(payload);
-  };
+    const payload = typeof event.data === 'string' ? event.data : String(event.data)
+    appendLogEntry(payload)
+  }
 
   socket.onerror = () => {
-    console.warn('Log WebSocket error');
-  };
+    console.warn('Log WebSocket error')
+  }
 
   socket.onclose = () => {
     if (wsRef.value) {
       reconnectTimer = setTimeout(() => {
-        connectSocket();
-      }, 5000);
+        connectSocket()
+      }, 5000)
     }
-  };
-};
+  }
+}
 
 const filteredLogs = computed(() => {
   if (activeLevel.value === 'all') {
-    return logData.value;
+    return logData.value
   }
-  return logData.value.filter((log) => log.level === activeLevel.value);
-});
+  return logData.value.filter((log) => log.level === activeLevel.value)
+})
 
 const stats = computed(() => [
   { label: '总日志', value: logData.value.length },
   { label: 'INFO', value: logData.value.filter((log) => log.level === 'info').length },
   { label: 'WARN', value: logData.value.filter((log) => log.level === 'warn').length },
   { label: 'ERROR', value: logData.value.filter((log) => log.level === 'error').length },
-]);
+])
 
 onMounted(() => {
-  connectSocket();
-  scrollToBottom();
-});
+  connectSocket()
+  scrollToBottom()
+})
 
 onBeforeUnmount(() => {
-  closeSocket();
-});
+  closeSocket()
+})
 </script>
 
 <style scoped>
@@ -277,7 +294,7 @@ onBeforeUnmount(() => {
   overflow: auto;
   background: #0f172a;
   color: #dbeafe;
-  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
   font-size: 13px;
   line-height: 1.7;
 }
@@ -310,7 +327,7 @@ onBeforeUnmount(() => {
   white-space: pre-wrap;
   word-break: break-word;
   color: #e2e8f0;
-  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
   font-size: 13px;
   line-height: 1.7;
 }

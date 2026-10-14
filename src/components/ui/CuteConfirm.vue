@@ -3,17 +3,17 @@
     <div class="cute-dialog">
       <div class="cute-dialog-header">
         <span class="cute-dialog-title">
-          <svg-icon :name="type === 'warning'
-              ? 'warning'
-              : type === 'error'
-                ? 'error'
-                : 'info'
-            " class="title-icon" :color="type === 'warning'
+          <svg-icon
+            :name="type === 'warning' ? 'warning' : type === 'error' ? 'error' : 'info'"
+            class="title-icon"
+            :color="
+              type === 'warning'
                 ? 'var(--el-color-warning)'
                 : type === 'error'
                   ? 'var(--el-color-danger)'
                   : 'var(--el-color-primary)'
-              " />
+            "
+          />
           {{ title }}
         </span>
       </div>
@@ -21,20 +21,36 @@
         <pre class="cute-dialog-message">{{ message }}</pre>
       </div>
       <div class="cute-dialog-footer">
-        <cute-button v-if="showCancelButton" type="secondary" :plain="false" :solid="true" @click="handleCancel"
-          class="w-full md:w-auto cancel-button" :style="{
+        <cute-button
+          v-if="showCancelButton"
+          type="secondary"
+          :plain="false"
+          :solid="true"
+          @click="handleCancel"
+          class="w-full md:w-auto cancel-button"
+          :style="{
             backgroundColor: 'var(--el-fill-color-light)',
             color: 'var(--el-text-color-regular)',
             borderColor: 'var(--el-border-color)',
-          }" icon="close" :iconColor="'var(--el-text-color-regular)'" size="sm" :fontSize="12" :iconSize="14">
+          }"
+          icon="close"
+          :iconColor="'var(--el-text-color-regular)'"
+          size="sm"
+          :fontSize="12"
+          :iconSize="14"
+        >
           {{ cancelButtonText }}
         </cute-button>
-        <cute-button type="primary" @click="handleConfirm" class="w-full md:w-auto confirm-button" :icon="type === 'warning'
-            ? 'warning'
-            : type === 'error'
-              ? 'error'
-              : 'confirm'
-          " :iconColor="'#ffffff'" size="sm" :fontSize="12" :iconSize="14">
+        <cute-button
+          type="primary"
+          @click="handleConfirm"
+          class="w-full md:w-auto confirm-button"
+          :icon="type === 'warning' ? 'warning' : type === 'error' ? 'error' : 'confirm'"
+          :iconColor="'#ffffff'"
+          size="sm"
+          :fontSize="12"
+          :iconSize="14"
+        >
           {{ confirmButtonText }}
         </cute-button>
       </div>
@@ -43,8 +59,8 @@
 </template>
 
 <script setup lang="ts">
-import CuteButton from "./CuteButton.vue"
-import SvgIcon from "../SvgIcon/SvgIcon.vue"
+import CuteButton from './CuteButton.vue'
+import SvgIcon from '../SvgIcon/SvgIcon.vue'
 
 interface Props {
   title?: string
@@ -54,26 +70,26 @@ interface Props {
   visible?: boolean
   showCancelButton?: boolean
   closeOnClickOverlay?: boolean
-  type?: "info" | "warning" | "error"
+  type?: 'info' | 'warning' | 'error'
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  cancelButtonText: "取消",
-  confirmButtonText: "确定",
+  cancelButtonText: '取消',
+  confirmButtonText: '确定',
   showCancelButton: true,
   closeOnClickOverlay: false,
-  type: "info",
+  type: 'info',
 })
 
-const emit = defineEmits(["confirm", "cancel"])
+const emit = defineEmits(['confirm', 'cancel'])
 
 const handleConfirm = () => {
-  emit("confirm")
-  emit("cancel")
+  emit('confirm')
+  emit('cancel')
 }
 
 const handleCancel = () => {
-  emit("cancel")
+  emit('cancel')
 }
 
 const handleOverlayClick = () => {
@@ -112,16 +128,18 @@ const handleOverlayClick = () => {
 }
 
 .cute-dialog::before {
-  content: "";
+  content: '';
   position: absolute;
   top: -10px;
   left: -10px;
   right: -10px;
   bottom: -10px;
-  background: linear-gradient(45deg,
-      var(--el-color-primary-light-9),
-      var(--el-bg-color),
-      var(--el-color-primary-light-9));
+  background: linear-gradient(
+    45deg,
+    var(--el-color-primary-light-9),
+    var(--el-bg-color),
+    var(--el-color-primary-light-9)
+  );
   z-index: -1;
   border-radius: 20px;
   opacity: 0.8;
@@ -137,7 +155,7 @@ const handleOverlayClick = () => {
 }
 
 .cute-dialog-header::after {
-  content: "✧･ﾟ: *✧･ﾟ:*";
+  content: '✧･ﾟ: *✧･ﾟ:*';
   position: absolute;
   bottom: -10px;
   left: 0;
@@ -165,7 +183,7 @@ const handleOverlayClick = () => {
 
 .cute-dialog-title::before,
 .cute-dialog-title::after {
-  content: "♥";
+  content: '♥';
   color: var(--el-color-primary);
   font-size: 16px;
   animation: heartBeat 1.3s ease-in-out infinite;
@@ -190,7 +208,7 @@ const handleOverlayClick = () => {
   white-space: pre-wrap;
   font-size: 15px;
   line-height: 1.6;
-  font-family: "Comic Sans MS", "Marker Felt", "Segoe Print", cursive;
+  font-family: 'Comic Sans MS', 'Marker Felt', 'Segoe Print', cursive;
 }
 
 .cute-dialog-footer {
@@ -270,17 +288,19 @@ const handleOverlayClick = () => {
 }
 
 // 暗色主题适配
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   .cute-dialog {
     background-color: var(--el-bg-color-overlay);
     border-color: var(--el-border-color-darker);
   }
 
   .cute-dialog::before {
-    background: linear-gradient(45deg,
-        var(--el-color-primary-light-8),
-        var(--el-bg-color-overlay),
-        var(--el-color-primary-light-8));
+    background: linear-gradient(
+      45deg,
+      var(--el-color-primary-light-8),
+      var(--el-bg-color-overlay),
+      var(--el-color-primary-light-8)
+    );
     opacity: 0.15;
   }
 

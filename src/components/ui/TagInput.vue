@@ -8,13 +8,27 @@
       </div>
 
       <!-- 输入框 -->
-      <input ref="inputRef" v-model="inputValue" type="text" class="tag-input__field"
-        :placeholder="tags.length === 0 ? placeholder : ''" @keydown.delete="handleDelete"
-        @keydown.enter.prevent="addTag" @focus="handleFocus" @blur="handleBlur" />
+      <input
+        ref="inputRef"
+        v-model="inputValue"
+        type="text"
+        class="tag-input__field"
+        :placeholder="tags.length === 0 ? placeholder : ''"
+        @keydown.delete="handleDelete"
+        @keydown.enter.prevent="addTag"
+        @focus="handleFocus"
+        @blur="handleBlur"
+      />
     </div>
 
     <!-- 添加按钮 -->
-    <button v-if="inputValue.trim()" type="button" class="tag-input__add-btn" @click="addTag" tabindex="-1">
+    <button
+      v-if="inputValue.trim()"
+      type="button"
+      class="tag-input__add-btn"
+      @click="addTag"
+      tabindex="-1"
+    >
       <i class="el-icon-plus"></i>
     </button>
   </div>
@@ -44,9 +58,13 @@ const inputValue = ref('')
 const isFocus = ref(false)
 const inputRef = ref<HTMLInputElement>()
 
-watch(() => props.modelValue, (newVal) => {
-  tags.value = [...newVal]
-}, { deep: true })
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    tags.value = [...newVal]
+  },
+  { deep: true },
+)
 
 function addTag() {
   const value = inputValue.value.trim()

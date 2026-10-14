@@ -1,22 +1,32 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center p-2 sm:p-3 md:p-4 relative overflow-hidden"
-    :style="{ background: 'var(--bg-color)' }">
+  <div
+    class="min-h-screen flex items-center justify-center p-2 sm:p-3 md:p-4 relative overflow-hidden"
+    :style="{ background: 'var(--bg-color)' }"
+  >
     <!-- 二次元云朵背景 -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden">
-      <div class="absolute top-10 left-10 w-32 h-16 rounded-full opacity-20"
-        :style="{ backgroundColor: 'var(--bg-color-secondary)' }"></div>
-      <div class="absolute top-20 right-20 w-40 h-20 rounded-full opacity-20"
-        :style="{ backgroundColor: 'var(--bg-color-secondary)' }"></div>
-      <div class="absolute bottom-10 left-1/4 w-48 h-24 rounded-full opacity-20"
-        :style="{ backgroundColor: 'var(--bg-color-secondary)' }"></div>
+      <div
+        class="absolute top-10 left-10 w-32 h-16 rounded-full opacity-20"
+        :style="{ backgroundColor: 'var(--bg-color-secondary)' }"
+      ></div>
+      <div
+        class="absolute top-20 right-20 w-40 h-20 rounded-full opacity-20"
+        :style="{ backgroundColor: 'var(--bg-color-secondary)' }"
+      ></div>
+      <div
+        class="absolute bottom-10 left-1/4 w-48 h-24 rounded-full opacity-20"
+        :style="{ backgroundColor: 'var(--bg-color-secondary)' }"
+      ></div>
     </div>
 
     <!-- 二次元装饰元素 -->
     <div class="absolute bottom-0 left-0 w-32 h-32 opacity-20">
       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <path :fill="'var(--el-fill-color-lighter)'"
+        <path
+          :fill="'var(--el-fill-color-lighter)'"
           d="M42.4,-59.4C53.2,-50.2,59.4,-35.2,63.2,-19.5C67,-3.8,68.4,12.6,62.1,25.3C55.8,38,41.8,47,26.1,58.1C10.4,69.2,-7,82.4,-21.9,79.8C-36.8,77.2,-49.2,58.8,-58.4,40.1C-67.6,21.4,-73.6,2.5,-70.3,-14.9C-67,-32.3,-54.4,-48.2,-39.6,-56.7C-24.9,-65.2,-7.9,-66.3,7.6,-74.9C23.1,-83.5,46.2,-99.6,42.4,-59.4Z"
-          transform="translate(100 100)" />
+          transform="translate(100 100)"
+        />
       </svg>
     </div>
 
@@ -26,69 +36,119 @@
       :style="{
         backgroundColor: 'var(--bg-color-secondary)',
         border: '2px solid var(--el-border-color)',
-      }">
+      }"
+    >
       <!-- 顶部装饰条 -->
-      <div class="h-2" :style="{
-        background:
-          'linear-gradient(to right, var(--el-color-primary), var(--el-color-primary-light-3))',
-      }"></div>
+      <div
+        class="h-2"
+        :style="{
+          background:
+            'linear-gradient(to right, var(--el-color-primary), var(--el-color-primary-light-3))',
+        }"
+      ></div>
 
       <!-- 二次元角色装饰 -->
       <div class="absolute -top-16 -right-16 w-32 h-32 opacity-70">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <path :fill="'var(--el-color-primary-light-3)'"
+          <path
+            :fill="'var(--el-color-primary-light-3)'"
             d="M44.9,-65.2C56.6,-58.3,63.8,-43.9,68.2,-29.5C72.6,-15.1,74.3,-0.7,69.4,10.3C64.5,21.3,53.1,29.9,41.2,40.7C29.3,51.5,16.6,64.5,1.1,63.2C-14.4,61.9,-30.6,46.3,-42.1,31.9C-53.6,17.5,-60.3,4.3,-61.3,-11.1C-62.3,-26.5,-57.6,-44.1,-45.3,-50.9C-33,-57.7,-13.2,-53.7,4.6,-58.8C22.3,-63.9,44.6,-78.1,44.9,-65.2Z"
-            transform="translate(100 100)" />
+            transform="translate(100 100)"
+          />
         </svg>
       </div>
 
       <div class="p-4 sm:p-5">
         <div class="relative mb-6">
-          <h1 class="text-xl sm:text-2xl font-bold text-center tracking-wide" :style="{
-            color: 'var(--el-color-primary)',
-            textShadow: '2px 2px 4px var(--el-color-primary-light-9)',
-          }">
+          <h1
+            class="text-xl sm:text-2xl font-bold text-center tracking-wide"
+            :style="{
+              color: 'var(--el-color-primary)',
+              textShadow: '2px 2px 4px var(--el-color-primary-light-9)',
+            }"
+          >
             API 地址设置
           </h1>
-          <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
-            :style="{ backgroundColor: 'var(--el-color-primary-light-3)' }"></div>
-          <div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-1 rounded-full"
-            :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"></div>
+          <div
+            class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
+            :style="{ backgroundColor: 'var(--el-color-primary-light-3)' }"
+          ></div>
+          <div
+            class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-1 rounded-full"
+            :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"
+          ></div>
         </div>
 
         <div class="space-y-6">
           <div class="flex items-center justify-between gap-3">
             <div
               class="text-base sm:text-lg font-semibold transition-all duration-500 ease-in-out relative inline-block"
-              :class="{ 'translate-x-2': rightShow }" :style="{ color: 'var(--el-color-primary)' }">
+              :class="{ 'translate-x-2': rightShow }"
+              :style="{ color: 'var(--el-color-primary)' }"
+            >
               <span class="relative z-10">服务器地址</span>
-              <span class="absolute -bottom-1 left-0 w-full h-1 rounded-full z-0"
-                :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"></span>
+              <span
+                class="absolute -bottom-1 left-0 w-full h-1 rounded-full z-0"
+                :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"
+              ></span>
             </div>
-            <div class="flex items-center gap-2 rounded-full px-3 py-1 text-sm shadow-sm"
-              :style="{ backgroundColor: 'var(--el-fill-color-light)', color: 'var(--el-text-color-secondary)' }">
-              <span class="w-2 h-2 rounded-full"
-                :class="testing === 1 ? 'bg-emerald-500' : testing === 0 ? 'bg-rose-500' : 'bg-sky-400'"></span>
-              <span>{{ testing === 1 ? '连接正常' : testing === 0 ? '连接异常' : testing === 2 ? '检测中' : '未检测' }}</span>
+            <div
+              class="flex items-center gap-2 rounded-full px-3 py-1 text-sm shadow-sm"
+              :style="{
+                backgroundColor: 'var(--el-fill-color-light)',
+                color: 'var(--el-text-color-secondary)',
+              }"
+            >
+              <span
+                class="w-2 h-2 rounded-full"
+                :class="
+                  testing === 1 ? 'bg-emerald-500' : testing === 0 ? 'bg-rose-500' : 'bg-sky-400'
+                "
+              ></span>
+              <span>{{
+                testing === 1
+                  ? '连接正常'
+                  : testing === 0
+                    ? '连接异常'
+                    : testing === 2
+                      ? '检测中'
+                      : '未检测'
+              }}</span>
             </div>
           </div>
 
           <div class="relative">
-            <div class="relative flex items-center rounded-2xl border-2 px-2 py-2 shadow-sm transition-all duration-300"
+            <div
+              class="relative flex items-center rounded-2xl border-2 px-2 py-2 shadow-sm transition-all duration-300"
               :style="{
                 backgroundColor: 'var(--bg-color-secondary)',
                 borderColor: 'var(--el-border-color)',
-              }">
-              <span class="ml-3 mr-2 text-sm font-medium whitespace-nowrap"
-                :style="{ color: 'var(--el-color-primary)' }">地址</span>
-              <input v-model.trim="apiUrl" @focus="inpOnfocus" @blur="inpOnBlur" type="text"
-                placeholder="请输入服务器地址，如 http://127.0.0.1:20000" spellcheck="false"
+              }"
+            >
+              <span
+                class="ml-3 mr-2 text-sm font-medium whitespace-nowrap"
+                :style="{ color: 'var(--el-color-primary)' }"
+                >地址</span
+              >
+              <input
+                v-model.trim="apiUrl"
+                @focus="inpOnfocus"
+                @blur="inpOnBlur"
+                type="text"
+                placeholder="请输入服务器地址，如 http://127.0.0.1:20000"
+                spellcheck="false"
                 class="w-full border-0 bg-transparent px-2 py-2.5 text-sm sm:text-base outline-none transition-all duration-300"
                 :style="{
                   color: 'var(--el-text-color-primary)',
-                }" />
-              <div class="mr-2 flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                :style="{ backgroundColor: 'var(--el-fill-color-light)', color: 'var(--el-color-primary)' }">
+                }"
+              />
+              <div
+                class="mr-2 flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                :style="{
+                  backgroundColor: 'var(--el-fill-color-light)',
+                  color: 'var(--el-color-primary)',
+                }"
+              >
                 <span v-if="testing === 1" class="mr-1">
                   <el-icon class="text-sm">
                     <CircleCheck />
@@ -107,22 +167,38 @@
                 <span>连接</span>
               </div>
             </div>
-            <div class="absolute -bottom-2 -right-2 w-4 h-4 rounded-full"
-              :style="{ backgroundColor: 'var(--el-color-primary)' }"></div>
+            <div
+              class="absolute -bottom-2 -right-2 w-4 h-4 rounded-full"
+              :style="{ backgroundColor: 'var(--el-color-primary)' }"
+            ></div>
           </div>
 
-          <div class="rounded-xl p-3 border shadow-inner relative overflow-hidden" :style="{
-            backgroundColor: 'var(--el-fill-color-light)',
-            borderColor: 'var(--el-border-color)',
-          }">
-            <div class="absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-30"
-              :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"></div>
-            <h3 class="font-semibold mb-2 flex items-center text-base sm:text-lg"
-              :style="{ color: 'var(--el-color-primary)' }">
-              <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
+          <div
+            class="rounded-xl p-3 border shadow-inner relative overflow-hidden"
+            :style="{
+              backgroundColor: 'var(--el-fill-color-light)',
+              borderColor: 'var(--el-border-color)',
+            }"
+          >
+            <div
+              class="absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-30"
+              :style="{ backgroundColor: 'var(--el-color-primary-light-9)' }"
+            ></div>
+            <h3
+              class="font-semibold mb-2 flex items-center text-base sm:text-lg"
+              :style="{ color: 'var(--el-color-primary)' }"
+            >
+              <svg
+                class="w-5 h-5 mr-2"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill-rule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
-                  clip-rule="evenodd"></path>
+                  clip-rule="evenodd"
+                ></path>
               </svg>
               注意事项：
             </h3>
@@ -134,8 +210,11 @@
               <li class="flex items-start">
                 <span class="mr-2 font-bold" :style="{ color: 'var(--el-color-primary)' }">②</span>
                 <span>
-                  如果生产环境部署的资源和本体<ins class="no-underline font-bold"
-                    :style="{ color: 'var(--el-color-primary)' }">不在</ins>
+                  如果生产环境部署的资源和本体<ins
+                    class="no-underline font-bold"
+                    :style="{ color: 'var(--el-color-primary)' }"
+                    >不在</ins
+                  >
                   同一个机器上，则输入你的服务器接口地址以及ATRI的端口。最后记得修改防火墙设置哦
                 </span>
               </li>
@@ -143,11 +222,21 @@
           </div>
 
           <div class="flex flex-col sm:flex-row gap-3 pt-1">
-            <el-button type="default" icon="back2" @click="goBack" class="flex-1 h-10 text-sm sm:text-base">
+            <el-button
+              type="default"
+              icon="back2"
+              @click="goBack"
+              class="flex-1 h-10 text-sm sm:text-base"
+            >
               返回
             </el-button>
-            <el-button type="primary" icon="edit" @click="changeUrl" class="flex-1 h-10 text-sm sm:text-base"
-              ref="myapi">
+            <el-button
+              type="primary"
+              icon="edit"
+              @click="changeUrl"
+              class="flex-1 h-10 text-sm sm:text-base"
+              ref="myapi"
+            >
               修改
             </el-button>
           </div>
@@ -158,50 +247,50 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, inject } from "vue";
-import { useRouter } from "vue-router";
-import { getBaseApiUrl, setBaseApiUrl } from "@/utils/api";
-import { message } from "@/utils/message";
-import { useRouteStore } from "@/stores/route";
-import { getRequest } from "@/utils/api";
-import { Loading, CircleCheck, CircleClose } from "@element-plus/icons-vue"
+import { ref, inject } from 'vue'
+import { useRouter } from 'vue-router'
+import { getBaseApiUrl, setBaseApiUrl } from '@/utils/api'
+import { message } from '@/utils/message'
+import { useRouteStore } from '@/stores/route'
+import { getRequest } from '@/utils/api'
+import { Loading, CircleCheck, CircleClose } from '@element-plus/icons-vue'
 
-const router = useRouter();
-const routeStore = useRouteStore();
-const apiUrl = ref(getBaseApiUrl());
-const prefix = inject<string>('prefix', "");
-const rightShow = ref(false);
-const fromPageName = ref(routeStore.fromName);
-const fromPage = ref(routeStore.fromPath);
-const clickEffect = ref(false);
-const testing = ref<number>(3); // 0:失败 1:成功 2:测试中 3:未测试
-const lastTestTime = ref(0);
+const router = useRouter()
+const routeStore = useRouteStore()
+const apiUrl = ref(getBaseApiUrl())
+const prefix = inject<string>('prefix', '')
+const rightShow = ref(false)
+const fromPageName = ref(routeStore.fromName)
+const fromPage = ref(routeStore.fromPath)
+const clickEffect = ref(false)
+const testing = ref<number>(3) // 0:失败 1:成功 2:测试中 3:未测试
+const lastTestTime = ref(0)
 
 function normalizeApiUrl(input: string): string {
-  const trimmedValue = (input || "").trim();
+  const trimmedValue = (input || '').trim()
 
   if (!trimmedValue) {
-    return "http://localhost";
+    return 'http://localhost'
   }
 
-  const withoutTrailingSlash = trimmedValue.replace(/[\\/]+$/, "");
+  const withoutTrailingSlash = trimmedValue.replace(/[\\/]+$/, '')
   const withProtocol = /^https?:\/\//i.test(withoutTrailingSlash)
     ? withoutTrailingSlash
-    : `http://${withoutTrailingSlash}`;
+    : `http://${withoutTrailingSlash}`
 
   try {
-    const parsedUrl = new URL(withProtocol);
-    return `${parsedUrl.protocol}//${parsedUrl.host}`;
+    const parsedUrl = new URL(withProtocol)
+    return `${parsedUrl.protocol}//${parsedUrl.host}`
   } catch {
-    return withProtocol;
+    return withProtocol
   }
 }
 
 function goBack() {
   if (fromPageName.value) {
-    router.replace(fromPage.value);
+    router.replace(fromPage.value)
   } else {
-    router.replace("/");
+    router.replace('/')
   }
 }
 
@@ -211,11 +300,11 @@ function changeUrl() {
     const normalizedUrl = normalizeApiUrl(apiUrl.value)
     apiUrl.value = normalizedUrl
     setBaseApiUrl(normalizedUrl)
-    message.success("修改地址成功！")
-    if (fromPageName.value == "Configure") {
+    message.success('修改地址成功！')
+    if (fromPageName.value == 'Configure') {
       goBack()
     } else {
-      router.replace("/")
+      router.replace('/')
     }
   }, 600)
 }
@@ -249,15 +338,15 @@ async function testConnection() {
     const testUrl = `${normalizeApiUrl(apiUrl.value)}${prefix}/ping`
     const resp = await getRequest(testUrl)
     if (resp.data.suc) {
-      message.success("连接成功！")
+      message.success('连接成功！')
       testing.value = 1
     } else {
-      message.error("连接失败：服务器响应异常")
+      message.error('连接失败：服务器响应异常')
       testing.value = 0
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    message.error(`连接失败：${error.message || "未知错误"}`)
+    message.error(`连接失败：${error.message || '未知错误'}`)
     testing.value = 0
   }
 }
@@ -265,10 +354,10 @@ async function testConnection() {
 
 <style>
 /* 添加自定义字体 */
-@import url("https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
 
 .font-comic {
-  font-family: "Comic Neue", cursive;
+  font-family: 'Comic Neue', cursive;
 }
 
 /* 按钮点击动画 */

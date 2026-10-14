@@ -63,7 +63,7 @@ axios.interceptors.response.use(
         if (status === 504 || status === 404) {
           message.error("服务器被吃了┭┮﹏┭┮");
         } else if (status === 405) {
-          message.error("真寻的api地址不正确捏");
+          message.error("服务器配置不正确捏");
         } else if (status === 400) {
           if (data.detail) {
             message.error(String(data.detail));

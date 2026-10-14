@@ -18,6 +18,7 @@ import {
   TooltipComponent,
   TitleComponent,
   LegendComponent,
+  ToolboxComponent,
 } from "echarts/components"; // 导入需要的组件
 
 const pinia = createPinia();
@@ -31,6 +32,7 @@ use([
   TooltipComponent,
   TitleComponent,
   LegendComponent,
+  ToolboxComponent,
 ]);
 
 const app = createApp(App);

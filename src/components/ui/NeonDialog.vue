@@ -1,20 +1,38 @@
 <template>
   <transition name="fm-dialog-fade">
-    <div v-show="visible" class="fixed inset-0 z-50 flex items-center justify-center p-4"
-      @click="closeOnClickModal ? handleClose() : null">
+    <div
+      v-show="visible"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      @click="closeOnClickModal ? handleClose() : null"
+    >
       <!-- 背景遮罩 -->
-      <div class="absolute inset-0 bg-black/50" @click="closeOnClickModal ? handleClose() : null"></div>
+      <div
+        class="absolute inset-0 bg-black/50"
+        @click="closeOnClickModal ? handleClose() : null"
+      ></div>
 
       <!-- 对话框卡片 -->
-      <div class="relative rounded-xl shadow-lg w-full max-w-md overflow-hidden border-2 animate-pop-in"
-        :class="dialogBorderClass" :style="{
+      <div
+        class="relative rounded-xl shadow-lg w-full max-w-md overflow-hidden border-2 animate-pop-in"
+        :class="dialogBorderClass"
+        :style="{
           backgroundColor: 'var(--bg-color-secondary)',
           borderColor: 'var(--border-color)',
-        }" @click.stop>
+        }"
+        @click.stop
+      >
         <!-- 头部 -->
-        <div class="flex items-center px-5 py-4 border-b" :class="headerBorderClass"
-          :style="{ borderColor: 'var(--border-color-light)' }">
-          <SvgIcon :name="iconClass" v-if="iconClass" class="text-xl mr-3" :style="{ color: 'var(--primary-color)' }" />
+        <div
+          class="flex items-center px-5 py-4 border-b"
+          :class="headerBorderClass"
+          :style="{ borderColor: 'var(--border-color-light)' }"
+        >
+          <SvgIcon
+            :name="iconClass"
+            v-if="iconClass"
+            class="text-xl mr-3"
+            :style="{ color: 'var(--primary-color)' }"
+          />
           <h3 class="text-lg font-bold" :style="{ color: 'var(--text-color)' }">
             {{ title }}
           </h3>
@@ -26,9 +44,22 @@
         </div>
 
         <!-- 操作按钮 -->
-        <div class="flex justify-end space-x-3 px-5 py-4" :style="{ backgroundColor: 'var(--bg-color-hover)' }">
-          <NormalButton v-if="showCancel" @click="handleCancel" class="fm-cancel-btn" :text="cancelText" />
-          <NormalButton @click="handleConfirm" class="fm-confirm-btn" :class="confirmBtnClass" :text="confirmText" />
+        <div
+          class="flex justify-end space-x-3 px-5 py-4"
+          :style="{ backgroundColor: 'var(--bg-color-hover)' }"
+        >
+          <NormalButton
+            v-if="showCancel"
+            @click="handleCancel"
+            class="fm-cancel-btn"
+            :text="cancelText"
+          />
+          <NormalButton
+            @click="handleConfirm"
+            class="fm-confirm-btn"
+            :class="confirmBtnClass"
+            :text="confirmText"
+          />
         </div>
       </div>
     </div>
@@ -36,14 +67,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
-import NormalButton from "@/components/ui/NormalButton.vue"
-import SvgIcon from "../SvgIcon/SvgIcon.vue"
+import { computed } from 'vue'
+import NormalButton from '@/components/ui/NormalButton.vue'
+import SvgIcon from '../SvgIcon/SvgIcon.vue'
 
 interface Props {
   visible: boolean
   title?: string
-  type?: "primary" | "danger" | "warning" | "success"
+  type?: 'primary' | 'danger' | 'warning' | 'success'
   iconClass?: string
   cancelText?: string
   confirmText?: string
@@ -52,64 +83,64 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: "",
-  type: "primary",
-  iconClass: "",
-  cancelText: "取消",
-  confirmText: "确定",
+  title: '',
+  type: 'primary',
+  iconClass: '',
+  cancelText: '取消',
+  confirmText: '确定',
   showCancel: true,
   closeOnClickModal: false,
 })
 
 const emit = defineEmits<{
-  (e: "update:visible", value: boolean): void
-  (e: "close"): void
-  (e: "cancel"): void
-  (e: "confirm"): void
+  (e: 'update:visible', value: boolean): void
+  (e: 'close'): void
+  (e: 'cancel'): void
+  (e: 'confirm'): void
 }>()
 
 const dialogBorderClass = computed(() => {
   const map: Record<string, string> = {
-    primary: "border-primary-light",
-    danger: "border-danger-color",
-    warning: "border-warning-color",
-    success: "border-success-color",
+    primary: 'border-primary-light',
+    danger: 'border-danger-color',
+    warning: 'border-warning-color',
+    success: 'border-success-color',
   }
   return map[props.type] || map.primary
 })
 
 const headerBorderClass = computed(() => {
   const map: Record<string, string> = {
-    primary: "border-primary-light-9",
-    danger: "border-danger-color-light",
-    warning: "border-warning-color-light",
-    success: "border-success-color-light",
+    primary: 'border-primary-light-9',
+    danger: 'border-danger-color-light',
+    warning: 'border-warning-color-light',
+    success: 'border-success-color-light',
   }
   return map[props.type] || map.primary
 })
 
 const confirmBtnClass = computed(() => {
   const map: Record<string, string> = {
-    primary: "bg-primary-color hover:bg-primary-color-light",
-    danger: "bg-danger-color hover:bg-danger-color-light",
-    warning: "bg-warning-color hover:bg-warning-color-light",
-    success: "bg-success-color hover:bg-success-color-light",
+    primary: 'bg-primary-color hover:bg-primary-color-light',
+    danger: 'bg-danger-color hover:bg-danger-color-light',
+    warning: 'bg-warning-color hover:bg-warning-color-light',
+    success: 'bg-success-color hover:bg-success-color-light',
   }
   return map[props.type] || map.primary
 })
 
 function handleClose() {
-  emit("update:visible", false)
-  emit("close")
+  emit('update:visible', false)
+  emit('close')
 }
 
 function handleCancel() {
-  emit("cancel")
+  emit('cancel')
   handleClose()
 }
 
 function handleConfirm() {
-  emit("confirm")
+  emit('confirm')
 }
 </script>
 

@@ -1,6 +1,8 @@
 <template>
-  <div class="left-info-container p-4 h-full" ref="leftInfoContainer"
-    :style="{ backgroundColor: 'var(--el-fill-color-light)' }">
+  <div
+    class="left-info-container p-4 h-full"
+    ref="leftInfoContainer"
+  >
     <el-row ref="firstRow">
       <el-col :span="24">
         <div class="top-text flex items-center" :style="{ color: 'var(--el-color-primary)' }">
@@ -9,11 +11,18 @@
           </el-icon>
           在线bot（{{ botList.length }}）
         </div>
-        <div class="bot-list" :style="{
-          backgroundColor: 'var(--el-bg-color)',
-        }">
-          <div v-for="bot in botList" :key="bot.self_id" class="bot-item"
-            :style="{ backgroundColor: 'var(--el-bg-color)' }">
+        <div
+          class="bot-list"
+          :style="{
+            backgroundColor: 'var(--el-bg-color)',
+          }"
+        >
+          <div
+            v-for="bot in botList"
+            :key="bot.self_id"
+            class="bot-item"
+            :style="{ backgroundColor: 'var(--el-bg-color)' }"
+          >
             <div style="width: 100%">
               <div class="item-ava">
                 <el-image :src="bot.ava_url" class="ava-img" :preview-src-list="[bot.ava_url]">
@@ -25,41 +34,71 @@
                 </el-image>
                 <div class="item-info">
                   <div class="info-name">
-                    <span class="line-line" :style="{ backgroundColor: 'var(--el-color-primary)' }"></span>
-                    <span class="bot-name" :style="{ color: 'var(--el-text-color-primary)' }">{{ bot.nickname }}</span>
+                    <span
+                      class="line-line"
+                      :style="{ backgroundColor: 'var(--el-color-primary)' }"
+                    ></span>
+                    <span class="bot-name" :style="{ color: 'var(--el-text-color-primary)' }">{{
+                      bot.nickname
+                    }}</span>
                   </div>
                   <div class="info-id">
-                    <span class="line-line" :style="{
-                      backgroundColor: 'var(--el-color-primary-light-3)',
-                    }"></span>
-                    <span class="purple-text" :style="{ color: 'var(--el-color-primary-light-3)' }">ID: {{ bot.self_id
-                      }}</span>
+                    <span
+                      class="line-line"
+                      :style="{
+                        backgroundColor: 'var(--el-color-primary-light-3)',
+                      }"
+                    ></span>
+                    <span class="purple-text" :style="{ color: 'var(--el-color-primary-light-3)' }"
+                      >ID: {{ bot.self_id }}</span
+                    >
                   </div>
                 </div>
               </div>
-              <div class="info-gf rounded-lg p-3 shadow-sm mt-3" :style="{ backgroundColor: 'var(--el-bg-color)' }">
+              <div
+                class="info-gf rounded-lg p-3 shadow-sm mt-3"
+                :style="{ backgroundColor: 'var(--el-bg-color)' }"
+              >
                 <div class="flex space-x-3">
-                  <div class="gf-item flex-1 flex items-center justify-between rounded-md p-2"
-                    :style="{ backgroundColor: 'var(--el-fill-color-lighter)' }">
+                  <div
+                    class="gf-item flex-1 flex items-center justify-between rounded-md p-2"
+                    :style="{ backgroundColor: 'var(--el-fill-color-lighter)' }"
+                  >
                     <div class="flex items-center">
                       <el-icon class="blue-icon mr-2" color="var(--el-color-primary)">
                         <User />
                       </el-icon>
-                      <span class="text-gray-600" :style="{ color: 'var(--el-text-color-regular)' }">好友</span>
+                      <span class="text-gray-600" :style="{ color: 'var(--el-text-color-regular)' }"
+                        >好友</span
+                      >
                     </div>
-                    <span class="gf-value font-semibold" :style="{ color: 'var(--el-color-primary)' }">{{
-                      bot.friend_count }}</span>
+                    <span
+                      class="gf-value font-semibold"
+                      :style="{ color: 'var(--el-color-primary)' }"
+                      >{{ bot.friend_count }}</span
+                    >
                   </div>
-                  <div class="gf-item flex-1 flex items-center justify-between rounded-md p-2"
-                    :style="{ backgroundColor: 'var(--el-fill-color-lighter)' }">
+                  <div
+                    class="gf-item flex-1 flex items-center justify-between rounded-md p-2"
+                    :style="{ backgroundColor: 'var(--el-fill-color-lighter)' }"
+                  >
                     <div class="flex items-center">
-                      <el-icon icon-class="group" class="green-icon mr-2" color="var(--el-color-success)">
+                      <el-icon
+                        icon-class="group"
+                        class="green-icon mr-2"
+                        color="var(--el-color-success)"
+                      >
                         <ChatDotRound />
                       </el-icon>
-                      <span class="text-gray-600" :style="{ color: 'var(--el-text-color-regular)' }">群组</span>
+                      <span class="text-gray-600" :style="{ color: 'var(--el-text-color-regular)' }"
+                        >群组</span
+                      >
                     </div>
-                    <span class="gf-value font-semibold" :style="{ color: 'var(--el-color-success)' }">{{
-                      bot.group_count }}</span>
+                    <span
+                      class="gf-value font-semibold"
+                      :style="{ color: 'var(--el-color-success)' }"
+                      >{{ bot.group_count }}</span
+                    >
                   </div>
                 </div>
               </div>
@@ -72,9 +111,14 @@
                     <Phone />
                   </el-icon>
                   <div class="message-content">
-                    <span class="message-title" :style="{ color: 'var(--el-text-color-secondary)' }">今日调用</span>
-                    <span class="message-value" :style="{ color: 'var(--el-text-color-primary)' }">{{ bot.day_call
-                      }}</span>
+                    <span class="message-title" :style="{ color: 'var(--el-text-color-secondary)' }"
+                      >今日调用</span
+                    >
+                    <span
+                      class="message-value"
+                      :style="{ color: 'var(--el-text-color-primary)' }"
+                      >{{ bot.day_call }}</span
+                    >
                   </div>
                 </div>
                 <div class="message" :style="{ backgroundColor: 'var(--el-fill-color-lighter)' }">
@@ -82,10 +126,14 @@
                     <Message />
                   </el-icon>
                   <div class="message-content">
-                    <span class="message-title" :style="{ color: 'var(--el-text-color-secondary)' }">今日消息</span>
-                    <span class="message-value" :style="{ color: 'var(--el-text-color-primary)' }">{{
-                      bot.received_messages
-                      }}</span>
+                    <span class="message-title" :style="{ color: 'var(--el-text-color-secondary)' }"
+                      >今日消息</span
+                    >
+                    <span
+                      class="message-value"
+                      :style="{ color: 'var(--el-text-color-primary)' }"
+                      >{{ bot.received_messages }}</span
+                    >
                   </div>
                 </div>
               </div>
@@ -95,9 +143,14 @@
                     <Platform />
                   </el-icon>
                   <div class="message-content">
-                    <span class="message-title" :style="{ color: 'var(--el-text-color-secondary)' }">所属平台</span>
-                    <span class="message-value" :style="{ color: 'var(--el-text-color-primary)' }">{{ bot.platform
-                      }}</span>
+                    <span class="message-title" :style="{ color: 'var(--el-text-color-secondary)' }"
+                      >所属平台</span
+                    >
+                    <span
+                      class="message-value"
+                      :style="{ color: 'var(--el-text-color-primary)' }"
+                      >{{ bot.platform }}</span
+                    >
                   </div>
                 </div>
                 <div class="message" :style="{ backgroundColor: 'var(--el-fill-color-lighter)' }">
@@ -105,17 +158,27 @@
                     <Clock />
                   </el-icon>
                   <div class="message-content">
-                    <span class="message-title" :style="{ color: 'var(--el-text-color-secondary)' }">连接时长</span>
-                    <span class="message-value" :style="{ color: 'var(--el-text-color-primary)' }">{{ bot.connectTime
-                      }}</span>
+                    <span class="message-title" :style="{ color: 'var(--el-text-color-secondary)' }"
+                      >连接时长</span
+                    >
+                    <span
+                      class="message-value"
+                      :style="{ color: 'var(--el-text-color-primary)' }"
+                      >{{ bot.connectTime }}</span
+                    >
                   </div>
                 </div>
               </div>
-              <div class="connect-date" :style="{ backgroundColor: 'var(--el-fill-color-lighter)' }">
+              <div
+                class="connect-date"
+                :style="{ backgroundColor: 'var(--el-fill-color-lighter)' }"
+              >
                 <el-icon class="yellow-icon" :style="{ color: 'var(--el-color-warning)' }">
                   <Calendar />
                 </el-icon>
-                <span :style="{ color: 'var(--el-text-color-primary)' }">连接日期: {{ bot.connect_date }}</span>
+                <span :style="{ color: 'var(--el-text-color-primary)' }"
+                  >连接日期: {{ bot.connect_date }}</span
+                >
               </div>
             </div>
           </div>
@@ -125,13 +188,22 @@
   </div>
 </template>
 
-<script setup lang='ts'>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, inject } from 'vue'
-import { message } from "@/utils/message"
+import { message } from '@/utils/message'
 import { getRequest } from '@/utils/api'
-import { Calendar, Message, Clock, Platform, Avatar, User, ChatDotRound, Phone } from '@element-plus/icons-vue';
+import {
+  Calendar,
+  Message,
+  Clock,
+  Platform,
+  Avatar,
+  User,
+  ChatDotRound,
+  Phone,
+} from '@element-plus/icons-vue'
 
-const prefix = inject<string>('prefix');
+const prefix = inject<string>('prefix')
 
 interface BotInfo {
   self_id: string
@@ -148,11 +220,11 @@ interface BotInfo {
 }
 
 interface GetBotInfoResponse {
-  suc: boolean;
-  code: number;
-  info: string;
-  warning?: string;
-  data: BotInfo[];
+  suc: boolean
+  code: number
+  info: string
+  warning?: string
+  data: BotInfo[]
 }
 
 const botList = ref<BotInfo[]>([])
@@ -162,12 +234,11 @@ onMounted(() => {
   getBotList()
 })
 
-
 function formateSeconds(endTime: number): string {
   let secondTime = endTime
   let min = 0
   let h = 0
-  let result = ""
+  let result = ''
   if (secondTime > 60) {
     min = Math.floor(secondTime / 60)
     secondTime = secondTime % 60
@@ -176,9 +247,9 @@ function formateSeconds(endTime: number): string {
       min = min % 60
     }
   }
-  result = `${h.toString().padStart(2, "0")}:${min
+  result = `${h.toString().padStart(2, '0')}:${min
     .toString()
-    .padStart(2, "0")}:${secondTime.toString().padStart(2, "0")}`
+    .padStart(2, '0')}:${secondTime.toString().padStart(2, '0')}`
   return result
 }
 
@@ -191,24 +262,22 @@ function addInterval(bot: BotInfo) {
 }
 
 function getBotList() {
-  getRequest(`${prefix}/dashboard/get_bot_list`).then(
-    (resp: { data: GetBotInfoResponse }) => {
-      if (resp.data.suc) {
-        if (resp.data.warning) {
-          message.warning(resp.data.warning)
-        } else {
-          message.success(resp.data.info)
-          botList.value = resp.data.data
-          for (const bot of botList.value) {
-            bot.connectTime = "00:00"
-            addInterval(bot)
-          }
-        }
+  getRequest(`${prefix}/dashboard/get_bot_list`).then((resp: { data: GetBotInfoResponse }) => {
+    if (resp.data.suc) {
+      if (resp.data.warning) {
+        message.warning(resp.data.warning)
       } else {
-        message.error(resp.data.info)
+        message.success(resp.data.info)
+        botList.value = resp.data.data
+        for (const bot of botList.value) {
+          bot.connectTime = '00:00'
+          addInterval(bot)
+        }
       }
+    } else {
+      message.error(resp.data.info)
     }
-  )
+  })
 }
 
 onUnmounted(() => {
@@ -223,7 +292,7 @@ onUnmounted(() => {
 <style scoped>
 .left-info-container {
   height: 100%;
-  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
   font-size: var(--font-size-md);
 }
 

@@ -21,48 +21,15 @@
     <div class="plugin-content">
       <!-- 自定义配置区域 -->
       <div v-if="customConfigs.length > 0" class="settings-container">
-        <div class="settings-grid">
-          <div v-for="(config, index) in customConfigs" :key="index" class="setting-card">
-            <div class="setting-header">
-              <div class="setting-title">
-                <div class="setting-label">{{ config.label }}</div>
-                <div v-if="config.description" class="setting-description">{{ config.description }}</div>
-              </div>
-            </div>
-            <div class="setting-control">
-              <!-- 布尔类型 - 开关 -->
-              <MySwitch v-if="config.type === 'boolean'" v-model="(config.value as boolean)" />
-
-              <!-- 字符串类型 - 输入框 -->
-              <el-input v-else-if="config.type === 'string'" v-model="(config.value as string)"
-                :placeholder="config.placeholder || '请输入'" />
-
-              <!-- 数字类型 - 数字输入框 -->
-              <el-input-number v-else-if="config.type === 'number'" v-model="(config.value as number)" :min="config.min"
-                :max="config.max" :step="config.step || 1" />
-
-              <!-- 选择类型 - 下拉框 -->
-              <el-select v-else-if="config.type === 'select'" v-model="(config.value as string | number)"
-                :placeholder="config.placeholder || '请选择'">
-                <el-option v-for="option in config.options" :key="option.value" :label="option.label"
-                  :value="option.value" />
-              </el-select>
-
-              <!-- 多行文本 -->
-              <el-input v-else-if="config.type === 'textarea'" v-model="(config.value as string)" type="textarea"
-                :rows="config.rows || 3" :placeholder="config.placeholder || '请输入'" />
-
-              <!-- 数组类型 - TagInput -->
-              <TagInput v-else-if="config.type === 'array'" v-model="(config.value as string[])"
-                :placeholder="config.placeholder || '输入后按回车添加'" />
-
-              <!-- 字典类型 - 展示子配置（支持递归） -->
-              <div v-else-if="config.type === 'dict' && config.children" class="dict-children">
-                <DictChildren :children="config.children" />
-              </div>
-            </div>
-          </div>
-        </div>
+        <DictChildren
+          :children="customConfigs"
+          :json-drafts="jsonDrafts"
+          :json-errors="jsonErrors"
+          @field-change="updateField"
+          @json-input="updateJsonDraft"
+          @json-blur="parseJsonDraft"
+          @field-error="updateFieldError"
+        />
       </div>
       <div v-else class="no-config-tip">
         <i class="el-icon-info"></i>
@@ -77,7 +44,7 @@
           <i class="el-icon-close"></i>
           <span>取消</span>
         </button>
-        <button class="action-button confirm-button" @click="commit">
+        <button class="action-button confirm-button" :disabled="saving" @click="commit">
           <i class="el-icon-check"></i>
           <span>确定</span>
         </button>
@@ -88,11 +55,10 @@
 
 <script setup lang="ts">
 import { ref, inject, watch } from 'vue'
-import MySwitch from "@/components/ui/MySwitch.vue"
-import TagInput from "@/components/ui/TagInput.vue"
-import DictChildren from "@/components/plugin/DictChildren.vue"
-import { getRequest, postRequest } from "@/utils/api"
-import { message } from "@/utils/message"
+import DictChildren from '@/components/plugin/DictChildren.vue'
+import { getRequest, postRequest } from '@/utils/api'
+import { message } from '@/utils/message'
+import type { PluginConfigField, PluginConfigSchema } from '@/types/plugin-config'
 
 interface Props {
   service?: string
@@ -112,38 +78,10 @@ const modelVisible = defineModel<boolean>('visible', { required: true })
 // 注入全局方法
 const prefix = inject<string>('prefix') as string
 
-interface CustomConfig {
-  key: string
-  label: string
-  type: 'boolean' | 'string' | 'number' | 'select' | 'textarea' | 'array' | 'dict'
-  value: boolean | string | number | string[] | Record<string, unknown>
-  icon?: string
-  description?: string
-  placeholder?: string
-  options?: Array<{ label: string; value: unknown }>
-  min?: number
-  max?: number
-  step?: number
-  rows?: number
-  children?: DictChildConfig[]
-}
-
-interface DictChildConfig {
-  key: string
-  label: string
-  type: 'boolean' | 'string' | 'number' | 'select' | 'textarea' | 'dict'
-  value: boolean | string | number | Record<string, unknown>
-  description?: string
-  placeholder?: string
-  options?: Array<{ label: string; value: unknown }>
-  min?: number
-  max?: number
-  step?: number
-  rows?: number
-  children?: DictChildConfig[]
-}
-
-const customConfigs = ref<CustomConfig[]>([])
+const customConfigs = ref<PluginConfigField[]>([])
+const jsonDrafts = ref<Record<string, string>>({})
+const jsonErrors = ref<Record<string, string>>({})
+const saving = ref(false)
 
 // 监听 visible 变化，当变为 true 时获取配置
 watch(
@@ -153,7 +91,7 @@ watch(
       await getCustomConfigs()
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 // 关闭对话框
@@ -169,150 +107,145 @@ async function getCustomConfigs() {
       service: props.service,
     })
     if (resp.data.suc && resp.data.data) {
-      const configData = resp.data.data
-      customConfigs.value = []
-
-      // 遍历配置数据，生成自定义配置项
-      Object.keys(configData).forEach((key) => {
-        const value = configData[key]
-        const configType = determineConfigType(value)
-        const config: CustomConfig = {
-          key,
-          label: formatLabel(key),
-          type: configType,
-          value: configType === 'dict' ? {} : value,
-        }
-
-        // 如果是字典类型，展开为子配置项
-        if (configType === 'dict' && typeof value === 'object' && value !== null) {
-          config.children = parseDictToChildren(value as Record<string, unknown>)
-        }
-
-        customConfigs.value.push(config)
-      })
+      const schema = resp.data.data as PluginConfigSchema
+      if (!Array.isArray(schema.fields)) {
+        throw new TypeError('插件配置响应缺少 fields schema')
+      }
+      customConfigs.value = schema.fields
+      jsonDrafts.value = {}
+      jsonErrors.value = {}
+      initializeJsonDrafts(schema.fields)
     } else {
       message?.error(resp.data.info || '获取配置失败')
     }
   } catch (error) {
     console.error('获取自定义配置失败:', error)
-    message?.error('获取配置失败')
+    message?.error(error instanceof Error ? `获取配置失败：${error.message}` : '获取配置失败')
   }
 }
 
-// 根据值确定配置类型
-function determineConfigType(value: unknown): CustomConfig['type'] {
-  if (typeof value === 'boolean') {
-    return 'boolean'
-  } else if (typeof value === 'number') {
-    return 'number'
-  } else if (Array.isArray(value)) {
-    return 'array'
-  } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-    // 对象类型转换为字典配置
-    return 'dict'
-  } else if (typeof value === 'string') {
-    // 如果字符串包含换行，可能是多行文本
-    if (String(value).includes('\n')) {
-      return 'textarea'
+function initializeJsonDrafts(fields: PluginConfigField[], parentPath = '') {
+  for (const field of fields) {
+    const path = parentPath ? `${parentPath}.${field.key}` : field.key
+    if (field.type === 'json' || field.type === 'object-list') {
+      jsonDrafts.value[path] = JSON.stringify(field.value, null, 2) ?? ''
     }
-    return 'string'
+    if (field.children) initializeJsonDrafts(field.children, path)
   }
-  return 'string'
 }
 
-// 将字典对象转换为子配置数组（支持递归）
-function parseDictToChildren(dict: Record<string, unknown>): DictChildConfig[] {
-  const children: DictChildConfig[] = []
-
-  Object.keys(dict).forEach((key) => {
-    const value = dict[key]
-    const childType = determineChildType(value)
-    const child: DictChildConfig = {
-      key,
-      label: formatLabel(key),
-      type: childType,
-      value: childType === 'dict' ? {} : (value as boolean | string | number),
-    }
-
-    // 如果子项也是字典，递归解析
-    if (childType === 'dict' && typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      child.children = parseDictToChildren(value as Record<string, unknown>)
-    }
-
-    children.push(child)
-  })
-
-  return children
+function updateField(field: PluginConfigField, value: unknown) {
+  field.value = value as PluginConfigField['value']
 }
 
-// 确定子配置项的类型（支持递归检测字典）
-function determineChildType(value: unknown): DictChildConfig['type'] {
-  if (typeof value === 'boolean') {
-    return 'boolean'
-  } else if (typeof value === 'number') {
-    return 'number'
-  } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-    // 嵌套的字典类型
-    return 'dict'
-  } else if (typeof value === 'string') {
-    if (String(value).includes('\n')) {
-      return 'textarea'
-    }
-    return 'string'
+function updateJsonDraft(path: string, value: string) {
+  jsonDrafts.value[path] = value
+  delete jsonErrors.value[path]
+}
+
+function updateFieldError(path: string, error: string | undefined) {
+  if (error) {
+    jsonErrors.value[path] = error
+  } else {
+    delete jsonErrors.value[path]
   }
-  return 'string'
 }
 
-// 格式化标签名称
-function formatLabel(key: string): string {
-  // 将驼峰命名或下划线命名转换为可读的中文标签
-  return key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/_/g, ' ')
-    .replace(/^\w/, (c) => c.toUpperCase())
-    .trim()
+function findField(path: string): PluginConfigField | undefined {
+  const keys = path.split('.')
+  let fields = customConfigs.value
+  let field: PluginConfigField | undefined
+  for (const key of keys) {
+    field = fields.find((item) => item.key === key)
+    if (!field) return undefined
+    fields = field.children || []
+  }
+  return field
 }
 
-// 递归收集字典配置值
-function collectDictValue(children: DictChildConfig[]): Record<string, unknown> {
-  const result: Record<string, unknown> = {}
-  children.forEach((child) => {
-    if (child.type === 'dict' && child.children) {
-      // 递归收集嵌套字典
-      result[child.key] = collectDictValue(child.children)
-    } else {
-      result[child.key] = child.value
+function parseJsonDraft(path: string): boolean {
+  const field = findField(path)
+  if (!field) return false
+  try {
+    const value: unknown = JSON.parse(jsonDrafts.value[path] ?? '')
+    if (field.type === 'object-list' && !Array.isArray(value)) {
+      throw new TypeError('此项必须是 JSON 数组')
     }
-  })
-  return result
+    if (
+      field.type === 'json' &&
+      (value === null || typeof value !== 'object' || Array.isArray(value))
+    ) {
+      throw new TypeError('此项必须是 JSON 对象')
+    }
+    field.value = value as PluginConfigField['value']
+    delete jsonErrors.value[path]
+    return true
+  } catch (error) {
+    jsonErrors.value[path] =
+      error instanceof Error ? error.message : 'JSON 格式无效'
+    return false
+  }
+}
+
+function collectValues(fields: PluginConfigField[]): Record<string, unknown> {
+  return Object.fromEntries(
+    fields.map((field) => [
+      field.key,
+      field.type === 'group' ? collectValues(field.children || []) : field.value,
+    ]),
+  )
+}
+
+function validateRequired(fields: PluginConfigField[], parentEditable = true): string | undefined {
+  for (const field of fields) {
+    const editable = parentEditable && field.editable
+    if (!editable) continue
+    if (field.type === 'group') {
+      const nestedError = validateRequired(field.children || [], editable)
+      if (nestedError) return nestedError
+    } else if (
+      field.required &&
+      (field.value === null ||
+        field.value === undefined ||
+        (typeof field.value === 'string' && !field.value.trim()))
+    ) {
+      return `“${field.label}”为必填项`
+    }
+  }
+  return undefined
 }
 
 // 提交更新
 async function commit() {
-  // 收集所有配置值
-  const configs: Record<string, unknown> = {}
-  customConfigs.value.forEach((config) => {
-    // 如果是 dict 类型，从子配置项构建对象
-    if (config.type === 'dict' && config.children) {
-      configs[config.key] = collectDictValue(config.children)
-    } else {
-      configs[config.key] = config.value
+  for (const path of Object.keys(jsonDrafts.value)) {
+    if (!parseJsonDraft(path)) {
+      message?.error(`请修正 JSON 配置：${path}`)
+      return
     }
-  })
+  }
+  const fieldError = Object.values(jsonErrors.value)[0]
+  if (fieldError) {
+    message?.warning(fieldError)
+    return
+  }
+  const validationError = validateRequired(customConfigs.value)
+  if (validationError) {
+    message?.warning(validationError)
+    return
+  }
 
+  saving.value = true
   try {
-    const resp = await postRequest!(
-      `${prefix}/plugin/update_plugin_config`,
-      {
-        service: props.service,
-        configs,
-      }
-    )
+    const resp = await postRequest!(`${prefix}/plugin/update_plugin_config`, {
+      service: props.service,
+      configs: collectValues(customConfigs.value),
+    })
     if (resp.data.suc) {
       if (resp.data.warning) {
         message?.warning(resp.data.warning)
       } else {
         message?.success(resp.data.info)
+        modelVisible.value = false
         emit('close', true)
       }
     } else {
@@ -320,7 +253,9 @@ async function commit() {
     }
   } catch (error) {
     console.error('更新插件失败:', error)
-    message?.error('更新插件失败')
+    message?.error(error instanceof Error ? `更新插件失败：${error.message}` : '更新插件失败')
+  } finally {
+    saving.value = false
   }
 }
 </script>
@@ -339,7 +274,6 @@ $bg-color-overlay: var(--el-bg-color-overlay, #ffffff);
 
 // 动画
 @keyframes float {
-
   0%,
   100% {
     transform: translateY(0);
@@ -351,7 +285,6 @@ $bg-color-overlay: var(--el-bg-color-overlay, #ffffff);
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 0.6;
@@ -429,9 +362,7 @@ $bg-color-overlay: var(--el-bg-color-overlay, #ffffff);
         right: 0;
         width: 300px;
         height: 300px;
-        background-image: radial-gradient(circle,
-            $primary 1px,
-            transparent 1px);
+        background-image: radial-gradient(circle, $primary 1px, transparent 1px);
         background-size: 20px 20px;
       }
 
@@ -440,12 +371,17 @@ $bg-color-overlay: var(--el-bg-color-overlay, #ffffff);
         left: 0;
         width: 200px;
         height: 200px;
-        background-image: linear-gradient(45deg, $primary 25%, transparent 25%),
+        background-image:
+          linear-gradient(45deg, $primary 25%, transparent 25%),
           linear-gradient(-45deg, $primary 25%, transparent 25%),
           linear-gradient(45deg, transparent 75%, $primary 75%),
           linear-gradient(-45deg, transparent 75%, $primary 75%);
         background-size: 20px 20px;
-        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        background-position:
+          0 0,
+          0 10px,
+          10px -10px,
+          -10px 0px;
       }
     }
 
@@ -589,17 +525,7 @@ $bg-color-overlay: var(--el-bg-color-overlay, #ffffff);
 
   // 设置容器
   .settings-container {
-
-    // 覆盖 Element Plus 默认样式
-    :deep(.el-input__inner) {
-      border-radius: 8px !important;
-      padding: 8px 12px !important;
-    }
-
-    :deep(.el-input-number) {
-      width: 100% !important;
-    }
-
+    :deep(.el-input-number),
     :deep(.el-select) {
       width: 100% !important;
     }

@@ -118,8 +118,41 @@
   margin-top: 10px !important;
 }
 
-/* 输入框样式 */
-.el-input__inner,
+/* Element Plus 的输入框由 wrapper 承载边框，内部 input 保持透明，避免双层边框。 */
+.el-input__wrapper {
+  transition: all 0.3s ease;
+  background-color: var(--el-bg-color) !important;
+  border: 1px solid var(--el-border-color) !important;
+  box-shadow: none !important;
+  color: var(--el-text-color-primary) !important;
+
+  &:hover {
+    border-color: var(--el-border-color-darker) !important;
+  }
+
+  &.is-focus {
+    border-color: var(--el-color-primary) !important;
+    box-shadow: 0 0 0 2px var(--el-color-primary-light-8) !important;
+  }
+
+  &.is-disabled {
+    background-color: var(--el-fill-color-light) !important;
+    border-color: var(--el-border-color-light) !important;
+    cursor: not-allowed;
+  }
+}
+
+.el-input__inner {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--el-text-color-primary) !important;
+
+  &::placeholder {
+    color: var(--el-text-color-placeholder) !important;
+  }
+}
+
 .el-textarea__inner {
   transition: all 0.3s ease;
   background-color: var(--el-bg-color) !important;

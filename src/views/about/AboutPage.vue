@@ -45,9 +45,7 @@
               <span class="section-icon">✉</span>
             </h2>
             <div class="section-content">
-              <p class="contact-description">
-                如果您有任何问题或建议，欢迎加入我们的 QQ 群
-              </p>
+              <p class="contact-description">如果您有任何问题或建议，欢迎加入我们的 QQ 群</p>
               <div class="contact-card pink-card">
                 <a href="https://qm.qq.com/q/dRe8C4WpGw" class="card-link">
                   <span>ATRI-LK交流群</span>
@@ -55,9 +53,7 @@
                 <p class="card-description">部署问题，萌新友好交流群</p>
               </div>
               <div class="contact-card purple-card">
-                <a href="https://qm.qq.com/q/sJq0vjqDbW" class="card-link">
-                  ATRI-LK技术群
-                </a>
+                <a href="https://qm.qq.com/q/sJq0vjqDbW" class="card-link"> ATRI-LK技术群 </a>
                 <p class="card-description">技术问题，功能建议与开发交流</p>
               </div>
             </div>
@@ -72,7 +68,10 @@
             <div class="section-content">
               <p>
                 本项目使用
-                <a href="https://github.com/lokyoh/ATRI-LK/blob/main/LICENSE" class="text-link green-link">
+                <a
+                  href="https://github.com/lokyoh/ATRI-LK/blob/main/LICENSE"
+                  class="text-link green-link"
+                >
                   GNU General Public License v3.0
                 </a>
                 作为开源协议。
@@ -91,8 +90,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from "vue"
-import { useRoute } from "vue-router"
+import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
@@ -101,7 +100,7 @@ onMounted(() => {
   if (route.hash) {
     const element = document.getElementById(route.hash.substring(1))
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" })
+      element.scrollIntoView({ behavior: 'smooth' })
     }
   }
 })
@@ -136,9 +135,7 @@ onMounted(() => {
 .decorator-1 {
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle,
-      var(--primary-color-light) 0%,
-      transparent 70%);
+  background: radial-gradient(circle, var(--primary-color-light) 0%, transparent 70%);
   top: -100px;
   left: -100px;
   animation: float 8s ease-in-out infinite;
@@ -172,10 +169,12 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 4px;
-  background: linear-gradient(to right,
-      var(--primary-color) 0%,
-      var(--primary-color-light) 50%,
-      var(--primary-color) 100%);
+  background: linear-gradient(
+    to right,
+    var(--primary-color) 0%,
+    var(--primary-color-light) 50%,
+    var(--primary-color) 100%
+  );
   z-index: 20;
   border-radius: 2px;
 }
@@ -189,17 +188,14 @@ onMounted(() => {
 }
 
 .logo-container::after {
-  content: "";
+  content: '';
   position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 60%;
   height: 1px;
-  background: linear-gradient(to right,
-      transparent,
-      var(--border-color),
-      transparent);
+  background: linear-gradient(to right, transparent, var(--border-color), transparent);
 }
 
 .main-logo {
@@ -312,16 +308,13 @@ p {
 }
 
 .contact-card::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(45deg,
-      transparent,
-      rgba(255, 255, 255, 0.1),
-      transparent);
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   transform: translateX(-100%);
   transition: transform 0.6s ease;
 }
@@ -336,16 +329,12 @@ p {
 }
 
 .pink-card {
-  background: linear-gradient(135deg,
-      var(--bg-color-hover),
-      var(--bg-color-secondary));
+  background: linear-gradient(135deg, var(--bg-color-hover), var(--bg-color-secondary));
   border: 1px solid var(--primary-color-light);
 }
 
 .purple-card {
-  background: linear-gradient(135deg,
-      var(--bg-color-hover),
-      var(--bg-color-secondary));
+  background: linear-gradient(135deg, var(--bg-color-hover), var(--bg-color-secondary));
   border: 1px solid var(--primary-color);
 }
 
@@ -397,22 +386,18 @@ p {
 }
 
 .page-footer::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 30%;
   height: 1px;
-  background: linear-gradient(to right,
-      transparent,
-      var(--border-color),
-      transparent);
+  background: linear-gradient(to right, transparent, var(--border-color), transparent);
 }
 
 /* 动画 */
 @keyframes float {
-
   0%,
   100% {
     transform: translateY(0) rotate(0deg);

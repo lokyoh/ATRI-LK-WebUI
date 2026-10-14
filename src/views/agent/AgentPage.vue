@@ -3,8 +3,12 @@
     <div class="page-header">
       <h2>AI模型设置</h2>
       <div class="tab-nav">
-        <button v-for="tab in tabs" :key="tab.key" :class="['tab-item', { active: currentTab === tab.key }]"
-          @click="currentTab = tab.key">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
+          :class="['tab-item', { active: currentTab === tab.key }]"
+          @click="currentTab = tab.key"
+        >
           {{ tab.label }}
         </button>
       </div>
@@ -18,47 +22,53 @@
       <div v-if="currentTab === 'models'" class="tab-panel">
         <ModelsPanel />
       </div>
+
+      <div v-if="currentTab === 'usage'" class="tab-panel">
+        <TokenUsagePanel />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import SettingsPanel from '@/components/agent/SettingsPanel.vue';
-import ModelsPanel from '@/components/agent/ModelsPanel.vue';
-import { getLoading } from '@/utils/loading';
+import { onMounted, ref, watch } from 'vue'
+import SettingsPanel from '@/components/agent/SettingsPanel.vue'
+import ModelsPanel from '@/components/agent/ModelsPanel.vue'
+import TokenUsagePanel from '@/components/agent/TokenUsagePanel.vue'
+import { getLoading } from '@/utils/loading'
 
 const tabs = [
   { key: 'settings', label: '设置' },
   { key: 'models', label: '模型' },
-];
+  { key: 'usage', label: 'Token 用量' },
+]
 
-const currentTab = ref('settings');
-let loadingInstance: ReturnType<typeof getLoading> | null = null;
+const currentTab = ref('settings')
+let loadingInstance: ReturnType<typeof getLoading> | null = null
 
 const startContentLoading = () => {
-  loadingInstance?.close();
-  loadingInstance = getLoading('.tab-content');
-};
+  loadingInstance?.close()
+  loadingInstance = getLoading('.tab-content')
+}
 
 const stopContentLoading = () => {
-  loadingInstance?.close();
-  loadingInstance = null;
-};
+  loadingInstance?.close()
+  loadingInstance = null
+}
 
 watch(currentTab, () => {
-  startContentLoading();
+  startContentLoading()
   setTimeout(() => {
-    stopContentLoading();
-  }, 500);
-});
+    stopContentLoading()
+  }, 500)
+})
 
 onMounted(() => {
-  startContentLoading();
+  startContentLoading()
   setTimeout(() => {
-    stopContentLoading();
-  }, 600);
-});
+    stopContentLoading()
+  }, 600)
+})
 </script>
 
 <style scoped>
@@ -95,7 +105,7 @@ onMounted(() => {
   background: var(--el-bg-color);
   color: var(--el-text-color-regular);
   cursor: pointer;
-  transition: all .2s;
+  transition: all 0.2s;
 }
 
 .tab-item.active {

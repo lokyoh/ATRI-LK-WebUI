@@ -1,8 +1,20 @@
 <template>
   <div class="moe-input-container">
     <div class="input-wrapper">
-      <el-input v-model="innerValue" :placeholder="placeholder" class="moe-el-input"
-        :class="{ 'is-focused': isFocused }" @focus="handleFocus" @blur="handleBlur" @input="handleInput" :type="type">
+      <el-input
+        v-model="innerValue"
+        :placeholder="placeholder"
+        class="moe-el-input"
+        :class="{
+          'is-focused': isFocused,
+          'has-prefix-icon': prefixIcon,
+          'has-suffix-icon': suffixIcon,
+        }"
+        @focus="handleFocus"
+        @blur="handleBlur"
+        @input="handleInput"
+        :type="type"
+      >
         <template v-if="prefixIcon" #prefix>
           <i :class="prefixIcon" class="input-icon"></i>
         </template>
@@ -17,9 +29,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { ref, watch } from 'vue'
 
 interface Props {
+  modelValue?: string | number
   value?: string | number
   placeholder?: string
   prefixIcon?: string
@@ -28,41 +41,43 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  value: "",
-  placeholder: "",
-  prefixIcon: "",
-  suffixIcon: "",
-  type: "text",
+  value: '',
+  placeholder: '',
+  prefixIcon: '',
+  suffixIcon: '',
+  type: 'text',
 })
 
 const emit = defineEmits<{
-  (e: "input", value: string | number): void
-  (e: "focus", event: FocusEvent): void
-  (e: "blur", event: FocusEvent): void
+  (e: 'update:modelValue', value: string | number): void
+  (e: 'input', value: string | number): void
+  (e: 'focus', event: FocusEvent): void
+  (e: 'blur', event: FocusEvent): void
 }>()
 
 const isFocused = ref(false)
-const innerValue = ref<string | number>(props.value)
+const innerValue = ref<string | number>(props.modelValue ?? props.value)
 
 watch(
-  () => props.value,
+  () => props.modelValue ?? props.value,
   (newVal) => {
-    innerValue.value = newVal
-  }
+    innerValue.value = newVal ?? ''
+  },
 )
 
 function handleInput(value: string | number) {
-  emit("input", value)
+  emit('update:modelValue', value)
+  emit('input', value)
 }
 
 function handleFocus(e: FocusEvent) {
   isFocused.value = true
-  emit("focus", e)
+  emit('focus', e)
 }
 
 function handleBlur(e: FocusEvent) {
   isFocused.value = false
-  emit("blur", e)
+  emit('blur', e)
 }
 </script>
 
@@ -70,8 +85,9 @@ function handleBlur(e: FocusEvent) {
 .moe-input-container {
   position: relative;
   width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
+    'Helvetica Neue', sans-serif;
 
   .input-wrapper {
     position: relative;
@@ -85,9 +101,7 @@ function handleBlur(e: FocusEvent) {
     bottom: 0;
     border-radius: 0.5rem;
     pointer-events: none;
-    background: linear-gradient(120deg,
-        var(--primary-color-light-9),
-        var(--primary-color-light-8));
+    background: linear-gradient(120deg, var(--primary-color-light-9), var(--primary-color-light-8));
     opacity: 0.3;
     z-index: 0;
   }
@@ -112,7 +126,6 @@ function handleBlur(e: FocusEvent) {
 }
 
 .moe-el-input :deep(.el-input__inner) {
-  padding-right: 2rem;
   height: 2.5rem;
   border-radius: 0.5rem;
   background-color: var(--bg-color-secondary);
@@ -120,7 +133,15 @@ function handleBlur(e: FocusEvent) {
   border: 1px solid var(--border-color);
   transition: all 0.3s ease;
   box-shadow: var(--el-box-shadow-lighter);
-  padding: 0px 30px !important;
+  padding: 0 12px !important;
+}
+
+.moe-el-input.has-prefix-icon :deep(.el-input__inner) {
+  padding-left: 30px !important;
+}
+
+.moe-el-input.has-suffix-icon :deep(.el-input__inner) {
+  padding-right: 30px !important;
 }
 
 .moe-el-input :deep(.el-input__inner):hover {
@@ -167,7 +188,15 @@ function handleBlur(e: FocusEvent) {
   .moe-el-input :deep(.el-input__inner) {
     height: 2.25rem;
     font-size: 0.875rem;
-    padding: 0px 24px !important;
+    padding: 0 12px !important;
+  }
+
+  .moe-el-input.has-prefix-icon :deep(.el-input__inner) {
+    padding-left: 24px !important;
+  }
+
+  .moe-el-input.has-suffix-icon :deep(.el-input__inner) {
+    padding-right: 24px !important;
   }
 
   .moe-el-input :deep(.el-input__prefix),

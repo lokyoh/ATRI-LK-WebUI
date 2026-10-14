@@ -1,23 +1,23 @@
 <template>
-  <div class="base" :style="{
-    height: computedHeight + 'px',
-    background: 'var(--el-bg-color-page)',
-  }">
-    <el-row :gutter="1" class="h-full">
+  <div
+    class="base"
+    :style="{ background: 'var(--el-bg-color-page)' }"
+  >
+    <el-row :gutter="16" class="dashboard-grid h-full">
       <el-col :xs="24" :sm="24" :md="8" :lg="6" class="h-full">
-        <div class="base-info h-full pr-0 md:pr-0" :style="{ backgroundColor: 'var(--el-bg-color)' }">
+        <div class="dashboard-panel base-info h-full">
           <LeftInfo class="h-full" />
         </div>
       </el-col>
 
       <el-col :xs="24" :sm="24" :md="16" :lg="12" class="h-full">
-        <div class="main-info h-full px-0 md:px-0" :style="{ backgroundColor: 'var(--el-bg-color)' }">
+        <div class="dashboard-panel main-info h-full">
           <MidInfo class="h-full" />
         </div>
       </el-col>
 
       <el-col :xs="24" :sm="24" :md="24" :lg="6" class="h-full">
-        <div class="config-info h-full pl-0 md:pl-0" :style="{ backgroundColor: 'var(--el-bg-color)' }">
+        <div class="dashboard-panel config-info h-full">
           <RightInfo class="h-full" />
         </div>
       </el-col>
@@ -26,80 +26,73 @@
 </template>
 
 <script setup lang="ts">
-import LeftInfo from "@/components/dashboard/LeftInfo.vue"
-import MidInfo from "@/components/dashboard/MidInfo.vue"
-import RightInfo from "@/components/dashboard/RightInfo.vue"
-import { getHeaderHeight } from "@/utils/utils"
-import { ref, computed, onMounted, onUnmounted } from "vue"
-
-const windowHeight = ref(window.innerHeight)
-const computedHeight = computed(() => {
-  return windowHeight.value - getHeaderHeight() + 70
-})
-
-onMounted(() => {
-  window.addEventListener("resize", handleResize)
-})
-
-function handleResize() {
-  windowHeight.value = window.innerHeight
-}
-
-onUnmounted(() => {
-  window.removeEventListener("resize", handleResize)
-})
+import LeftInfo from '@/components/dashboard/LeftInfo.vue'
+import MidInfo from '@/components/dashboard/MidInfo.vue'
+import RightInfo from '@/components/dashboard/RightInfo.vue'
 </script>
 
 <style lang="scss" scoped>
 .base {
-  transition: all 0.3s;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  padding: 0.75rem;
 }
 
-.base-info {
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--el-border-color-light);
-  display: flex;
-  flex-direction: column;
-}
-
+.dashboard-panel,
+.base-info,
 .main-info {
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
-.config-info {
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
+.dashboard-panel {
+  overflow: hidden;
+  border-radius: 1rem;
   border: 1px solid var(--el-border-color-light);
-  display: flex;
-  flex-direction: column;
+  background-color: var(--el-bg-color);
+  box-shadow: var(--el-box-shadow-light);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-/* Ensure the inner column content stretches and becomes independently scrollable */
-.el-col>div {
+.dashboard-panel:hover {
+  border-color: color-mix(in srgb, var(--el-color-primary) 24%, var(--el-border-color-light));
+}
+
+.el-col > div {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.base-info>*,
-.main-info>*,
-.config-info>* {
+.base-info > *,
+.main-info > *,
+.config-info > * {
   flex: 1 1 auto;
   min-height: 0;
-  /* allow overflow to work inside flex */
   overflow: auto;
 }
 
 /* 响应式设计 */
 @media (max-width: 1280px) {
+  .base {
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
+    padding: 0.625rem;
+  }
+
+  .dashboard-grid {
+    height: auto;
+  }
+
   .el-col {
     &:nth-child(1) {
       width: 100%;
@@ -137,25 +130,22 @@ onUnmounted(() => {
     }
   }
 
-  .base-info,
-  .main-info,
-  .config-info {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+  .base {
+    padding: 0.5rem;
+  }
+
+  .dashboard-panel {
+    border-radius: 0.875rem;
   }
 }
 
 @media (max-width: 1280px) {
-  .base {
-    overflow: auto;
-  }
-
   .el-row.h-full,
   .el-col.h-full,
-  .el-col>div,
-  .base-info>*,
-  .main-info>*,
-  .config-info>* {
+  .el-col > div,
+  .base-info > *,
+  .main-info > *,
+  .config-info > * {
     height: auto !important;
   }
 
@@ -165,6 +155,10 @@ onUnmounted(() => {
 
   .el-col.h-full {
     flex: none;
+  }
+
+  .dashboard-panel {
+    min-height: 18rem;
   }
 }
 </style>

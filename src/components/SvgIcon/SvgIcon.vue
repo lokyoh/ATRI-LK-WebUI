@@ -1,5 +1,9 @@
 <template>
-  <div class="svg-icon" :style="{ width: size + 'px', height: size + 'px' }" v-html="svgContent"></div>
+  <div
+    class="svg-icon"
+    :style="{ width: size + 'px', height: size + 'px' }"
+    v-html="svgContent"
+  ></div>
 </template>
 
 <script setup lang="ts">
@@ -9,7 +13,7 @@ import { computed } from 'vue'
 const svgModules = import.meta.glob('@/assets/icons/svg/*.svg', {
   query: '?raw',
   import: 'default',
-  eager: true
+  eager: true,
 })
 
 interface Props {
@@ -20,7 +24,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   size: 24,
-  color: 'currentColor'
+  color: 'currentColor',
 })
 
 const svgContent = computed(() => {

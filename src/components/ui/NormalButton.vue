@@ -1,12 +1,17 @@
 <template>
-  <button :disabled="disabled" @click.stop="handleClick"
-    class="p-2 rounded-lg flex items-center ml-2 transition-all duration-200" :class="[
-      baseClass,
-      disabled ? disabledClass : activeClass,
-      { 'hover:scale-110': !disabled },
-    ]" :title="title">
-    <svg-icon :name="iconClass" v-if="iconClass" class="button-icon"
-      :color="disabled ? 'var(--el-text-color-disabled)' : iconColor"></svg-icon>
+  <button
+    :disabled="disabled"
+    @click.stop="handleClick"
+    class="p-2 rounded-lg flex items-center ml-2 transition-all duration-200"
+    :class="[baseClass, disabled ? disabledClass : activeClass, { 'hover:scale-110': !disabled }]"
+    :title="title"
+  >
+    <svg-icon
+      :name="iconClass"
+      v-if="iconClass"
+      class="button-icon"
+      :color="disabled ? 'var(--el-text-color-disabled)' : iconColor"
+    ></svg-icon>
     <span v-if="showText" class="ml-1 text-xs" :class="{ 'hidden xs:inline': !forceShowText }">
       {{ forceShowText ? text : text.charAt(0) }}
     </span>
@@ -14,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import SvgIcon from "../SvgIcon/SvgIcon.vue"
+import SvgIcon from '../SvgIcon/SvgIcon.vue'
 
 const props = defineProps({
   disabled: {
@@ -23,27 +28,27 @@ const props = defineProps({
   },
   iconClass: {
     type: String,
-    default: "",
+    default: '',
   },
   text: {
     type: String,
-    default: "",
+    default: '',
   },
   title: {
     type: String,
-    default: "",
+    default: '',
   },
   baseClass: {
     type: String,
-    default: "",
+    default: '',
   },
   activeClass: {
     type: String,
-    default: "",
+    default: '',
   },
   disabledClass: {
     type: String,
-    default: "bg-gray-100 text-gray-400 cursor-not-allowed",
+    default: 'bg-gray-100 text-gray-400 cursor-not-allowed',
   },
   showText: {
     type: Boolean,
@@ -55,15 +60,15 @@ const props = defineProps({
   },
   iconColor: {
     type: String,
-    default: "var(--primary-color)",
+    default: 'var(--primary-color)',
   },
 })
 
-const emit = defineEmits(["click"])
+const emit = defineEmits(['click'])
 
 function handleClick(event: MouseEvent) {
   if (!props.disabled) {
-    emit("click", event)
+    emit('click', event)
   }
 }
 </script>

@@ -1,25 +1,44 @@
 <template>
-  <div class="right-info p-4 md:p-4 h-full flex flex-col" ref="rightInfo"
-    :style="{ backgroundColor: 'var(--el-fill-color-light)' }">
+  <div
+    class="right-info p-4 md:p-4 h-full flex flex-col"
+    ref="rightInfo"
+  >
     <!-- NoneBot配置卡片 - 更紧凑的版本 -->
-    <div class="base-border rounded-lg p-4 shadow-sm mb-2 h-auto min-h-30" ref="baseBorder"
-      :style="{ backgroundColor: 'var(--el-bg-color)' }">
+    <div
+      class="base-border rounded-lg p-4 shadow-sm mb-2 h-auto min-h-30 shrink-0"
+      ref="baseBorder"
+      :style="{ backgroundColor: 'var(--el-bg-color)' }"
+    >
       <p class="base-title mb-1 flex items-center" :style="{ color: 'var(--el-color-primary)' }">
         <i class="fas fa-cog mr-1 text-xs"></i> NoneBot配置
       </p>
       <div class="nb-config grid grid-cols-2 gap-1 px-0.5">
-        <div v-for="(item, key) in configItems" :key="key" class="rounded-sm p-1" :style="{
-          background: 'var(--el-fill-color-lighter)',
-          border: '1px solid var(--el-border-color-light)',
-        }">
-          <el-tooltip effect="light" :content="String(item.value)" placement="top" popper-class="max-w-xs break-words">
-            <p class="config-info-item-text truncate leading-tight cursor-default"
-              :style="{ color: 'var(--el-text-color-regular)' }">
+        <div
+          v-for="(item, key) in configItems"
+          :key="key"
+          class="rounded-sm p-1"
+          :style="{
+            background: 'var(--el-fill-color-lighter)',
+            border: '1px solid var(--el-border-color-light)',
+          }"
+        >
+          <el-tooltip
+            effect="light"
+            :content="String(item.value)"
+            placement="top"
+            popper-class="max-w-xs break-words"
+          >
+            <p
+              class="config-info-item-text truncate leading-tight cursor-default"
+              :style="{ color: 'var(--el-text-color-regular)' }"
+            >
               {{ item.value }}
             </p>
           </el-tooltip>
-          <p class="config-small-title font-bold uppercase tracking-tighter mt-0"
-            :style="{ color: 'var(--el-color-primary)' }">
+          <p
+            class="config-small-title font-bold uppercase tracking-tighter mt-0"
+            :style="{ color: 'var(--el-color-primary)' }"
+          >
             {{ item.label }}
           </p>
         </div>
@@ -29,22 +48,32 @@
     <!-- 图表区域 -->
     <div class="space-y-4 min-h-75 flex-1 flex flex-col">
       <!-- 活跃群聊图表 -->
-      <div class="active-group base-border rounded-xl p-4 shadow-lg h-full min-h-75 flex flex-col overflow-hidden"
+      <div
+        class="active-group base-border rounded-xl p-4 shadow-lg h-full min-h-75 flex flex-col overflow-hidden"
         :style="{
           minHeight: '280px',
           backgroundColor: 'var(--el-bg-color)',
-        }">
+        }"
+      >
         <div ref="activeGroupBorder" class="flex justify-between items-center mb-2">
           <p class="mb-1 md:mb-0 flex items-center" :style="{ color: 'var(--el-color-primary)' }">
-            <i class="fas fa-users mr-1 animate-bounce" :style="{ color: 'var(--el-color-primary)' }"></i>
+            <i
+              class="fas fa-users mr-1 animate-bounce"
+              :style="{ color: 'var(--el-color-primary)' }"
+            ></i>
             活跃群组
           </p>
           <div class="flex flex-wrap gap-1">
-            <button v-for="type in timeTypes" :key="'group' + type.value" @click="clickGroupType(type.value)"
-              class="px-2 py-0.5 rounded-full transition-all duration-200" :class="{
+            <button
+              v-for="type in timeTypes"
+              :key="'group' + type.value"
+              @click="clickGroupType(type.value)"
+              class="px-2 py-0.5 rounded-full transition-all duration-200"
+              :class="{
                 'text-white shadow-sm': selectGroupType === type.value,
                 'hover:bg-opacity-80': selectGroupType !== type.value,
-              }" :style="{
+              }"
+              :style="{
                 backgroundColor:
                   selectGroupType === type.value
                     ? 'var(--el-color-primary)'
@@ -53,30 +82,46 @@
                   selectGroupType === type.value
                     ? 'var(--el-color-white)'
                     : 'var(--el-color-primary)',
-              }">
+              }"
+            >
               {{ type.label }}
             </button>
           </div>
         </div>
-        <div ref="groupChart" class="w-full flex-1" :style="{ minHeight: '220px', height: '100%' }"></div>
+        <div
+          ref="groupChart"
+          class="w-full flex-1"
+          :style="{ minHeight: '220px', height: '100%' }"
+        ></div>
       </div>
 
       <!-- 热门插件图表 -->
-      <div class="hot-plugin base-border rounded-xl p-4 shadow-lg h-full min-h-75 flex flex-col overflow-hidden" :style="{
-        minHeight: '280px',
-        backgroundColor: 'var(--el-bg-color)',
-      }">
+      <div
+        class="hot-plugin base-border rounded-xl p-4 shadow-lg h-full min-h-75 flex flex-col overflow-hidden"
+        :style="{
+          minHeight: '280px',
+          backgroundColor: 'var(--el-bg-color)',
+        }"
+      >
         <div ref="hotPluginBorder" class="flex justify-between items-center mb-2">
           <p class="mb-1 md:mb-0 flex items-center" :style="{ color: 'var(--el-color-primary)' }">
-            <i class="fas fa-users mr-1 animate-bounce" :style="{ color: 'var(--el-color-primary)' }"></i>
+            <i
+              class="fas fa-users mr-1 animate-bounce"
+              :style="{ color: 'var(--el-color-primary)' }"
+            ></i>
             热门插件
           </p>
           <div class="flex flex-wrap gap-1">
-            <button v-for="type in timeTypes" :key="'plugin' + type.value" @click="clickHotPluginType(type.value)"
-              class="px-2 py-0.5 rounded-full transition-all duration-200" :class="{
+            <button
+              v-for="type in timeTypes"
+              :key="'plugin' + type.value"
+              @click="clickHotPluginType(type.value)"
+              class="px-2 py-0.5 rounded-full transition-all duration-200"
+              :class="{
                 'text-white shadow-sm': selectHotPluginType === type.value,
                 'hover:bg-opacity-80': selectHotPluginType !== type.value,
-              }" :style="{
+              }"
+              :style="{
                 backgroundColor:
                   selectHotPluginType === type.value
                     ? 'var(--el-color-primary)'
@@ -85,98 +130,104 @@
                   selectHotPluginType === type.value
                     ? 'var(--el-color-white)'
                     : 'var(--el-color-primary)',
-              }">
+              }"
+            >
               {{ type.label }}
             </button>
           </div>
         </div>
-        <div ref="hotPluginChart" class="w-full flex-1" :style="{ minHeight: '220px', height: '100%' }"></div>
+        <div
+          ref="hotPluginChart"
+          class="w-full flex-1"
+          :style="{ minHeight: '220px', height: '100%' }"
+        ></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, inject } from "vue"
-import EventBus from "@/utils/event-bus"
-import { debounce } from "lodash"
-import { getChartOption } from "@/utils/template"
-import { useMainStore } from "@/stores/main"
-import * as echarts from "echarts"
-import { isMobile } from "@/utils/validate"
-import { getLoading } from "@/utils/loading"
-import { getRequest } from "@/utils/api"
-import { message } from "@/utils/message"
+import { ref, computed, onMounted, onUnmounted, nextTick, inject } from 'vue'
+import EventBus from '@/utils/event-bus'
+import { debounce } from 'lodash'
+import { getChartOption } from '@/utils/template'
+import { useMainStore } from '@/stores/main'
+import * as echarts from 'echarts/core'
+import type { EChartsOption, SeriesOption } from 'echarts'
+import { isMobile } from '@/utils/validate'
+import { getLoading } from '@/utils/loading'
+import { getRequest } from '@/utils/api'
+import { message } from '@/utils/message'
 
 const store = useMainStore()
 const prefix = inject<string>('prefix')
 
 interface config {
-  driver: String
+  driver: string
   host: string
   port: string
   log_level: string
   api_timeout: string
   nickname: string[]
-  session_expire_timeout: string;
-  nicknames?: string;
+  session_expire_timeout: string
+  nicknames?: string
 }
 interface getNonebotConfigResponse {
-  suc: boolean;
-  code: number;
-  info: string;
-  warning?: string;
-  data: config;
+  suc: boolean
+  code: number
+  info: string
+  warning?: string
+  data: config
 }
 interface activeGroup {
-  group_id: string;
-  name: string;
-  chat_num: number;
-  ava_img: string;
+  group_id: string
+  name: string
+  chat_num: number
+  ava_img: string
 }
 interface getActiveGroupResponse {
-  suc: boolean;
-  code: number;
-  info: string;
-  warning?: string;
-  data: activeGroup[];
+  suc: boolean
+  code: number
+  info: string
+  warning?: string
+  data: activeGroup[]
 }
 interface hotPlugin {
-  name: string;
-  count: number;
+  name: string
+  count: number
 }
 interface getHotPluginResponse {
-  suc: boolean;
-  code: number;
-  info: string;
-  warning?: string;
-  data: hotPlugin[];
+  suc: boolean
+  code: number
+  info: string
+  warning?: string
+  data: hotPlugin[]
 }
 
 const timeTypes = ref([
-  { label: "全部", value: "all" },
-  { label: "日", value: "day" },
-  { label: "周", value: "week" },
-  { label: "月", value: "month" },
-  { label: "年", value: "year" },
+  { label: '全部', value: 'all' },
+  { label: '日', value: 'day' },
+  { label: '周', value: 'week' },
+  { label: '月', value: 'month' },
+  { label: '年', value: 'year' },
 ])
 
 const chartHeight = ref(240)
 const chartDivHeight = ref(320)
 const botInfo = ref<typeof store.botInfo>(null)
 const botConfig = ref<config>({
-  host: "127.0.0.1",
-  port: "20000",
-  driver: "~fastapi+~httpx+~websockets",
-  log_level: "INFO",
-  api_timeout: "30.0",
-  session_expire_timeout: "30",
+  host: '127.0.0.1',
+  port: '20000',
+  driver: '~fastapi+~httpx+~websockets',
+  log_level: 'INFO',
+  api_timeout: '30.0',
+  session_expire_timeout: '30',
   nickname: [],
 })
-const activeGroupData = ref<{ name: string, value: number }[]>([])
+const activeGroupData = ref<{ name: string; value: number }[]>([])
 const hotPluginData = ref<{ name: string; value: number }[]>([])
-const selectGroupType = ref("all")
-const selectHotPluginType = ref("all")
+const selectGroupType = ref('all')
+const selectHotPluginType = ref('all')
 const groupCntInterval = ref<number | null>(null)
 const chartResizeObserver = ref<ResizeObserver | null>(null)
 const groupChart = ref<HTMLElement | null>(null)
@@ -189,18 +240,18 @@ let hotPluginChartInstance: echarts.ECharts | null = null
 
 const configItems = computed(() => {
   return [
-    { label: "Host", value: botConfig.value.host },
-    { label: "Port", value: botConfig.value.port },
-    { label: "Driver", value: botConfig.value.driver },
-    { label: "Log Level", value: botConfig.value.log_level },
-    { label: "API Timeout", value: botConfig.value.api_timeout },
+    { label: 'Host', value: botConfig.value.host },
+    { label: 'Port', value: botConfig.value.port },
+    { label: 'Driver', value: botConfig.value.driver },
+    { label: 'Log Level', value: botConfig.value.log_level },
+    { label: 'API Timeout', value: botConfig.value.api_timeout },
     {
-      label: "Session Timeout",
+      label: 'Session Timeout',
       value: botConfig.value.session_expire_timeout,
     },
     {
-      label: "Nicknames",
-      value: botConfig.value.nickname?.join(", ") || "无",
+      label: 'Nicknames',
+      value: botConfig.value.nickname?.join(', ') || '无',
     },
   ]
 })
@@ -210,7 +261,7 @@ if (store.botInfo) {
 }
 
 onMounted(() => {
-  window.addEventListener("resize", handleResize)
+  window.addEventListener('resize', handleResize)
   getNonebotConfig()
   groupCntInterval.value = setInterval(() => {
     getActiveGroupData(selectGroupType.value, true)
@@ -224,14 +275,14 @@ onMounted(() => {
     })
   })
 
-  EventBus.on("sidebar-aside", debounce(handleResize, 200))
-  EventBus.on("change-theme", debounce(updateChartTheme, 200))
+  EventBus.on('sidebar-aside', debounce(handleResize, 200))
+  EventBus.on('change-theme', debounce(updateChartTheme, 200))
 })
 
 onUnmounted(() => {
-  window.removeEventListener("resize", handleResize)
-  EventBus.off("sidebar-aside", handleResize)
-  EventBus.off("change-theme", updateChartTheme)
+  window.removeEventListener('resize', handleResize)
+  EventBus.off('sidebar-aside', handleResize)
+  EventBus.off('change-theme', updateChartTheme)
   if (groupCntInterval.value) {
     clearInterval(groupCntInterval.value)
   }
@@ -243,7 +294,7 @@ onUnmounted(() => {
 })
 
 function setupResizeObserver() {
-  if (typeof ResizeObserver === "undefined") {
+  if (typeof ResizeObserver === 'undefined') {
     return
   }
 
@@ -265,7 +316,8 @@ function initChartsWhenReady() {
 
       const groupRect = groupChart.value.getBoundingClientRect()
       const pluginRect = hotPluginChart.value.getBoundingClientRect()
-      const hasSize = groupRect.width > 0 && groupRect.height > 0 && pluginRect.width > 0 && pluginRect.height > 0
+      const hasSize =
+        groupRect.width > 0 && groupRect.height > 0 && pluginRect.width > 0 && pluginRect.height > 0
 
       if (!hasSize) {
         return false
@@ -299,8 +351,8 @@ function updateChartTheme() {
   const groupOption = getChartOption()
   const pluginOption = getChartOption()
 
-  const groupSeries = groupOption.series as echarts.SeriesOption[] | undefined
-  const pluginSeries = pluginOption.series as echarts.SeriesOption[] | undefined
+  const groupSeries = groupOption.series as SeriesOption[] | undefined
+  const pluginSeries = pluginOption.series as SeriesOption[] | undefined
 
   if (Array.isArray(groupSeries) && groupSeries[0]) {
     groupSeries[0].data = activeGroupData.value
@@ -310,8 +362,8 @@ function updateChartTheme() {
   }
 
   if (groupChartInstance && hotPluginChartInstance) {
-    groupChartInstance.setOption(groupOption as echarts.EChartsOption, true)
-    hotPluginChartInstance.setOption(pluginOption as echarts.EChartsOption, true)
+    groupChartInstance.setOption(groupOption as EChartsOption, true)
+    hotPluginChartInstance.setOption(pluginOption as EChartsOption, true)
     groupChartInstance.resize()
     hotPluginChartInstance.resize()
   }
@@ -327,7 +379,10 @@ function handleResize() {
         const containerHeight = rightInfo.value.offsetHeight
         const calculatedHeight = (containerHeight - baseBorder.value.offsetHeight - 54) / 2
         chartDivHeight.value = Math.max(calculatedHeight, 280)
-        chartHeight.value = Math.max(chartDivHeight.value - activeGroupBorder.value.offsetHeight - 30, 220)
+        chartHeight.value = Math.max(
+          chartDivHeight.value - activeGroupBorder.value.offsetHeight - 30,
+          220,
+        )
       }
     }
 
@@ -339,7 +394,7 @@ function handleResize() {
 }
 
 function getNonebotConfig() {
-  const loading = getLoading(".base-border")
+  const loading = getLoading('.base-border')
   getRequest(`${prefix}/dashboard/get_nonebot_config`).then(
     (resp: { data: getNonebotConfigResponse }) => {
       if (resp.data.suc) {
@@ -348,16 +403,16 @@ function getNonebotConfig() {
         } else {
           message.success(resp.data.info)
           botConfig.value = resp.data.data
-          botConfig.value.nicknames = ""
+          botConfig.value.nicknames = ''
           if (botConfig.value.nickname) {
-            botConfig.value.nicknames = botConfig.value.nickname.join(",")
+            botConfig.value.nicknames = botConfig.value.nickname.join(',')
           }
         }
       } else {
         message.error(resp.data.info)
       }
       loading.close()
-    }
+    },
   )
 }
 
@@ -366,23 +421,23 @@ function clickGroupType(type: string) {
   getActiveGroupData(type)
 
   // 添加点击动画效果
-  const buttons = document.querySelectorAll(".active-group button")
+  const buttons = document.querySelectorAll('.active-group button')
   buttons.forEach((btn) => {
-    const text = btn.textContent || ""
+    const text = btn.textContent || ''
     if (text.toLowerCase() === type) {
-      btn.classList.add("animate-pulse")
-      setTimeout(() => btn.classList.remove("animate-pulse"), 500)
+      btn.classList.add('animate-pulse')
+      setTimeout(() => btn.classList.remove('animate-pulse'), 500)
     }
   })
 }
 
 function getActiveGroupData(date_type: string | null = null, no_loading = false) {
-  if (date_type == "all") {
+  if (date_type == 'all') {
     date_type = null
   }
   let loading = null
   if (!no_loading) {
-    loading = getLoading(".active-group")
+    loading = getLoading('.active-group')
   }
   getRequest(`${prefix}/main/get_active_group`, {
     date_type,
@@ -409,8 +464,8 @@ function getActiveGroupData(date_type: string | null = null, no_loading = false)
 
         // --- 主题化修改 Start ---
         try {
-          const opt = tmpOpt as echarts.EChartsOption
-          opt.backgroundColor = "transparent" // 设置背景透明
+          const opt = tmpOpt as EChartsOption
+          opt.backgroundColor = 'transparent' // 设置背景透明
 
           // X 轴
           if (opt.xAxis && Array.isArray(opt.xAxis) && opt.xAxis[0]) {
@@ -432,30 +487,32 @@ function getActiveGroupData(date_type: string | null = null, no_loading = false)
           }
           // 提示框
           if (opt.tooltip && !Array.isArray(opt.tooltip)) {
-            const tooltip = opt.tooltip as unknown as { formatter?: string | ((params: unknown) => string) }
+            const tooltip = opt.tooltip as unknown as {
+              formatter?: string | ((params: unknown) => string)
+            }
             // @ts-expect-error ECharts tooltip formatters have a complex parameter type
             tooltip.formatter = function (params: { name: string; value: unknown }) {
               return params.name + '<br/>' + params.value + ' 次聊天'
             }
           }
         } catch (e) {
-          console.error("Failed to apply theme to group chart:", e)
+          console.error('Failed to apply theme to group chart:', e)
         }
         // --- 主题化修改 End ---
 
-        const optData = tmpOpt as echarts.EChartsOption
+        const optData = tmpOpt as EChartsOption
         const xAxisObj = Array.isArray(optData.xAxis)
           ? (optData.xAxis[0] as unknown)
           : (optData.xAxis as unknown)
 
-        if (xAxisObj && typeof xAxisObj === "object") {
-          ; (xAxisObj as Record<string, unknown>)["data"] = group_list
+        if (xAxisObj && typeof xAxisObj === 'object') {
+          ;(xAxisObj as Record<string, unknown>)['data'] = group_list
         }
         if (optData.series && Array.isArray(optData.series) && optData.series[0]) {
           optData.series[0].data = data
         }
         activeGroupData.value = data
-        groupChartInstance?.setOption(tmpOpt as echarts.EChartsOption, true)
+        groupChartInstance?.setOption(tmpOpt as EChartsOption, true)
       }
     } else {
       if (loading) {
@@ -473,21 +530,21 @@ function clickHotPluginType(type: string) {
   getHotPlugin(type)
 
   // 添加点击动画效果
-  const buttons = document.querySelectorAll(".hot-plugin button")
+  const buttons = document.querySelectorAll('.hot-plugin button')
   buttons.forEach((btn) => {
-    const text = btn.textContent || ""
+    const text = btn.textContent || ''
     if (text.toLowerCase() === type) {
-      btn.classList.add("animate-pulse")
-      setTimeout(() => btn.classList.remove("animate-pulse"), 500)
+      btn.classList.add('animate-pulse')
+      setTimeout(() => btn.classList.remove('animate-pulse'), 500)
     }
   })
 }
 
 function getHotPlugin(date_type: string | null = null) {
-  if (date_type === "all") {
+  if (date_type === 'all') {
     date_type = null
   }
-  const loading = getLoading(".hot-plugin")
+  const loading = getLoading('.hot-plugin')
   getRequest(`${prefix}/main/get_hot_plugin`, {
     date_type,
   }).then((resp: { data: getHotPluginResponse }) => {
@@ -508,7 +565,7 @@ function getHotPlugin(date_type: string | null = null) {
 
         // --- 主题化修改 Start ---
         try {
-          const opt = tmpOpt as echarts.EChartsOption
+          const opt = tmpOpt as EChartsOption
           // X 轴
           if (opt.xAxis && Array.isArray(opt.xAxis) && opt.xAxis[0]) {
             opt.xAxis[0].axisLabel = opt.xAxis[0].axisLabel || {}
@@ -529,30 +586,32 @@ function getHotPlugin(date_type: string | null = null) {
           }
           // 提示框
           if (opt.tooltip && !Array.isArray(opt.tooltip)) {
-            const tooltip = opt.tooltip as unknown as { formatter?: string | ((params: unknown) => string) }
+            const tooltip = opt.tooltip as unknown as {
+              formatter?: string | ((params: unknown) => string)
+            }
             // @ts-expect-error ECharts tooltip formatters have a complex parameter type
             tooltip.formatter = function (params: { name: string; value: unknown }) {
               return params.name + '<br/>' + params.value + ' 次使用'
             }
           }
         } catch (e) {
-          console.error("Failed to apply theme to plugin chart:", e)
+          console.error('Failed to apply theme to plugin chart:', e)
         }
         // --- 主题化修改 End ---
 
-        const optData = tmpOpt as echarts.EChartsOption
+        const optData = tmpOpt as EChartsOption
         const xAxisObj = Array.isArray(optData.xAxis)
           ? (optData.xAxis[0] as unknown)
           : (optData.xAxis as unknown)
 
-        if (xAxisObj && typeof xAxisObj === "object") {
-          ; (xAxisObj as Record<string, unknown>)["data"] = hotPluginList
+        if (xAxisObj && typeof xAxisObj === 'object') {
+          ;(xAxisObj as Record<string, unknown>)['data'] = hotPluginList
         }
         if (optData.series && Array.isArray(optData.series) && optData.series[0]) {
           optData.series[0].data = data
         }
         hotPluginData.value = data
-        hotPluginChartInstance?.setOption(tmpOpt as echarts.EChartsOption, true)
+        hotPluginChartInstance?.setOption(tmpOpt as EChartsOption, true)
       }
     } else {
       message.error(resp.data.info)
@@ -582,7 +641,7 @@ function getHotPlugin(date_type: string | null = null) {
 }
 
 /* 图表标题样式 */
-.base-border>div>p {
+.base-border > div > p {
   font-size: var(--font-size-lg);
   font-weight: bold;
 }
@@ -606,7 +665,7 @@ function getHotPlugin(date_type: string | null = null) {
     font-size: var(--font-size-micro);
   }
 
-  .base-border>div>p {
+  .base-border > div > p {
     font-size: var(--font-size-md);
   }
 
@@ -653,17 +712,19 @@ function getHotPlugin(date_type: string | null = null) {
 }
 
 .base-border::before {
-  content: "";
+  content: '';
   position: absolute;
   top: -5px;
   left: -5px;
   right: -5px;
   bottom: -5px;
   z-index: -1;
-  background: linear-gradient(45deg,
-      var(--el-color-primary),
-      var(--el-color-primary-light-3),
-      var(--el-color-primary-light-5));
+  background: linear-gradient(
+    45deg,
+    var(--el-color-primary),
+    var(--el-color-primary-light-3),
+    var(--el-color-primary-light-5)
+  );
   background-size: 300% 300%;
   border-radius: 12px;
   opacity: 0.1;
@@ -695,11 +756,11 @@ function getHotPlugin(date_type: string | null = null) {
   box-shadow: var(--el-box-shadow-light) !important;
 }
 
-:deep(.el-tooltip__popper[x-placement^="top"] .popper__arrow) {
+:deep(.el-tooltip__popper[x-placement^='top'] .popper__arrow) {
   border-top-color: var(--el-color-primary) !important;
 }
 
-:deep(.el-tooltip__popper[x-placement^="bottom"] .popper__arrow) {
+:deep(.el-tooltip__popper[x-placement^='bottom'] .popper__arrow) {
   border-bottom-color: var(--el-color-primary) !important;
 }
 </style>

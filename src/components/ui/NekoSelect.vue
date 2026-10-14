@@ -1,14 +1,28 @@
 <template>
   <div class="moe-select-container w-full">
-    <el-select v-model="selectedValue" :placeholder="placeholder" :popper-class="`moe-select-dropdown ${popperClass}`"
-      class="moe-el-select w-full" :class="{ 'is-focused': isDropdownVisible }" @change="handleChange"
-      @visible-change="handleVisibleChange" @focus="handleFocus" @blur="handleBlur" :clearable="clearable">
+    <el-select
+      v-model="selectedValue"
+      :placeholder="placeholder"
+      :popper-class="`moe-select-dropdown ${popperClass}`"
+      class="moe-el-select w-full"
+      :class="{ 'is-focused': isDropdownVisible }"
+      @change="handleChange"
+      @visible-change="handleVisibleChange"
+      @focus="handleFocus"
+      @blur="handleBlur"
+      :clearable="clearable"
+    >
       <template #prefix>
         <i class="i-mdi-heart-outline text-pink-400 mr-1"></i>
       </template>
 
-      <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value"
-        class="moe-select-option">
+      <el-option
+        v-for="item in options"
+        :key="item.value"
+        :label="item.label"
+        :value="item.value"
+        class="moe-select-option"
+      >
         <div class="flex items-center">
           <i class="i-mdi-star-outline text-pink-300 mr-2" v-if="!isSelected(item)"></i>
           <i class="i-mdi-star text-yellow-400 mr-2" v-else></i>
@@ -24,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { ref, watch } from 'vue'
 
 interface SelectOption {
   value: string | number | object
@@ -41,24 +55,24 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   value: null,
-  placeholder: "请选择~",
-  popperClass: "",
+  placeholder: '请选择~',
+  popperClass: '',
   clearable: false,
 })
 
 const emit = defineEmits<{
-  (e: "input", value: string | number | object): void
-  (e: "change", value: string | number | object): void
-  (e: "focus"): void
-  (e: "blur"): void
+  (e: 'input', value: string | number | object): void
+  (e: 'change', value: string | number | object): void
+  (e: 'focus'): void
+  (e: 'blur'): void
 }>()
 
 const selectedValue = ref<string | number | object | null>(props.value)
 const isDropdownVisible = ref(false)
 
 function handleChange(value: string | number | object) {
-  emit("input", value)
-  emit("change", value)
+  emit('input', value)
+  emit('change', value)
 }
 
 function handleVisibleChange(visible: boolean) {
@@ -66,11 +80,11 @@ function handleVisibleChange(visible: boolean) {
 }
 
 function handleFocus() {
-  emit("focus")
+  emit('focus')
 }
 
 function handleBlur() {
-  emit("blur")
+  emit('blur')
 }
 
 function isSelected(option: SelectOption): boolean {
@@ -81,7 +95,7 @@ watch(
   () => props.value,
   (newVal) => {
     selectedValue.value = newVal
-  }
+  },
 )
 </script>
 
@@ -89,8 +103,9 @@ watch(
 .moe-select-container {
   position: relative;
   width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
+    'Helvetica Neue', sans-serif;
 
   .soft-pink-overlay {
     position: absolute;
@@ -100,9 +115,7 @@ watch(
     bottom: 0;
     border-radius: 0.5rem;
     pointer-events: none;
-    background: linear-gradient(120deg,
-        var(--primary-color-light-9),
-        var(--primary-color-light-8));
+    background: linear-gradient(120deg, var(--primary-color-light-9), var(--primary-color-light-8));
     opacity: 0.3;
     z-index: 0;
   }

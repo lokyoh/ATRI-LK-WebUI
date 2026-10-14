@@ -20,8 +20,6 @@ export default defineConfig({
       output: {
         // 手动分割代码块
         manualChunks: {
-          // 将 echarts 单独打包
-          'echarts-vendor': ['echarts'],
           // 将 vue 和相关库单独打包
           'vue-vendor': ['vue', 'vue-router', 'pinia'],
           // 将 element-plus 单独打包

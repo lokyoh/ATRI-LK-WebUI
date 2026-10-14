@@ -1,14 +1,20 @@
 <template>
   <div class="plugin-list-container h-full overflow-auto">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-      <div v-for="data in dataList" :key="data.plugin_name"
-        class="plugin-card relative rounded-xl p-4 transition-all duration-300 cursor-pointer" :class="{
+      <div
+        v-for="data in dataList"
+        :key="data.plugin_name"
+        class="plugin-card relative rounded-xl p-4 transition-all duration-300 cursor-pointer"
+        :class="{
           'border-2 border-transparent hover:border-opacity-50': true,
-        }" :style="{
+        }"
+        :style="{
           borderColor: 'var(--border-color-light)',
           boxShadow: 'none',
           background: 'var(--bg-color-secondary)',
-        }" @click="showDetail(data)">
+        }"
+        @click="showDetail(data)"
+      >
         <!-- 选中标记 - 已移除 -->
 
         <!-- 插件内容 -->
@@ -18,57 +24,87 @@
             <h3 class="text-lg font-bold truncate" :style="{ color: 'var(--primary-color)' }">
               {{ data.plugin_name }}
             </h3>
-            <span class="ml-2 text-xs px-1.5 py-0.5 rounded-full" :style="{
-              color: 'var(--primary-color)',
-              backgroundColor: 'var(--bg-color-hover)',
-            }">v{{ data.version }}</span>
+            <span
+              class="ml-2 text-xs px-1.5 py-0.5 rounded-full"
+              :style="{
+                color: 'var(--primary-color)',
+                backgroundColor: 'var(--bg-color-hover)',
+              }"
+              >v{{ data.version }}</span
+            >
           </div>
 
           <!-- 模块和作者 -->
           <p class="text-sm mb-2 truncate" :style="{ color: 'var(--text-color-secondary)' }">
             <span class="font-mono">{{ data.module }}</span>
-            <span v-if="data.author" class="ml-2" :style="{ color: 'var(--primary-color-light)' }">@{{ data.author
-              }}</span>
+            <span v-if="data.author" class="ml-2" :style="{ color: 'var(--primary-color-light)' }"
+              >@{{ data.author }}</span
+            >
           </p>
 
           <!-- 底部按钮区域 - 右侧横向排列 -->
-          <div class="flex justify-end items-center mt-3 pt-2"
-            :style="{ borderTop: '1px solid var(--border-color-light)' }">
+          <div
+            class="flex justify-end items-center mt-3 pt-2"
+            :style="{ borderTop: '1px solid var(--border-color-light)' }"
+          >
             <!-- 开关 -->
-            <div class="flex items-center" title="切换插件状态" @click.stop>
-              <MySwitch v-model="data.status" :disabled="!data.allow_switch" @change="onSwitchChange(data, $event)" />
-              <span v-if="!data.allow_switch" class="ml-2 text-xs"
-                :style="{ color: 'var(--text-color-secondary)' }">禁用</span>
-              <span v-else class="ml-2 text-xs" :style="{
-                color: data.status
-                  ? 'var(--el-color-success)'
-                  : 'var(--el-color-danger)',
-              }">{{ data.status ? "开启" : "关闭" }}</span>
+            <div v-if="data.allow_switch" class="flex items-center" title="切换插件状态" @click.stop>
+              <MySwitch
+                v-model="data.status"
+                @change="onSwitchChange(data, $event)"
+              />
+              <span
+                class="ml-2 text-xs"
+                :style="{
+                  color: data.status ? 'var(--el-color-success)' : 'var(--el-color-danger)',
+                }"
+                >{{ data.status ? '开启' : '关闭' }}</span
+              >
             </div>
 
             <!-- 配置按钮 -->
-            <NormalButton class="fas fa-cog text-lg" iconClass="setting" :disabled="!data.allow_setting" text="配置"
-              title="插件配置" baseClass="hover:scale-110"
+            <NormalButton
+              v-if="data.allow_setting"
+              class="fas fa-cog text-lg"
+              iconClass="setting"
+              text="配置"
+              title="插件配置"
+              baseClass="hover:scale-110"
               activeClass="bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-800"
-              @click.stop="openSetting(data)" />
+              @click.stop="openSetting(data)"
+            />
 
             <!-- 卸载按钮 -->
-            <NormalButton text="卸载" :iconClass="data.is_builtin ? 'uninstall-disabled' : 'uninstall-purple'
-              " :title="data.is_builtin ? '系统内置插件不可卸载' : '卸载插件'" :disabled="data.is_builtin"
+            <NormalButton
+              v-if="!data.is_builtin"
+              text="卸载"
+              iconClass="uninstall-purple"
+              title="卸载插件"
               :base-class="'hover:scale-110'"
               :active-class="'bg-purple-100 text-purple-600 hover:bg-purple-200 hover:text-purple-800'"
-              @click="uninstallPlugin(data)" />
+              @click="uninstallPlugin(data)"
+            />
           </div>
         </div>
       </div>
     </div>
 
-    <UpdateDialog v-if="dialogVisible" :service="pluginModule" v-model:visible="dialogVisible"
-      @close="closeSetting(false)" />
+    <UpdateDialog
+      v-if="dialogVisible"
+      :service="pluginModule"
+      v-model:visible="dialogVisible"
+      @close="closeSetting(false)"
+    />
 
     <!-- 插件详情对话框 -->
-    <NeonDialog v-model:visible="detailDialogVisible" title="插件详情" icon-class="info" @confirm="handleDetailConfirm"
-      class="detail-dialog" :close-on-click-modal="true">
+    <NeonDialog
+      v-model:visible="detailDialogVisible"
+      title="插件详情"
+      icon-class="info"
+      @confirm="handleDetailConfirm"
+      class="detail-dialog"
+      :close-on-click-modal="true"
+    >
       <div v-if="currentPluginDetail" class="detail-content">
         <!-- 基本信息 -->
         <div class="detail-section">
@@ -78,7 +114,9 @@
           <div class="grid grid-cols-2 gap-3 text-sm">
             <div>
               <span class="text-gray-500">插件名称：</span>
-              <span :style="{ color: 'var(--primary-color)' }">{{ currentPluginDetail.plugin_name }}</span>
+              <span :style="{ color: 'var(--primary-color)' }">{{
+                currentPluginDetail.plugin_name
+              }}</span>
             </div>
             <div>
               <span class="text-gray-500">版本：</span>
@@ -94,12 +132,15 @@
             </div>
             <div>
               <span class="text-gray-500">状态：</span>
-              <span :style="{
-                color: currentPluginDetail.status
-                  ? 'var(--el-color-success)'
-                  : 'var(--el-color-danger)',
-              }" class="text-sm font-medium">
-                {{ currentPluginDetail.status ? "启用" : "禁用" }}
+              <span
+                :style="{
+                  color: currentPluginDetail.status
+                    ? 'var(--el-color-success)'
+                    : 'var(--el-color-danger)',
+                }"
+                class="text-sm font-medium"
+              >
+                {{ currentPluginDetail.status ? '启用' : '禁用' }}
               </span>
             </div>
           </div>
@@ -123,11 +164,17 @@
           <div class="space-y-4">
             <!-- 第一行：启用状态和白名单模式 -->
             <div class="grid grid-cols-2 gap-4">
-              <div class="flex items-center justify-between p-3 rounded-lg" :style="{ background: 'var(--bg-color)' }">
+              <div
+                class="flex items-center justify-between p-3 rounded-lg"
+                :style="{ background: 'var(--bg-color)' }"
+              >
                 <span class="text-sm font-medium">启用状态</span>
                 <MySwitch v-model="editData.configs.enabled" />
               </div>
-              <div class="flex items-center justify-between p-3 rounded-lg" :style="{ background: 'var(--bg-color)' }">
+              <div
+                class="flex items-center justify-between p-3 rounded-lg"
+                :style="{ background: 'var(--bg-color)' }"
+              >
                 <span class="text-sm font-medium">白名单模式</span>
                 <MySwitch v-model="editData.configs.white_list_mode" />
               </div>
@@ -136,19 +183,28 @@
             <!-- 禁用用户列表 -->
             <div>
               <label class="block text-sm font-medium mb-2">禁用用户列表</label>
-              <TagInput v-model="editData.configs.disable_user" placeholder="输入用户 ID 后按回车添加" />
+              <TagInput
+                v-model="editData.configs.disable_user"
+                placeholder="输入用户 ID 后按回车添加"
+              />
             </div>
 
             <!-- 禁用群组列表 -->
             <div>
               <label class="block text-sm font-medium mb-2">禁用群组列表</label>
-              <TagInput v-model="editData.configs.disable_group" placeholder="输入群组 ID 后按回车添加" />
+              <TagInput
+                v-model="editData.configs.disable_group"
+                placeholder="输入群组 ID 后按回车添加"
+              />
             </div>
 
             <!-- 白名单列表 -->
             <div>
               <label class="block text-sm font-medium mb-2">白名单列表</label>
-              <TagInput v-model="editData.configs.white_list" placeholder="输入用户/群组 ID 后按回车添加" />
+              <TagInput
+                v-model="editData.configs.white_list"
+                placeholder="输入用户/群组 ID 后按回车添加"
+              />
             </div>
           </div>
         </div>
@@ -158,17 +214,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, inject, h, render } from "vue"
-import { useRouter } from "vue-router"
-import UpdateDialog from "./UpdateDialog.vue"
-import NormalButton from "@/components/ui/NormalButton.vue"
-import MySwitch from "@/components/ui/MySwitch.vue"
-import NeonDialog from "@/components/ui/NeonDialog.vue"
-import TagInput from "@/components/ui/TagInput.vue"
-import CuteConfirm from "@/components/ui/CuteConfirm.vue"
-import { getRequest, postRequest } from "@/utils/api"
-import { getLoading } from "@/utils/loading"
-import { message } from "@/utils/message"
+import { ref, onMounted, inject, h, render } from 'vue'
+import { useRouter } from 'vue-router'
+import UpdateDialog from './UpdateDialog.vue'
+import NormalButton from '@/components/ui/NormalButton.vue'
+import MySwitch from '@/components/ui/MySwitch.vue'
+import NeonDialog from '@/components/ui/NeonDialog.vue'
+import TagInput from '@/components/ui/TagInput.vue'
+import CuteConfirm from '@/components/ui/CuteConfirm.vue'
+import { getRequest, postRequest } from '@/utils/api'
+import { getLoading } from '@/utils/loading'
+import { message } from '@/utils/message'
 
 const prefix = inject<string>('prefix') as string
 const router = useRouter()
@@ -179,7 +235,7 @@ const showCuteConfirm = (options: {
   message: string
   cancelButtonText?: string
   confirmButtonText?: string
-  type?: "info" | "warning" | "error"
+  type?: 'info' | 'warning' | 'error'
 }): Promise<boolean> => {
   return new Promise((resolve) => {
     const container = document.createElement('div')
@@ -187,7 +243,7 @@ const showCuteConfirm = (options: {
 
     const props = ref({
       visible: true,
-      ...options
+      ...options,
     })
 
     const vnode = h(CuteConfirm, {
@@ -199,7 +255,7 @@ const showCuteConfirm = (options: {
       onCancel: () => {
         cleanup()
         resolve(false)
-      }
+      },
     })
 
     const cleanup = () => {
@@ -235,8 +291,6 @@ interface PluginData {
   [key: string]: unknown
 }
 
-
-
 const dataList = ref<PluginData[]>([])
 const pluginModule = ref<string>('')
 const dialogVisible = ref(false)
@@ -265,20 +319,19 @@ const editData = ref<EditData>({
 })
 
 interface Props {
-  pluginType?: string,
+  pluginType?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   pluginType: '',
 })
 
-
 onMounted(() => {
   getPluginList()
 })
 
 function getPluginList() {
-  const loading = getLoading(".plugin-list-container")
+  const loading = getLoading('.plugin-list-container')
 
   const params: Record<string, string | string[]> = {}
   if (props.pluginType) {
@@ -293,12 +346,12 @@ function getPluginList() {
           message.warning(resp.data.warning)
         }
       } else {
-        message.error(resp.data.info || "获取插件列表失败")
+        message.error(resp.data.info || '获取插件列表失败')
         dataList.value = []
       }
     })
     .catch((error) => {
-      message.error("请求插件列表失败：" + error)
+      message.error('请求插件列表失败：' + error)
       dataList.value = []
     })
     .finally(() => loading.close())
@@ -333,11 +386,11 @@ function closeSetting(updated?: boolean) {
 
 async function uninstallPlugin(data: PluginData) {
   const result = await showCuteConfirm({
-    title: "卸载确认",
+    title: '卸载确认',
     message: `确定要卸载插件 "${data.plugin_name}" 吗？`,
-    cancelButtonText: "我再想想",
-    confirmButtonText: "狠心卸载",
-    type: "warning"
+    cancelButtonText: '我再想想',
+    confirmButtonText: '狠心卸载',
+    type: 'warning',
   })
 
   if (result) {
@@ -353,14 +406,14 @@ async function uninstallPlugin(data: PluginData) {
             getPluginList()
           }
         } else {
-          message.error(resp.data.info || "卸载失败")
+          message.error(resp.data.info || '卸载失败')
         }
       })
     } catch (error: unknown) {
-      message.error("卸载失败：" + (error instanceof Error ? error.message : String(error)))
+      message.error('卸载失败：' + (error instanceof Error ? error.message : String(error)))
     }
   } else {
-    console.log("取消卸载")
+    console.log('取消卸载')
   }
 }
 
@@ -438,13 +491,10 @@ async function handleDetailConfirm() {
   }
 
   try {
-    const resp = await postRequest!(
-      `${prefix}/plugin/update_plugin`,
-      {
-        service: currentPluginDetail.value.plugin_name,
-        configs,
-      }
-    )
+    const resp = await postRequest!(`${prefix}/plugin/update_plugin`, {
+      service: currentPluginDetail.value.plugin_name,
+      configs,
+    })
     if (resp.data.suc) {
       if (resp.data.warning) {
         message?.warning(resp.data.warning)
@@ -466,9 +516,8 @@ async function handleDetailConfirm() {
 <style scoped>
 .plugin-card {
   box-shadow: var(--card-shadow);
-  background-image: radial-gradient(circle at 10% 20%,
-      var(--primary-color-light) 0%,
-      var(--bg-color-hover) 90%),
+  background-image:
+    radial-gradient(circle at 10% 20%, var(--primary-color-light) 0%, var(--bg-color-hover) 90%),
     linear-gradient(to bottom right, var(--bg-color), var(--bg-color-secondary));
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   min-height: 140px;
@@ -512,7 +561,6 @@ async function handleDetailConfirm() {
 
 /* 移动端适配 */
 @media (max-width: 640px) {
-
   /* 小屏幕下只显示图标 */
   .plugin-card button span {
     display: none;

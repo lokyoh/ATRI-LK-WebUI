@@ -13,9 +13,15 @@
 
     <div v-if="providers.length" class="panel-body">
       <div class="provider-list">
-        <div v-for="provider in providers" :key="provider.provider_name"
-          :class="['provider-card', { active: activeProvider?.provider_name === provider.provider_name }]"
-          @click="selectProvider(provider.provider_name)">
+        <div
+          v-for="provider in providers"
+          :key="provider.provider_name"
+          :class="[
+            'provider-card',
+            { active: activeProvider?.provider_name === provider.provider_name },
+          ]"
+          @click="selectProvider(provider.provider_name)"
+        >
           <div class="provider-card-top">
             <strong>{{ provider.provider_name }}</strong>
             <el-tag size="small" effect="plain">{{ provider.provider_type || 'unknown' }}</el-tag>
@@ -34,28 +40,55 @@
             </div>
             <div class="detail-actions">
               <el-button size="small" type="primary" @click="openModelDialog">添加模型</el-button>
-              <el-button size="small" plain @click="openProviderDialog(activeProvider)">编辑 Provider</el-button>
-              <el-button size="small" type="danger" plain @click="handleDeleteProvider">删除 Provider</el-button>
+              <el-button size="small" plain @click="openProviderDialog(activeProvider)"
+                >编辑 Provider</el-button
+              >
+              <el-button size="small" type="danger" plain @click="handleDeleteProvider"
+                >删除 Provider</el-button
+              >
             </div>
           </div>
 
           <div class="detail-info">
-            <div><span>地址</span><strong>{{ activeProvider.url || '未配置' }}</strong></div>
+            <div>
+              <span>地址</span><strong>{{ activeProvider.url || '未配置' }}</strong>
+            </div>
           </div>
 
           <div class="model-list">
             <template v-if="activeProvider.models?.length">
               <div v-for="model in activeProvider.models" :key="model.name" class="model-item">
                 <div>
-                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
                     <div class="model-name">{{ model.name }}</div>
-                    <el-tag size="small" :type="typeColor(model.type)">{{ model.type }}</el-tag>
+                    <template v-if="normalizeModelTypes(model.type).length">
+                      <el-tag
+                        v-for="type in normalizeModelTypes(model.type)"
+                        :key="`${model.name}-${type}`"
+                        size="small"
+                        :type="typeColor(type)"
+                        class="model-type-tag"
+                      >
+                        {{ type }}
+                      </el-tag>
+                    </template>
                   </div>
                   <div class="model-meta">{{ model.model }} · temp {{ model.temperature }}</div>
                 </div>
-                <div style="display:flex;gap:8px">
+                <div style="display: flex; gap: 8px">
+                  <el-button
+                    size="small"
+                    type="success"
+                    plain
+                    :loading="testingModelName === model.name"
+                    :disabled="!!testingModelName"
+                    @click="handleTestModel(model)"
+                    >测试 API</el-button
+                  >
                   <el-button size="small" plain @click="openModelDialog(model)">编辑</el-button>
-                  <el-button size="small" type="danger" plain @click="handleDeleteModel(model.name)">删除</el-button>
+                  <el-button size="small" type="danger" plain @click="handleDeleteModel(model.name)"
+                    >删除</el-button
+                  >
                 </div>
               </div>
             </template>
@@ -67,30 +100,52 @@
 
     <div v-else class="empty-state">暂无 Provider，请先添加一个。</div>
 
-    <el-dialog v-model="providerDialogVisible" :title="providerEditMode ? '编辑 Provider' : '添加 Provider'" width="560px">
+    <el-dialog
+      v-model="providerDialogVisible"
+      :title="providerEditMode ? '编辑 Provider' : '添加 Provider'"
+      width="560px"
+    >
       <el-form :model="providerForm" label-position="top">
         <el-form-item label="Provider 名称">
           <el-input v-model="providerForm.provider_name" placeholder="例如 siliconflow" />
         </el-form-item>
         <el-form-item label="Provider 类型">
-          <el-input v-model="providerForm.provider_type" placeholder="例如 openai" />
+          <el-select
+            v-model="providerForm.provider_type"
+            placeholder="请选择 Provider 类型"
+            :loading="typeOptionsLoading"
+            class="w-full"
+          >
+            <el-option v-for="type in providerTypes" :key="type" :label="type" :value="type" />
+          </el-select>
         </el-form-item>
         <el-form-item label="服务地址">
           <el-input v-model="providerForm.url" placeholder="https://api.example.com/v1" />
         </el-form-item>
         <el-form-item label="API Key">
-          <el-input v-model="providerForm.api_key" type="password" show-password placeholder="请输入密钥" />
+          <el-input
+            v-model="providerForm.api_key"
+            type="password"
+            show-password
+            placeholder="请输入密钥"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="providerDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitting" @click="handleSaveProvider">确认</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSaveProvider"
+            >确认</el-button
+          >
         </span>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="modelDialogVisible" :title="modelEditMode ? '编辑模型' : '添加模型'" width="560px">
+    <el-dialog
+      v-model="modelDialogVisible"
+      :title="modelEditMode ? '编辑模型' : '添加模型'"
+      width="560px"
+    >
       <el-form :model="modelForm" label-position="top">
         <el-form-item label="显示名称">
           <el-input v-model="modelForm.name" placeholder="例如 my-model" />
@@ -102,7 +157,27 @@
           <el-input-number v-model="modelForm.temperature" :min="0" :max="2" :step="0.1" />
         </el-form-item>
         <el-form-item label="类型">
-          <el-input v-model="modelForm.type" placeholder="例如 chat" />
+          <el-select
+            :model-value="normalizeModelTypes(modelForm.type)"
+            @update:model-value="modelForm.type = $event"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+            placeholder="请选择模型类型"
+            :loading="typeOptionsLoading"
+            class="w-full"
+          >
+            <el-option v-for="type in modelTypes" :key="type" :label="type" :value="type" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="附加配置 (JSON)">
+          <el-input
+            v-model="modelDataText"
+            type="textarea"
+            :rows="4"
+            placeholder='{"max_tokens": 2048, "response_format": {"type": "json_object"}}'
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -116,44 +191,56 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, reactive, ref } from 'vue';
-import { ElMessageBox } from 'element-plus';
-import { getRequest, postRequest } from '@/utils/api';
-import { message } from '@/utils/message';
+import { computed, inject, onMounted, reactive, ref } from 'vue'
+import { ElMessageBox } from 'element-plus'
+import { getRequest, postRequest } from '@/utils/api'
+import { message } from '@/utils/message'
 
 interface LLMModel {
-  name: string;
-  model: string;
-  temperature: number;
-  type: string;
+  name: string
+  model: string
+  temperature: number
+  type: string | string[]
+  data?: Record<string, any>
 }
 
 interface LLMProvider {
-  provider_name: string;
-  provider_type: string;
-  url: string;
-  api_key: string;
-  models: LLMModel[];
+  provider_name: string
+  provider_type: string
+  url: string
+  api_key: string
+  models: LLMModel[]
 }
 
 interface ProviderResponse {
-  suc: boolean;
-  code: number;
-  info: string;
-  data?: LLMProvider[];
+  suc: boolean
+  code: number
+  info: string
+  data?: LLMProvider[]
 }
 
-const prefix = inject<string>('prefix', '/atri/api');
-const loading = ref(false);
-const submitting = ref(false);
-const providers = ref<LLMProvider[]>([]);
-const activeProviderName = ref('');
-const providerDialogVisible = ref(false);
-const modelDialogVisible = ref(false);
-const providerEditMode = ref(false);
-const providerOriginalName = ref('');
-const modelEditMode = ref(false);
-const modelOriginalName = ref('');
+interface TypeOptionsResponse {
+  suc: boolean
+  code: number
+  info: string
+  data?: string[]
+}
+
+const prefix = inject<string>('prefix', '/atri/api')
+const loading = ref(false)
+const submitting = ref(false)
+const testingModelName = ref('')
+const typeOptionsLoading = ref(false)
+const providers = ref<LLMProvider[]>([])
+const providerTypes = ref<string[]>([])
+const modelTypes = ref<string[]>([])
+const activeProviderName = ref('')
+const providerDialogVisible = ref(false)
+const modelDialogVisible = ref(false)
+const providerEditMode = ref(false)
+const providerOriginalName = ref('')
+const modelEditMode = ref(false)
+const modelOriginalName = ref('')
 
 const providerForm = reactive<LLMProvider>({
   provider_name: '',
@@ -161,127 +248,186 @@ const providerForm = reactive<LLMProvider>({
   url: '',
   api_key: '',
   models: [],
-});
+})
+
+const normalizeModelTypes = (value?: string | string[] | null) => {
+  if (!value) return []
+  const values = Array.isArray(value) ? value : [value]
+  return values
+    .filter((item) => typeof item === 'string' && item.trim())
+    .map((item) => item.trim())
+    .filter((item) => item !== 'click' && item !== 'Click')
+}
+
+const modelDataText = ref('{}')
 
 const modelForm = reactive<LLMModel>({
   name: '',
   model: '',
   temperature: 0.7,
-  type: 'chat',
-});
+  type: [],
+  data: {},
+})
 
 const activeProvider = computed(() => {
-  return providers.value.find((provider) => provider.provider_name === activeProviderName.value) || null;
-});
+  return (
+    providers.value.find((provider) => provider.provider_name === activeProviderName.value) || null
+  )
+})
 
 const typeColor = (t: string) => {
-  if (!t) return 'info';
+  if (!t) return 'info'
   const map: Record<string, string> = {
     chat: 'success',
     tool: 'warning',
     image: 'info',
-  };
-  return map[t] || 'info';
-};
+    embedding: 'primary',
+    tts: 'info',
+    sys1: 'danger',
+  }
+  return map[t] || 'info'
+}
 
 const loadProviders = async () => {
-  loading.value = true;
+  loading.value = true
   try {
-    const resp = await getRequest(`${prefix}/agent/get_providers`);
-    const payload = resp.data as ProviderResponse;
+    const resp = await getRequest(`${prefix}/agent/get_providers`)
+    const payload = resp.data as ProviderResponse
 
     if (payload.suc) {
-      providers.value = payload.data || [];
+      providers.value = payload.data || []
       if (!activeProviderName.value && providers.value.length) {
-        activeProviderName.value = providers.value[0]?.provider_name || '';
+        activeProviderName.value = providers.value[0]?.provider_name || ''
       } else if (activeProviderName.value) {
-        const exists = providers.value.some((provider) => provider.provider_name === activeProviderName.value);
+        const exists = providers.value.some(
+          (provider) => provider.provider_name === activeProviderName.value,
+        )
         if (!exists) {
-          activeProviderName.value = providers.value[0]?.provider_name || '';
+          activeProviderName.value = providers.value[0]?.provider_name || ''
         }
       }
     } else {
-      message.error(payload.info || '获取 Provider 列表失败');
+      message.error(payload.info || '获取 Provider 列表失败')
     }
   } catch (error) {
-    console.error('loadProviders error', error);
-    message.error('获取 Provider 列表失败');
+    console.error('loadProviders error', error)
+    message.error('获取 Provider 列表失败')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
+
+const loadTypeOptions = async () => {
+  typeOptionsLoading.value = true
+  const [providerResult, modelResult] = await Promise.allSettled([
+    postRequest(`${prefix}/agent/get_provider_type`),
+    postRequest(`${prefix}/agent/get_model_type`),
+  ])
+
+  if (providerResult.status === 'fulfilled') {
+    const payload = providerResult.value.data as TypeOptionsResponse
+    if (payload?.suc && Array.isArray(payload.data)) {
+      providerTypes.value = payload.data
+    } else {
+      console.error('loadProviderTypes failed', payload?.info)
+      message.error(payload?.info || '获取 Provider 类型失败')
+    }
+  } else {
+    console.error('loadProviderTypes error', providerResult.reason)
+    message.error('获取 Provider 类型失败')
+  }
+
+  if (modelResult.status === 'fulfilled') {
+    const payload = modelResult.value.data as TypeOptionsResponse
+    if (payload?.suc && Array.isArray(payload.data)) {
+      modelTypes.value = payload.data.filter((type) => typeof type === 'string' && type.trim() && type.toLowerCase() !== 'click')
+    } else {
+      console.error('loadModelTypes failed', payload?.info)
+      message.error(payload?.info || '获取模型类型失败')
+    }
+  } else {
+    console.error('loadModelTypes error', modelResult.reason)
+    message.error('获取模型类型失败')
+  }
+  typeOptionsLoading.value = false
+}
 
 const selectProvider = (providerName: string) => {
-  activeProviderName.value = providerName;
-};
+  activeProviderName.value = providerName
+}
 
 const openProviderDialog = (provider?: LLMProvider | null) => {
-  providerEditMode.value = !!provider;
-  providerDialogVisible.value = true;
+  providerEditMode.value = !!provider
+  providerDialogVisible.value = true
   if (provider) {
-    providerOriginalName.value = provider.provider_name;
+    providerOriginalName.value = provider.provider_name
     Object.assign(providerForm, {
       provider_name: provider.provider_name,
       provider_type: provider.provider_type,
       url: provider.url,
       api_key: '',
       models: provider.models || [],
-    });
+    })
   } else {
-    providerOriginalName.value = '';
+    providerOriginalName.value = ''
     Object.assign(providerForm, {
       provider_name: '',
-      provider_type: '',
+      provider_type: providerTypes.value[0] || '',
       url: '',
       api_key: '',
       models: [],
-    });
+    })
   }
-};
+}
 
 const openModelDialog = (model?: LLMModel | null) => {
   if (!activeProvider.value) {
-    message.warning('请先选择一个 Provider');
-    return;
+    message.warning('请先选择一个 Provider')
+    return
   }
-  modelEditMode.value = !!model;
-  modelDialogVisible.value = true;
+  modelEditMode.value = !!model
+  modelDialogVisible.value = true
   if (model) {
-    modelOriginalName.value = model.name;
+    modelOriginalName.value = model.name
     Object.assign(modelForm, {
       name: model.name,
       model: model.model,
       temperature: model.temperature,
-      type: model.type,
-    });
+      type: normalizeModelTypes(model.type),
+      data: model.data || {},
+    })
   } else {
-    modelOriginalName.value = '';
+    modelOriginalName.value = ''
     Object.assign(modelForm, {
       name: '',
       model: '',
       temperature: 0.7,
-      type: 'chat',
-    });
+      type: modelTypes.value[0] ? [modelTypes.value[0]] : [],
+      data: {},
+    })
   }
-};
+  modelDataText.value = JSON.stringify(modelForm.data || {}, null, 2)
+}
 
 const handleSaveProvider = async () => {
   if (!providerForm.provider_name.trim()) {
-    message.warning('请输入 Provider 名称');
-    return;
+    message.warning('请输入 Provider 名称')
+    return
   }
   if (!providerEditMode.value && !providerForm.api_key.trim()) {
-    message.warning('请输入 API Key');
-    return;
+    message.warning('请输入 API Key')
+    return
   }
 
-  submitting.value = true;
+  submitting.value = true
   try {
     if (providerEditMode.value) {
       // renaming: if name changed, delete old then add new
       if (providerForm.provider_name !== providerOriginalName.value && providerOriginalName.value) {
         // delete old
-        await postRequest(`${prefix}/agent/del_provider?provider_name=${encodeURIComponent(providerOriginalName.value)}`);
+        await postRequest(
+          `${prefix}/agent/del_provider?provider_name=${encodeURIComponent(providerOriginalName.value)}`,
+        )
         // add new
         const addResp = await postRequest(`${prefix}/agent/add_provider`, {
           provider_name: providerForm.provider_name,
@@ -289,29 +435,32 @@ const handleSaveProvider = async () => {
           url: providerForm.url,
           api_key: providerForm.api_key,
           models: providerForm.models || [],
-        });
+        })
         if (addResp.data?.suc) {
-          message.success(addResp.data.info || '修改 Provider 成功');
-          providerDialogVisible.value = false;
-          await loadProviders();
+          message.success(addResp.data.info || '修改 Provider 成功')
+          providerDialogVisible.value = false
+          await loadProviders()
         } else {
-          message.error(addResp.data?.info || '修改 Provider 失败');
+          message.error(addResp.data?.info || '修改 Provider 失败')
         }
       } else {
         // same name, use set_provider
-        const resp = await postRequest(`${prefix}/agent/set_provider?provider_name=${encodeURIComponent(providerOriginalName.value || providerForm.provider_name)}`, {
-          provider_name: providerForm.provider_name,
-          provider_type: providerForm.provider_type,
-          url: providerForm.url,
-          api_key: providerForm.api_key,
-          models: providerForm.models || [],
-        });
+        const resp = await postRequest(
+          `${prefix}/agent/set_provider?provider_name=${encodeURIComponent(providerOriginalName.value || providerForm.provider_name)}`,
+          {
+            provider_name: providerForm.provider_name,
+            provider_type: providerForm.provider_type,
+            url: providerForm.url,
+            api_key: providerForm.api_key,
+            models: providerForm.models || [],
+          },
+        )
         if (resp.data?.suc) {
-          message.success(resp.data.info || '修改 Provider 成功');
-          providerDialogVisible.value = false;
-          await loadProviders();
+          message.success(resp.data.info || '修改 Provider 成功')
+          providerDialogVisible.value = false
+          await loadProviders()
         } else {
-          message.error(resp.data?.info || '修改 Provider 失败');
+          message.error(resp.data?.info || '修改 Provider 失败')
         }
       }
     } else {
@@ -322,119 +471,177 @@ const handleSaveProvider = async () => {
         url: providerForm.url,
         api_key: providerForm.api_key,
         models: [],
-      });
+      })
       if (payload.data?.suc) {
-        message.success(payload.data.info || '添加 Provider 成功');
-        providerDialogVisible.value = false;
-        await loadProviders();
+        message.success(payload.data.info || '添加 Provider 成功')
+        providerDialogVisible.value = false
+        await loadProviders()
       } else {
-        message.error(payload.data?.info || '添加 Provider 失败');
+        message.error(payload.data?.info || '添加 Provider 失败')
       }
     }
   } catch (error) {
-    console.error('saveProvider error', error);
-    message.error('保存 Provider 失败');
+    console.error('saveProvider error', error)
+    message.error('保存 Provider 失败')
   } finally {
-    submitting.value = false;
-    providerEditMode.value = false;
-    providerOriginalName.value = '';
+    submitting.value = false
+    providerEditMode.value = false
+    providerOriginalName.value = ''
   }
-};
+}
 
 const handleSaveModel = async () => {
   if (!activeProvider.value) {
-    message.warning('请先选择 Provider');
-    return;
+    message.warning('请先选择 Provider')
+    return
   }
   if (!modelForm.name.trim() || !modelForm.model.trim()) {
-    message.warning('请完整填写模型名称');
-    return;
+    message.warning('请完整填写模型名称')
+    return
   }
 
-  submitting.value = true;
+  const normalizedTypes = normalizeModelTypes(modelForm.type)
+  if (!normalizedTypes.length) {
+    message.warning('请选择模型类型')
+    return
+  }
+
+  let parsedData: Record<string, any> = {}
+  const rawData = modelDataText.value.trim()
+  if (rawData) {
+    try {
+      const parsed = JSON.parse(rawData)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        parsedData = parsed
+      } else {
+        throw new Error('JSON 必须是对象')
+      }
+    } catch (error) {
+      message.warning('附加配置必须是合法的 JSON 对象')
+      return
+    }
+  }
+
+  submitting.value = true
   try {
     if (modelEditMode.value && modelOriginalName.value) {
       // delete old then add new (handles rename)
-      await postRequest(`${prefix}/agent/del_model?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}&model_name=${encodeURIComponent(modelOriginalName.value)}`);
+      await postRequest(
+        `${prefix}/agent/del_model?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}&model_name=${encodeURIComponent(modelOriginalName.value)}`,
+      )
     }
 
-    const payload = await postRequest(`${prefix}/agent/add_model?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}`, {
-      name: modelForm.name,
-      model: modelForm.model,
-      temperature: modelForm.temperature,
-      type: modelForm.type,
-    });
+    const payload = await postRequest(
+      `${prefix}/agent/add_model?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}`,
+      {
+        name: modelForm.name,
+        model: modelForm.model,
+        temperature: modelForm.temperature,
+        type: normalizedTypes.length === 1 ? normalizedTypes[0] : normalizedTypes,
+        data: parsedData,
+      },
+    )
 
     if (payload.data?.suc) {
-      message.success(payload.data.info || (modelEditMode.value ? '修改模型成功' : '添加模型成功'));
-      modelDialogVisible.value = false;
-      await loadProviders();
+      message.success(payload.data.info || (modelEditMode.value ? '修改模型成功' : '添加模型成功'))
+      modelDialogVisible.value = false
+      await loadProviders()
     } else {
-      message.error(payload.data?.info || (modelEditMode.value ? '修改模型失败' : '添加模型失败'));
+      message.error(payload.data?.info || (modelEditMode.value ? '修改模型失败' : '添加模型失败'))
     }
   } catch (error) {
-    console.error('saveModel error', error);
-    message.error(modelEditMode.value ? '修改模型失败' : '添加模型失败');
+    console.error('saveModel error', error)
+    message.error(modelEditMode.value ? '修改模型失败' : '添加模型失败')
   } finally {
-    submitting.value = false;
-    modelEditMode.value = false;
-    modelOriginalName.value = '';
+    submitting.value = false
+    modelEditMode.value = false
+    modelOriginalName.value = ''
   }
-};
+}
 
 const handleDeleteProvider = async () => {
-  if (!activeProvider.value) return;
+  if (!activeProvider.value) return
 
   try {
-    await ElMessageBox.confirm(`确定删除 Provider ${activeProvider.value.provider_name} 吗？`, '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
+    await ElMessageBox.confirm(
+      `确定删除 Provider ${activeProvider.value.provider_name} 吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    )
 
-    const payload = await postRequest(`${prefix}/agent/del_provider?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}`);
+    const payload = await postRequest(
+      `${prefix}/agent/del_provider?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}`,
+    )
     if (payload.data?.suc) {
-      message.success(payload.data.info || '删除 Provider 成功');
-      await loadProviders();
+      message.success(payload.data.info || '删除 Provider 成功')
+      await loadProviders()
     } else {
-      message.error(payload.data?.info || '删除 Provider 失败');
+      message.error(payload.data?.info || '删除 Provider 失败')
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('deleteProvider error', error);
-      message.error('删除 Provider 失败');
+      console.error('deleteProvider error', error)
+      message.error('删除 Provider 失败')
     }
   }
-};
+}
 
 const handleDeleteModel = async (modelName: string) => {
-  if (!activeProvider.value) return;
+  if (!activeProvider.value) return
 
   try {
     await ElMessageBox.confirm(`确定删除模型 ${modelName} 吗？`, '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
-    });
+    })
 
-    const payload = await postRequest(`${prefix}/agent/del_model?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}&model_name=${encodeURIComponent(modelName)}`);
+    const payload = await postRequest(
+      `${prefix}/agent/del_model?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}&model_name=${encodeURIComponent(modelName)}`,
+    )
     if (payload.data?.suc) {
-      message.success(payload.data.info || '删除模型成功');
-      await loadProviders();
+      message.success(payload.data.info || '删除模型成功')
+      await loadProviders()
     } else {
-      message.error(payload.data?.info || '删除模型失败');
+      message.error(payload.data?.info || '删除模型失败')
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('deleteModel error', error);
-      message.error('删除模型失败');
+      console.error('deleteModel error', error)
+      message.error('删除模型失败')
     }
   }
-};
+}
+
+const handleTestModel = async (model: LLMModel) => {
+  if (!activeProvider.value || testingModelName.value) return
+
+  testingModelName.value = model.name
+  try {
+    const response = await postRequest(
+      `${prefix}/agent/test_model?provider_name=${encodeURIComponent(activeProvider.value.provider_name)}&model_name=${encodeURIComponent(model.name)}`,
+    )
+    if (response.data?.suc) {
+      message.success(response.data.info || 'API 测试成功')
+    } else {
+      message.error(response.data?.info || 'API 测试失败')
+    }
+  } catch (error) {
+    console.error('testModel error', error)
+    message.error('API 测试失败')
+  } finally {
+    testingModelName.value = ''
+  }
+}
 
 onMounted(() => {
-  loadProviders();
-});
+  loadProviders()
+  loadTypeOptions()
+})
 </script>
 
 <style scoped>

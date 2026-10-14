@@ -1,8 +1,12 @@
 <template>
-  <div class="my-switch" :class="{
-    'is-disabled': disabled,
-    'is-checked': myValue,
-  }" @click="toggleSwitch">
+  <div
+    class="my-switch"
+    :class="{
+      'is-disabled': disabled,
+      'is-checked': myValue,
+    }"
+    @click="toggleSwitch"
+  >
     <input v-model="myValue" type="checkbox" class="my-switch__input" :disabled="disabled" />
     <span class="my-switch__track">
       <span class="my-switch__thumb" />
@@ -30,9 +34,12 @@ const emit = defineEmits<{
 
 const myValue = ref(props.modelValue)
 
-watch(() => props.modelValue, (newVal) => {
-  myValue.value = newVal
-})
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    myValue.value = newVal
+  },
+)
 
 const toggleSwitch = () => {
   if (!props.disabled) {
@@ -78,13 +85,16 @@ const toggleSwitch = () => {
     box-sizing: border-box;
     background: var(--el-border-color-light);
     border: 1px solid var(--el-border-color-lighter, rgba(0, 0, 0, 0.06));
-    transition: background 0.25s ease, box-shadow 0.25s ease;
+    transition:
+      background 0.25s ease,
+      box-shadow 0.25s ease;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
 
     .my-switch.is-checked & {
       background: var(--primary-color);
       border-color: var(--primary-color);
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08),
+      box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.08),
         0 0 0 3px rgba(255, 107, 149, 0.2);
     }
 
@@ -110,7 +120,9 @@ const toggleSwitch = () => {
     height: 16px;
     border-radius: 50%;
     background: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.2),
+      0 1px 1px rgba(0, 0, 0, 0.1);
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
     .my-switch.is-checked & {

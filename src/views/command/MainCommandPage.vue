@@ -1,25 +1,28 @@
 <template>
-  <div class="base" :style="{
-    height: computedHeight + 'px',
-    background:
-      'linear-gradient(to bottom right, var(--bg-color), var(--bg-color-hover))',
-  }">
-    <el-row :gutter="1" class="h-full">
-      <el-col :xs="24" :sm="24" :md="8" :lg="6" class="h-full">
-        <div class="base-info h-full pr-0 md:pr-0">
+  <div
+    class="base"
+    :style="{
+      height: computedHeight + 'px',
+      background: 'linear-gradient(to bottom right, var(--bg-color), var(--bg-color-hover))',
+    }"
+  >
+    <el-row :gutter="12" class="command-grid h-full">
+      <el-col :xs="24" :sm="24" :md="8" :span="8" class="left-column h-full">
+        <div class="base-info h-full">
           <LeftInfo class="h-full" />
         </div>
       </el-col>
-
-      <el-col :xs="24" :sm="24" :md="16" :lg="12" class="h-full">
-        <div class="main-info h-full px-0 md:px-0">
-          <MidInfo class="h-full" />
+      <el-col :xs="24" :sm="24" :md="8" :span="8" class="middle-column h-full">
+        <div class="middle-info h-full">
+          <BotServiceManage />
+          <div class="global-info">
+            <BotStatusConfig scope="global" />
+          </div>
         </div>
       </el-col>
-
-      <el-col :xs="24" :sm="24" :md="24" :lg="6" class="h-full">
-        <div class="config-info h-full pl-0 md:pl-0">
-          <RightInfo class="h-full" />
+      <el-col :xs="24" :sm="24" :md="8" :span="8" class="right-column h-full">
+        <div class="plugin-info h-full">
+          <LKPluginConfig />
         </div>
       </el-col>
     </el-row>
@@ -27,11 +30,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue"
-import LeftInfo from "@/components/command/LeftInfo.vue"
-import MidInfo from "@/components/command/MidInfo.vue"
-import RightInfo from "@/components/command/RightInfo.vue"
-import { getHeaderHeight } from "@/utils/utils"
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import LeftInfo from '@/components/command/LeftInfo.vue'
+import BotServiceManage from '@/components/command/BotServiceManage.vue'
+import BotStatusConfig from '@/components/command/BotStatusConfig.vue'
+import LKPluginConfig from '@/components/command/LKPluginConfig.vue'
+import { getHeaderHeight } from '@/utils/utils'
 
 const windowHeight = ref(window.innerHeight)
 
@@ -40,7 +44,7 @@ const computedHeight = computed(() => {
 })
 
 onMounted(() => {
-  window.addEventListener("resize", handleResize)
+  window.addEventListener('resize', handleResize)
 })
 
 function handleResize() {
@@ -48,59 +52,76 @@ function handleResize() {
 }
 
 onUnmounted(() => {
-  window.removeEventListener("resize", handleResize)
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <style scoped>
 .base {
-  transition: all 0.3s;
   overflow: auto;
+  padding: 0.75rem;
 }
 
-.base-info {
-  border-radius: 0.5rem;
-  background-color: color-mix(in srgb, var(--bg-color-secondary) 70%, transparent);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid var(--border-color-light);
+.el-row {
+  justify-content: stretch;
 }
 
-.main-info {
-  border-radius: 0.5rem;
-  background-color: color-mix(in srgb, var(--bg-color-secondary) 70%, transparent);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid var(--border-color-light);
+.el-col.left-column {
+  flex: 0 1 340px;
+  width: auto;
+  max-width: none;
 }
 
-.config-info {
-  border-radius: 0.5rem;
-  background-color: color-mix(in srgb, var(--bg-color-secondary) 70%, transparent);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid var(--border-color-light);
+.el-col.middle-column {
+  flex: 0 1 400px;
+  width: auto;
+  max-width: none;
 }
 
-/* 自定义二次元风格阴影 */
-.shadow-cute {
-  box-shadow: 0 4px 15px var(--el-box-shadow-light),
-    0 2px 5px var(--el-box-shadow-lighter);
+.el-col.right-column {
+  flex: 1 1 0;
+  width: auto;
+  max-width: none;
+  min-width: 300px;
 }
 
-/* 响应式设计 */
+.base-info,
+.plugin-info {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: transparent;
+}
+
+.middle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.125rem;
+}
+
+.middle-info .plugin-section {
+  flex: 1 0 auto;
+}
+
+.global-info {
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
 @media (max-width: 1024px) {
-
   .base {
     overflow: auto;
+    padding: 0.5rem;
   }
 
   .el-row.h-full,
-  .el-col.h-full,
-  .el-col>div,
-  .base-info>*,
-  .main-info>*,
-  .config-info>* {
+  .el-col > div,
+  .base-info > *,
+  .middle-info > *,
+  .plugin-info > * {
     height: auto !important;
   }
 
@@ -110,31 +131,35 @@ onUnmounted(() => {
 
   .el-col.h-full {
     flex: none;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
-  .el-col:nth-child(1),
-  .el-col:nth-child(2),
-  .el-col:nth-child(3) {
-    height: auto;
+  .middle-info {
+    overflow: visible;
+    padding: 0;
   }
 
   .base-info,
-  .main-info,
-  .config-info {
-    margin-bottom: 0.5rem;
+  .middle-info,
+  .global-info,
+  .plugin-info {
+    margin-bottom: 0.75rem;
+  }
+
+  .plugin-info :deep(.lk-plugin-config) {
+    min-height: 240px;
+  }
+
+  .global-info :deep(.status-config) {
+    margin-bottom: 0;
   }
 }
 
 @media (max-width: 768px) {
   .el-row {
     flex-direction: column;
-  }
-
-  .base-info,
-  .main-info,
-  .config-info {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
   }
 }
 </style>

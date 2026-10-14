@@ -13,10 +13,18 @@
     </div>
 
     <!-- 筛选部分 -->
-    <div class="filter mb-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+    <div
+      class="filter mb-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4"
+    >
       <!-- 搜索框 -->
       <div class="search-input w-full lg:w-1/2">
-        <el-input v-model="search" placeholder="搜索插件..." clearable size="default" class="rounded-full">
+        <el-input
+          v-model="search"
+          placeholder="搜索插件..."
+          clearable
+          size="default"
+          class="rounded-full"
+        >
           <template #prefix>
             <el-icon class="search-icon">
               <Search />
@@ -29,42 +37,80 @@
       <div class="search-actions flex flex-wrap items-center gap-3 justify-end w-full lg:w-auto">
         <!-- 重启按钮 -->
         <div class="restart-button">
-          <my-button icon="refresh" text="重启" :iconHeight="18" :height="34" :width="84" @click="handleRestart"
-            type="warning" rounded="full" :style="{
+          <my-button
+            icon="refresh"
+            text="重启"
+            :iconHeight="18"
+            :height="34"
+            :width="84"
+            @click="handleRestart"
+            type="warning"
+            rounded="full"
+            :style="{
               borderColor: 'var(--el-border-color)',
-            }" />
+            }"
+          />
         </div>
 
         <!-- 作者筛选 -->
         <div class="search-tag">
-          <el-dropdown @command="handleCommand" trigger="click" teleported popper-class="store-dropdown-popper"
-            class="cursor-pointer">
-            <div class="filter-button flex items-center px-3 py-1.5 rounded-full transition-all duration-300" :style="{
-              backgroundColor: 'var(--el-fill-color-blank)',
-              border: '1px solid var(--el-border-color-darker)',
-              boxShadow: 'var(--el-box-shadow)',
-            }">
-              <svg-icon :name="authorIcon" class="mr-1.5" :color="'var(--el-color-primary)'"
-                :style="{ width: '20px', height: '20px' }" />
-              <span :style="{
-                color: 'var(--el-text-color-primary)',
-                fontWeight: 500,
-              }">作者筛选</span>
-              <svg-icon name="arrow-down" class="ml-1.5 transform transition-transform duration-300"
-                :style="{ width: '20px', height: '20px' }" :color="'var(--el-color-primary)'" />
+          <el-dropdown
+            @command="handleCommand"
+            trigger="click"
+            teleported
+            popper-class="store-dropdown-popper"
+            class="cursor-pointer"
+          >
+            <div
+              class="filter-button flex items-center px-3 py-1.5 rounded-full transition-all duration-300"
+              :style="{
+                backgroundColor: 'var(--el-fill-color-blank)',
+                border: '1px solid var(--el-border-color-darker)',
+                boxShadow: 'var(--el-box-shadow)',
+              }"
+            >
+              <svg-icon
+                :name="authorIcon"
+                class="mr-1.5"
+                :color="'var(--el-color-primary)'"
+                :style="{ width: '20px', height: '20px' }"
+              />
+              <span
+                :style="{
+                  color: 'var(--el-text-color-primary)',
+                  fontWeight: 500,
+                }"
+                >作者筛选</span
+              >
+              <svg-icon
+                name="arrow-down"
+                class="ml-1.5 transform transition-transform duration-300"
+                :style="{ width: '20px', height: '20px' }"
+                :color="'var(--el-color-primary)'"
+              />
             </div>
 
             <template #dropdown>
-              <el-dropdown-menu class="author-dropdown" :style="{
-                backgroundColor: 'var(--el-bg-color-overlay)',
-                border: '1px solid var(--el-border-color-darker)',
-                borderRadius: '8px',
-                boxShadow: 'var(--el-box-shadow)',
-                padding: '4px',
-              }">
-                <el-dropdown-item v-for="(v, i) in authorList" :key="i" :command="v" class="author-item">
-                  <div class="flex items-center py-2 px-3 rounded-md"
-                    :style="{ color: 'var(--el-text-color-primary)' }">
+              <el-dropdown-menu
+                class="author-dropdown"
+                :style="{
+                  backgroundColor: 'var(--el-bg-color-overlay)',
+                  border: '1px solid var(--el-border-color-darker)',
+                  borderRadius: '8px',
+                  boxShadow: 'var(--el-box-shadow)',
+                  padding: '4px',
+                }"
+              >
+                <el-dropdown-item
+                  v-for="(v, i) in authorList"
+                  :key="i"
+                  :command="v"
+                  class="author-item"
+                >
+                  <div
+                    class="flex items-center py-2 px-3 rounded-md"
+                    :style="{ color: 'var(--el-text-color-primary)' }"
+                  >
                     <svg-icon name="user" class="mr-2" :color="'var(--el-color-primary)'" />
                     {{ v }}
                   </div>
@@ -77,20 +123,32 @@
     </div>
 
     <!-- 卡片列表 -->
-    <div class="plugin-card-container flex flex-col flex-1 min-h-0">
-      <div class="plugin-card-list store-content-panel flex-1 min-h-0" :style="{
-        background: 'var(--el-bg-color)',
-        borderRadius: '12px',
-        padding: '1rem',
-        boxShadow: 'var(--el-box-shadow-light)',
-        border: '1px solid var(--el-border-color-light)',
-      }">
+    <div class="plugin-card-container store-content-panel flex flex-col flex-1 min-h-0">
+      <div
+        class="plugin-card-list flex-1 min-h-0"
+        :style="{
+          background: 'var(--el-bg-color)',
+          borderRadius: '12px',
+          padding: '1rem',
+          boxShadow: 'var(--el-box-shadow-light)',
+          border: '1px solid var(--el-border-color-light)',
+        }"
+      >
         <div v-if="filterTableData.length" class="card-grid">
-          <div v-for="plugin in filterTableData" :key="plugin.name" class="plugin-card">
+          <div v-for="plugin in paginatedTableData" :key="plugin.name" class="plugin-card">
             <div class="plugin-card__header">
               <div class="plugin-card__title">
-                <a v-if="plugin.github_url" :href="plugin.github_url" target="_blank" class="plugin-card__link">
-                  <svg-icon class="github-icon" :style="{ color: 'var(--el-text-color-regular)' }" name="github" />
+                <a
+                  v-if="plugin.github_url"
+                  :href="plugin.github_url"
+                  target="_blank"
+                  class="plugin-card__link"
+                >
+                  <svg-icon
+                    class="github-icon"
+                    :style="{ color: 'var(--el-text-color-regular)' }"
+                    name="github"
+                  />
                 </a>
                 <div class="plugin-card__name-wrap">
                   <div class="plugin-card__name">{{ plugin.name }}</div>
@@ -98,7 +156,12 @@
                     <el-tag size="small" effect="plain" class="plugin-card__tag version-tag">
                       {{ getPluginVersionLabel(plugin) }}
                     </el-tag>
-                    <el-tag :type="getPluginStatus(plugin).type" size="small" effect="plain" class="plugin-card__tag">
+                    <el-tag
+                      :type="getPluginStatus(plugin).type"
+                      size="small"
+                      effect="plain"
+                      class="plugin-card__tag"
+                    >
                       {{ getPluginStatus(plugin).label }}
                     </el-tag>
                   </div>
@@ -123,21 +186,48 @@
             </div>
 
             <div class="plugin-card__actions">
-              <my-button icon="download" text="安装" :iconSize="16" :height="28" :width="72"
-                @click="handleInstall(0, plugin)" type="primary" :disabled="installPlugin.includes(plugin.name)"
-                rounded="full" :style="{
+              <my-button
+                v-if="!installPlugin.includes(plugin.name)"
+                icon="download"
+                text="安装"
+                :iconSize="16"
+                :height="28"
+                :width="72"
+                @click="handleInstall(0, plugin)"
+                type="primary"
+                rounded="full"
+                :style="{
                   borderColor: 'var(--el-border-color)',
-                }" />
-              <my-button icon="update" text="更新" :iconSize="16" :height="28" :width="72"
-                @click="handleUpdate(0, plugin)" type="warning"
-                :disabled="!installPlugin.includes(plugin.name) || !plugin.need_update" rounded="full" :style="{
+                }"
+              />
+              <my-button
+                v-if="installPlugin.includes(plugin.name) && plugin.need_update"
+                icon="update"
+                text="更新"
+                :iconSize="16"
+                :height="28"
+                :width="72"
+                @click="handleUpdate(0, plugin)"
+                type="warning"
+                rounded="full"
+                :style="{
                   borderColor: 'var(--el-border-color)',
-                }" />
-              <my-button icon="remove" text="删除" :iconSize="16" :height="28" :width="72"
-                @click="handleRemove(0, plugin)" type="danger" :disabled="!installPlugin.includes(plugin.name)"
-                rounded="full" :style="{
+                }"
+              />
+              <my-button
+                v-if="installPlugin.includes(plugin.name)"
+                icon="remove"
+                text="删除"
+                :iconSize="16"
+                :height="28"
+                :width="72"
+                @click="handleRemove(0, plugin)"
+                type="danger"
+                rounded="full"
+                :style="{
                   borderColor: 'var(--el-border-color)',
-                }" />
+                }"
+              />
             </div>
           </div>
         </div>
@@ -146,16 +236,29 @@
           <div class="empty-state__text">暂无匹配的插件</div>
         </div>
       </div>
+      <el-config-provider :locale="zhCn">
+        <el-pagination
+          v-if="filterTableData.length"
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[12, 24, 48, 96]"
+          :total="filterTableData.length"
+          layout="total, sizes, prev, pager, next"
+          class="store-pagination"
+          background
+        />
+      </el-config-provider>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, inject, h, render } from 'vue'
+import { ref, computed, onMounted, inject, h, render, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
-import MyButton from "../ui/MyButton.vue"
-import SvgIcon from "@/components/SvgIcon/SvgIcon.vue"
-import CuteConfirm from "../ui/CuteConfirm.vue"
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import MyButton from '../ui/MyButton.vue'
+import SvgIcon from '@/components/SvgIcon/SvgIcon.vue'
+import CuteConfirm from '../ui/CuteConfirm.vue'
 import { getRequest, postRequest } from '@/utils/api'
 import { message } from '@/utils/message'
 import { getLoading } from '@/utils/loading'
@@ -168,7 +271,7 @@ const showCuteConfirm = (options: {
   message: string
   cancelButtonText?: string
   confirmButtonText?: string
-  type?: "info" | "warning" | "error"
+  type?: 'info' | 'warning' | 'error'
 }): Promise<boolean> => {
   return new Promise((resolve) => {
     const container = document.createElement('div')
@@ -176,7 +279,7 @@ const showCuteConfirm = (options: {
 
     const props = ref({
       visible: true,
-      ...options
+      ...options,
     })
 
     const vnode = h(CuteConfirm, {
@@ -188,7 +291,7 @@ const showCuteConfirm = (options: {
       onCancel: () => {
         cleanup()
         resolve(false)
-      }
+      },
     })
 
     const cleanup = () => {
@@ -230,13 +333,13 @@ interface PluginData {
   [key: string]: unknown
 }
 
-
-
-const authorIcon = ref("author-red")
+const authorIcon = ref('author-red')
 const authorList = ref<string[]>([])
 const tableData = ref<PluginData[]>([])
-const search = ref("")
+const search = ref('')
 const installPlugin = ref<string[]>([])
+const currentPage = ref(1)
+const pageSize = ref(12)
 
 const filterTableData = computed(() => {
   const searchValue = search.value.trim()
@@ -249,28 +352,49 @@ const filterTableData = computed(() => {
   }
 })
 
+const paginatedTableData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filterTableData.value.slice(start, start + pageSize.value)
+})
+
+watch(search, () => {
+  currentPage.value = 1
+})
+
+watch(
+  [() => filterTableData.value.length, pageSize],
+  ([total]) => {
+    const lastPage = Math.max(1, Math.ceil(total / pageSize.value))
+    if (currentPage.value > lastPage) {
+      currentPage.value = lastPage
+    }
+  },
+)
+
 onMounted(() => {
   getPluginList()
 })
 
 const getPluginTypeColor = (type: string) => {
   const typeMap: Record<string, string> = {
-    "功能": "success",
-    "娱乐": "warning",
-    "工具": "info",
-    "管理": "danger",
-    "其他插件": "info",
-    "其他": "info",
+    功能: 'success',
+    娱乐: 'warning',
+    工具: 'info',
+    管理: 'danger',
+    其他插件: 'info',
+    其他: 'info',
   }
-  return typeMap[type] || "info"
+  return typeMap[type] || 'info'
 }
 
 const getPluginStatus = (plugin: PluginData) => {
   const installed = installPlugin.value.includes(plugin.name)
   if (installed) {
-    return plugin.need_update ? { label: "可更新", type: "warning" } : { label: "已安装", type: "success" }
+    return plugin.need_update
+      ? { label: '可更新', type: 'warning' }
+      : { label: '已安装', type: 'success' }
   }
-  return { label: "未安装", type: "info" }
+  return { label: '未安装', type: 'info' }
 }
 
 const getPluginVersionLabel = (plugin: PluginData) => {
@@ -282,47 +406,47 @@ const getPluginVersionLabel = (plugin: PluginData) => {
 
 const handleRestart = async () => {
   const result = await showCuteConfirm({
-    title: "重启确认",
+    title: '重启确认',
     message: `确定要重启系统吗？`,
-    cancelButtonText: "我再想想",
-    confirmButtonText: "确认重启",
-    type: "warning"
+    cancelButtonText: '我再想想',
+    confirmButtonText: '确认重启',
+    type: 'warning',
   })
 
   if (result) {
-    const loading = getLoading(".store-content-panel")
+    const loading = getLoading('.store-content-panel')
 
     postRequest(`${prefix}/configure/restart`, {})
       .then((response) => {
         loading.close()
         const resp = response.data as APIResponse
         if (resp.suc) {
-          message?.success({ message: resp.info || "重启命令已执行!" })
+          message?.success({ message: resp.info || '重启命令已执行!' })
         } else {
-          message?.error({ message: resp.info || "重启失败" })
+          message?.error({ message: resp.info || '重启失败' })
         }
       })
       .catch((error) => {
         loading.close()
-        message?.error({ message: "重启过程中发生错误：" + (error.message || error) })
-        console.error("[StoreTemplate] Restart error:", error)
+        message?.error({ message: '重启过程中发生错误：' + (error.message || error) })
+        console.error('[StoreTemplate] Restart error:', error)
       })
   } else {
-    message?.info({ message: "已取消重启" })
+    message?.info({ message: '已取消重启' })
   }
 }
 
 const handleUpdate = async (_i: number, data: PluginData) => {
   const result = await showCuteConfirm({
-    title: "更新确认",
+    title: '更新确认',
     message: `确定要更新这个插件吗`,
-    cancelButtonText: "我再想想",
-    confirmButtonText: "无视风险强制更新",
-    type: "warning"
+    cancelButtonText: '我再想想',
+    confirmButtonText: '无视风险强制更新',
+    type: 'warning',
   })
 
   if (result) {
-    const loading = getLoading(".store-content-panel")
+    const loading = getLoading('.store-content-panel')
 
     postRequest(`${prefix}/store/update_plugin`, {
       service: data.name,
@@ -334,33 +458,33 @@ const handleUpdate = async (_i: number, data: PluginData) => {
           if (resp.warning) {
             message?.warning({ message: resp.warning })
           } else {
-            message?.success({ message: resp.info || "插件更新成功!" })
+            message?.success({ message: resp.info || '插件更新成功!' })
             getPluginList()
           }
         } else {
-          message?.error({ message: resp.info || "插件更新失败" })
+          message?.error({ message: resp.info || '插件更新失败' })
         }
       })
       .catch((error) => {
         loading.close()
-        message?.error({ message: "更新过程中发生错误：" + (error.message || error) })
-        console.error("[Plugin Store] Update error:", error)
+        message?.error({ message: '更新过程中发生错误：' + (error.message || error) })
+        console.error('[Plugin Store] Update error:', error)
       })
   } else {
-    message?.info({ message: "已取消更新" })
+    message?.info({ message: '已取消更新' })
   }
 }
 
 const handleRemove = async (_i: number, data: PluginData) => {
   const result = await showCuteConfirm({
-    title: "移除确认",
+    title: '移除确认',
     message: `确定要移除这个插件吗`,
-    cancelButtonText: "我再想想",
-    confirmButtonText: "坚定不移必须移除",
-    type: "warning"
+    cancelButtonText: '我再想想',
+    confirmButtonText: '坚定不移必须移除',
+    type: 'warning',
   })
   if (result) {
-    const loading = getLoading(".store-content-panel")
+    const loading = getLoading('.store-content-panel')
 
     postRequest(`${prefix}/store/remove_plugin`, {
       service: data.name,
@@ -372,33 +496,33 @@ const handleRemove = async (_i: number, data: PluginData) => {
           if (resp.warning) {
             message?.warning({ message: resp.warning })
           } else {
-            message?.success({ message: resp.info || "插件移除成功!" })
+            message?.success({ message: resp.info || '插件移除成功!' })
             getPluginList()
           }
         } else {
-          message?.error({ message: resp.info || "插件移除失败" })
+          message?.error({ message: resp.info || '插件移除失败' })
         }
       })
       .catch((error) => {
         loading.close()
-        message?.error({ message: "移除过程中发生错误：" + (error.message || error) })
-        console.error("[Plugin Store] Remove error:", error)
+        message?.error({ message: '移除过程中发生错误：' + (error.message || error) })
+        console.error('[Plugin Store] Remove error:', error)
       })
   } else {
-    message?.info({ message: "已取消移除" })
+    message?.info({ message: '已取消移除' })
   }
 }
 
 const handleInstall = async (_i: number, data: PluginData) => {
   const result = await showCuteConfirm({
-    title: "安装确认",
+    title: '安装确认',
     message: `确定要安装这个插件吗？`,
-    cancelButtonText: "我再想想",
-    confirmButtonText: "无视风险继续安装",
-    type: "warning"
+    cancelButtonText: '我再想想',
+    confirmButtonText: '无视风险继续安装',
+    type: 'warning',
   })
   if (result) {
-    const loading = getLoading(".store-content-panel")
+    const loading = getLoading('.store-content-panel')
 
     postRequest(`${prefix}/store/install_plugin`, {
       service: data.name,
@@ -410,20 +534,20 @@ const handleInstall = async (_i: number, data: PluginData) => {
           if (resp.warning) {
             message?.warning({ message: resp.warning })
           } else {
-            message?.success({ message: resp.info || "插件安装成功!" })
+            message?.success({ message: resp.info || '插件安装成功!' })
             getPluginList()
           }
         } else {
-          message?.error({ message: resp.info || "插件安装失败" })
+          message?.error({ message: resp.info || '插件安装失败' })
         }
       })
       .catch((error) => {
         loading.close()
-        message?.error({ message: "安装过程中发生错误：" + (error.message || error) })
-        console.error("[Plugin Store] Install error:", error)
+        message?.error({ message: '安装过程中发生错误：' + (error.message || error) })
+        console.error('[Plugin Store] Install error:', error)
       })
   } else {
-    message?.info({ message: "已取消安装" })
+    message?.info({ message: '已取消安装' })
   }
 }
 
@@ -433,7 +557,7 @@ const handleCommand = (s: string) => {
 }
 
 const getPluginList = () => {
-  const loading = getLoading(".store-content-panel")
+  const loading = getLoading('.store-content-panel')
   getRequest(`${prefix}/store/get_plugin_store`)
     .then((response) => {
       loading.close()
@@ -442,11 +566,9 @@ const getPluginList = () => {
         if (resp.warning) {
           message?.warning({ message: resp.warning })
         } else {
-          message?.success({ message: resp.info || "获取插件商店列表成功!" })
+          message?.success({ message: resp.info || '获取插件商店列表成功!' })
           const pluginData = resp.data as PluginListData
-          tableData.value = Array.isArray(pluginData?.plugin_list)
-            ? pluginData.plugin_list
-            : []
+          tableData.value = Array.isArray(pluginData?.plugin_list) ? pluginData.plugin_list : []
           installPlugin.value = pluginData?.install_plugin || []
           authorList.value = []
 
@@ -459,10 +581,8 @@ const getPluginList = () => {
           }
         }
       } else {
-        const errorMsg = resp
-          ? resp.info
-          : "无法获取插件商店列表，请检查网络连接或后端服务。"
-        message?.error({ message: errorMsg || "获取插件商店列表失败" })
+        const errorMsg = resp ? resp.info : '无法获取插件商店列表，请检查网络连接或后端服务。'
+        message?.error({ message: errorMsg || '获取插件商店列表失败' })
         tableData.value = []
         installPlugin.value = []
         authorList.value = []
@@ -471,13 +591,12 @@ const getPluginList = () => {
     .catch((error) => {
       loading.close()
       message?.error({ message: `获取插件商店列表时出错：${error.message || error}` })
-      console.error("[StoreTemplate Error] getPluginList catch:", error)
+      console.error('[StoreTemplate Error] getPluginList catch:', error)
       tableData.value = []
       installPlugin.value = []
       authorList.value = []
     })
 }
-
 </script>
 
 <style lang="scss" scoped>
@@ -594,7 +713,7 @@ const getPluginList = () => {
 }
 
 // 暗色主题适配
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   .main {
     background: var(--el-bg-color-overlay);
   }
@@ -773,6 +892,15 @@ const getPluginList = () => {
   overflow-y: auto;
   padding-right: 0.25rem;
   justify-content: center;
+  align-content: start;
+  flex: 1;
+  min-height: 0;
+}
+
+.store-pagination {
+  flex: none;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
 }
 
 .plugin-card {
@@ -958,6 +1086,12 @@ const getPluginList = () => {
       padding: 0.75rem;
     }
 
+    .store-pagination {
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+
     .card-grid {
       grid-template-columns: minmax(0, 420px);
       gap: 0.75rem;
@@ -979,7 +1113,6 @@ const getPluginList = () => {
 
 // 动画效果
 @keyframes bounce {
-
   0%,
   100% {
     transform: translateY(0);

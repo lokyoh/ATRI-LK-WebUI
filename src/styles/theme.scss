@@ -14,6 +14,14 @@
   --warning-color: #ed8936;
   --danger-color: #f56565;
   --info-color: #4299e1;
+  --primary-color-light-5: color-mix(in srgb, var(--primary-color) 50%, var(--bg-color-secondary));
+  --primary-color-light-7: color-mix(in srgb, var(--primary-color) 32%, var(--bg-color-secondary));
+  --primary-color-light-8: color-mix(in srgb, var(--primary-color) 20%, var(--bg-color-secondary));
+  --primary-color-light-9: color-mix(in srgb, var(--primary-color) 10%, var(--bg-color-secondary));
+  --success-color-light: color-mix(in srgb, var(--success-color) 14%, var(--bg-color-secondary));
+  --warning-color-light: color-mix(in srgb, var(--warning-color) 14%, var(--bg-color-secondary));
+  --danger-color-light: color-mix(in srgb, var(--danger-color) 14%, var(--bg-color-secondary));
+  --info-color-light: color-mix(in srgb, var(--info-color) 14%, var(--bg-color-secondary));
   --text-color-disabled: #a0aec0;
   --el-color-white: #ffffff;
 
