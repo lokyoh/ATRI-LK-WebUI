@@ -74,6 +74,7 @@
                     </template>
                   </div>
                   <div class="model-meta">{{ model.model }} · temp {{ model.temperature }}</div>
+                  <div class="model-meta">{{ pricingText(model.pricing) }}</div>
                 </div>
                 <div style="display: flex; gap: 8px">
                   <el-button
@@ -179,6 +180,46 @@
             placeholder='{"max_tokens": 2048, "response_format": {"type": "json_object"}}'
           />
         </el-form-item>
+        <el-form-item label="计费配置">
+          <div class="pricing-block">
+            <div class="pricing-switch">
+              <el-switch v-model="pricingEnabled" active-text="启用计费" />
+              <span class="pricing-hint">单价单位：元 / 每 100 万 Token，留空即 0，没有缓存命中价格则配置缓存命中价格与输入价格一致即可</span>
+            </div>
+            <div v-if="pricingEnabled" class="pricing-grid">
+              <label>
+                <span>输入单价</span>
+                <el-input-number
+                  v-model="pricingForm.input"
+                  :min="0"
+                  :step="0.1"
+                  :precision="4"
+                  controls-position="right"
+                />
+              </label>
+              <label>
+                <span>输出单价</span>
+                <el-input-number
+                  v-model="pricingForm.output"
+                  :min="0"
+                  :step="0.1"
+                  :precision="4"
+                  controls-position="right"
+                />
+              </label>
+              <label>
+                <span>缓存命中单价</span>
+                <el-input-number
+                  v-model="pricingForm.cache_hit"
+                  :min="0"
+                  :step="0.1"
+                  :precision="4"
+                  controls-position="right"
+                />
+              </label>
+            </div>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -195,12 +236,14 @@ import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { getRequest, postRequest } from '@/utils/api'
 import { message } from '@/utils/message'
+import type { ModelPricing } from '@/types/agent'
 
 interface LLMModel {
   name: string
   model: string
   temperature: number
   type: string | string[]
+  pricing?: ModelPricing | null
   data?: Record<string, any>
 }
 
@@ -260,6 +303,26 @@ const normalizeModelTypes = (value?: string | string[] | null) => {
 }
 
 const modelDataText = ref('{}')
+
+/** 计费开关：关闭时保存 pricing=null，即该模型不计费 */
+const pricingEnabled = ref(false)
+
+const emptyPricing = (): ModelPricing => ({ input: 0, output: 0, cache_hit: 0 })
+
+/** 与 modelForm 平行的计费表单，避免嵌套可选字段带来的空值判断 */
+const pricingForm = reactive<ModelPricing>(emptyPricing())
+
+/** 后端 pricing 为 null/缺省时视为未启用计费 */
+const normalizePricing = (pricing?: ModelPricing | null): ModelPricing => ({
+  input: Number(pricing?.input ?? 0),
+  output: Number(pricing?.output ?? 0),
+  cache_hit: Number(pricing?.cache_hit ?? 0),
+})
+
+const pricingText = (pricing?: ModelPricing | null) => {
+  if (!pricing) return '未配置计费'
+  return `计费 ${pricing.input}/${pricing.output}/${pricing.cache_hit} 元·M⁻¹（输入/输出/缓存）`
+}
 
 const modelForm = reactive<LLMModel>({
   name: '',
@@ -340,7 +403,9 @@ const loadTypeOptions = async () => {
   if (modelResult.status === 'fulfilled') {
     const payload = modelResult.value.data as TypeOptionsResponse
     if (payload?.suc && Array.isArray(payload.data)) {
-      modelTypes.value = payload.data.filter((type) => typeof type === 'string' && type.trim() && type.toLowerCase() !== 'click')
+      modelTypes.value = payload.data.filter(
+        (type) => typeof type === 'string' && type.trim() && type.toLowerCase() !== 'click',
+      )
     } else {
       console.error('loadModelTypes failed', payload?.info)
       message.error(payload?.info || '获取模型类型失败')
@@ -389,6 +454,8 @@ const openModelDialog = (model?: LLMModel | null) => {
   modelDialogVisible.value = true
   if (model) {
     modelOriginalName.value = model.name
+    Object.assign(pricingForm, normalizePricing(model.pricing))
+    pricingEnabled.value = !!model.pricing
     Object.assign(modelForm, {
       name: model.name,
       model: model.model,
@@ -398,6 +465,8 @@ const openModelDialog = (model?: LLMModel | null) => {
     })
   } else {
     modelOriginalName.value = ''
+    Object.assign(pricingForm, emptyPricing())
+    pricingEnabled.value = false
     Object.assign(modelForm, {
       name: '',
       model: '',
@@ -522,6 +591,18 @@ const handleSaveModel = async () => {
     }
   }
 
+// 计费配置：关闭开关即写入 null（不计费）；开启时三项单价必须为非负有限数
+  let pricingPayload: ModelPricing | null = null
+  if (pricingEnabled.value) {
+    const pricing = normalizePricing(pricingForm)
+    const invalid = Object.values(pricing).some((value) => !Number.isFinite(value) || value < 0)
+    if (invalid) {
+      message.warning('计费单价必须是非负数字')
+      return
+    }
+    pricingPayload = pricing
+  }
+
   submitting.value = true
   try {
     if (modelEditMode.value && modelOriginalName.value) {
@@ -538,6 +619,7 @@ const handleSaveModel = async () => {
         model: modelForm.model,
         temperature: modelForm.temperature,
         type: normalizedTypes.length === 1 ? normalizedTypes[0] : normalizedTypes,
+        pricing: pricingPayload,
         data: parsedData,
       },
     )
@@ -798,6 +880,43 @@ onMounted(() => {
 .model-meta {
   font-size: 12px;
   color: var(--text-color-secondary);
+}
+
+.pricing-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.pricing-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pricing-hint {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pricing-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.pricing-grid :deep(.el-input-number) {
+  width: 100%;
 }
 
 .empty-state {

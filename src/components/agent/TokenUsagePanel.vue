@@ -9,19 +9,31 @@
       <section class="summary-section">
         <div class="summary-heading">
           <span>用量统计</span>
-          <el-select
-            v-model="summaryPeriod"
-            size="small"
-            class="period-select"
-            aria-label="统计周期"
-          >
-            <el-option
-              v-for="period in summaryPeriods"
-              :key="period.value"
-              :label="period.label"
-              :value="period.value"
-            />
-          </el-select>
+          <div class="summary-filters">
+            <el-select
+              v-model="summaryModel"
+              size="small"
+              clearable
+              placeholder="全部模型"
+              class="model-select"
+              aria-label="统计模型"
+            >
+              <el-option v-for="model in modelNames" :key="model" :label="model" :value="model" />
+            </el-select>
+            <el-select
+              v-model="summaryPeriod"
+              size="small"
+              class="period-select"
+              aria-label="统计周期"
+            >
+              <el-option
+                v-for="period in summaryPeriods"
+                :key="period.value"
+                :label="period.label"
+                :value="period.value"
+              />
+            </el-select>
+          </div>
         </div>
         <div class="summary-grid">
           <el-card shadow="never">
@@ -41,6 +53,27 @@
             <strong>{{ formatNumber(summary.totalTokens) }}</strong>
           </el-card>
         </div>
+        <div class="summary-grid cost-grid">
+          <el-card shadow="never">
+            <span>缓存命中率</span>
+            <strong>{{ formatPercent(summary.cacheHitRate) }}</strong>
+          </el-card>
+          <el-card shadow="never">
+            <span>预估总费用</span>
+            <strong>{{ costSummaryText(summary.totalCost, summary.priced) }}</strong>
+          </el-card>
+          <el-card shadow="never">
+            <span>输入费用（含缓存）</span>
+            <strong>{{ costSummaryText(summary.inputCost, summary.priced) }}</strong>
+          </el-card>
+          <el-card shadow="never">
+            <span>输出费用</span>
+            <strong>{{ costSummaryText(summary.outputCost, summary.priced) }}</strong>
+          </el-card>
+        </div>
+        <p v-if="unpricedModelCount" class="cost-note">
+          当前统计范围内有 {{ unpricedModelCount }} 个模型未配置计费，其费用不计入合计。
+        </p>
       </section>
 
       <el-form class="query-form" :inline="true" @submit.prevent="applyQuery">
@@ -102,6 +135,22 @@
             formatNumber(row.promptTokens + row.outputTokens)
           }}</template>
         </el-table-column>
+        <el-table-column label="缓存命中率" min-width="120" align="right">
+          <template #default="{ row }">{{ formatPercent(row.cacheHitRate) }}</template>
+        </el-table-column>
+        <el-table-column label="预估费用" min-width="130" align="right">
+          <template #default="{ row }">
+            <el-tooltip
+              v-if="row.cost.priced"
+              effect="dark"
+              placement="top"
+              :content="costTooltip(row.cost)"
+            >
+              <span>{{ formatCurrency(row.cost.total) }}</span>
+            </el-tooltip>
+            <span v-else class="muted">未计费</span>
+          </template>
+        </el-table-column>
       </el-table>
 
       <el-pagination
@@ -123,23 +172,19 @@ import { computed, inject, onMounted, ref } from 'vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { getRequest } from '@/utils/api'
 import { message } from '@/utils/message'
-
-interface TokenUsageItem {
-  name: string
-  event: string
-  usage: {
-    prompt_tokens: number
-    output_tokens: number
-    cache_hit_tokens: number
-  }
-  time: string
-}
-
-interface TokenUsageResponse {
-  suc: boolean
-  info: string
-  data?: Record<string, TokenUsageItem[]>
-}
+import type {
+  ModelPricingInfo,
+  ModelPricingResponse,
+  TokenUsageItem,
+  TokenUsageResponse,
+} from '@/types/agent'
+import {
+  cacheHitRate,
+  calculateUsageCost,
+  formatCurrency,
+  formatPercent,
+  type CostBreakdown,
+} from '@/utils/cost'
 
 interface TokenUsageRecord {
   modelName: string
@@ -148,6 +193,8 @@ interface TokenUsageRecord {
   promptTokens: number
   outputTokens: number
   cacheHitTokens: number
+  cacheHitRate: number
+  cost: CostBreakdown
 }
 
 type SummaryPeriod = 'today' | 'week' | 'month' | 'year'
@@ -155,7 +202,10 @@ type SummaryPeriod = 'today' | 'week' | 'month' | 'year'
 const prefix = inject<string>('prefix', '/atri/api')
 const loading = ref(false)
 const usageByModel = ref<Record<string, TokenUsageItem[]>>({})
+const pricingByModel = ref<Record<string, ModelPricingInfo>>({})
 const summaryPeriod = ref<SummaryPeriod>('today')
+/** 顶部看板模型筛选，空值表示全部模型 */
+const summaryModel = ref('')
 const summaryPeriods: { label: string; value: SummaryPeriod }[] = [
   { label: '今天', value: 'today' },
   { label: '本周', value: 'week' },
@@ -176,14 +226,23 @@ const modelNames = computed(() => Object.keys(usageByModel.value).sort())
 const allRecords = computed<TokenUsageRecord[]>(() =>
   Object.entries(usageByModel.value)
     .flatMap(([modelName, items]) =>
-      items.map((item) => ({
-        modelName,
-        event: item.event,
-        time: item.time,
-        promptTokens: item.usage.prompt_tokens,
-        outputTokens: item.usage.output_tokens,
-        cacheHitTokens: item.usage.cache_hit_tokens,
-      })),
+      items.map((item) => {
+        const usage = {
+          prompt_tokens: item.usage.prompt_tokens,
+          output_tokens: item.usage.output_tokens,
+          cache_hit_tokens: item.usage.cache_hit_tokens,
+        }
+        return {
+          modelName,
+          event: item.event,
+          time: item.time,
+          promptTokens: usage.prompt_tokens,
+          outputTokens: usage.output_tokens,
+          cacheHitTokens: usage.cache_hit_tokens,
+          cacheHitRate: cacheHitRate(usage),
+          cost: calculateUsageCost(usage, pricingByModel.value[modelName]),
+        }
+      }),
     )
     .sort((a, b) => b.time.localeCompare(a.time)),
 )
@@ -205,22 +264,55 @@ const pageRecords = computed(() => {
 const summaryRecords = computed(() => {
   const { start, end } = getSummaryDateRange(summaryPeriod.value)
   return allRecords.value.filter((record) => {
+    if (summaryModel.value && record.modelName !== summaryModel.value) return false
     const recordDate = getDateKey(record.time)
     return recordDate >= start && recordDate <= end
   })
 })
-const summary = computed(() =>
-  summaryRecords.value.reduce(
-    (totals, record) => {
-      totals.promptTokens += record.promptTokens
-      totals.outputTokens += record.outputTokens
-      totals.cacheHitTokens += record.cacheHitTokens
-      totals.totalTokens += record.promptTokens + record.outputTokens
-      return totals
+const summary = computed(() => {
+  const totals = summaryRecords.value.reduce(
+    (acc, record) => {
+      acc.promptTokens += record.promptTokens
+      acc.outputTokens += record.outputTokens
+      acc.cacheHitTokens += record.cacheHitTokens
+      acc.totalTokens += record.promptTokens + record.outputTokens
+      acc.totalCost += record.cost.total
+      acc.inputCost += record.cost.inputCost + record.cost.cacheHitCost
+      acc.outputCost += record.cost.outputCost
+      return acc
     },
-    { promptTokens: 0, outputTokens: 0, cacheHitTokens: 0, totalTokens: 0 },
-  ),
-)
+    {
+      promptTokens: 0,
+      outputTokens: 0,
+      cacheHitTokens: 0,
+      totalTokens: 0,
+      totalCost: 0,
+      inputCost: 0,
+      outputCost: 0,
+    },
+  )
+  const modelsInRange = new Set(summaryRecords.value.map((record) => record.modelName))
+  const unpriced = [...modelsInRange].filter((name) => !pricingByModel.value[name])
+  return {
+    ...totals,
+    cacheHitRate: cacheHitRate({
+      prompt_tokens: totals.promptTokens,
+      output_tokens: totals.outputTokens,
+      cache_hit_tokens: totals.cacheHitTokens,
+    }),
+    // 未配置计费的模型费用恒为 0，故用「是否存在任一计费模型」判断是否展示金额；
+    // 统计范围内没有记录时金额为 0，直接按 ¥0.00 展示而不是「未计费」
+    priced: modelsInRange.size === 0 || unpriced.length < modelsInRange.size,
+    unpricedModelCount: unpriced.length,
+  }
+})
+const unpricedModelCount = computed(() => summary.value.unpricedModelCount)
+
+const costSummaryText = (value: number, priced: boolean) =>
+  priced ? formatCurrency(value) : '未计费'
+
+const costTooltip = (cost: CostBreakdown) =>
+  `输入 ${formatCurrency(cost.inputCost)} · 缓存命中 ${formatCurrency(cost.cacheHitCost)} · 输出 ${formatCurrency(cost.outputCost)}`
 
 const formatNumber = (value: number) => new Intl.NumberFormat().format(value)
 
@@ -252,13 +344,34 @@ const getSummaryDateRange = (period: SummaryPeriod) => {
   return { start: formatDateKey(start), end: formatDateKey(today) }
 }
 
+const loadPricing = async () => {
+  try {
+    const response = await getRequest(`${prefix}/agent/get_model_pricing`)
+    const payload = response.data as ModelPricingResponse
+    pricingByModel.value = payload.suc ? payload.data || {} : {}
+    if (!payload.suc) {
+      console.warn('loadModelPricing failed', payload.info)
+    }
+  } catch (error) {
+    // 计费配置不可用时仅影响费用展示，Token 统计仍然可用
+    console.error('loadModelPricing error', error)
+    pricingByModel.value = {}
+  }
+}
+
 const loadUsage = async () => {
   loading.value = true
   try {
-    const response = await getRequest(`${prefix}/agent/get_token_usage`)
-    const payload = response.data as TokenUsageResponse
+    const [, usageResponse] = await Promise.all([
+      loadPricing(),
+      getRequest(`${prefix}/agent/get_token_usage`),
+    ])
+    const payload = usageResponse.data as TokenUsageResponse
     if (payload.suc) {
       usageByModel.value = payload.data || {}
+      if (summaryModel.value && !(summaryModel.value in usageByModel.value)) {
+        summaryModel.value = ''
+      }
     } else {
       message.error(payload.info || '获取 Token 用量失败')
     }
@@ -321,10 +434,30 @@ onMounted(loadUsage)
   font-size: 13px;
 }
 
+.summary-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+}
+
+.cost-grid {
+  margin-top: 10px;
+}
+
+.cost-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.muted {
+  color: var(--el-text-color-secondary);
 }
 
 .summary-grid :deep(.el-card__body) {

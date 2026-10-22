@@ -26,6 +26,14 @@
       <div v-if="currentTab === 'usage'" class="tab-panel">
         <TokenUsagePanel />
       </div>
+
+      <div v-if="currentTab === 'function_calling'" class="tab-panel">
+        <FunctionCallingPanel />
+      </div>
+
+      <div v-if="currentTab === 'skills'" class="tab-panel">
+        <SkillsPanel />
+      </div>
     </div>
   </div>
 </template>
@@ -35,12 +43,16 @@ import { onMounted, ref, watch } from 'vue'
 import SettingsPanel from '@/components/agent/SettingsPanel.vue'
 import ModelsPanel from '@/components/agent/ModelsPanel.vue'
 import TokenUsagePanel from '@/components/agent/TokenUsagePanel.vue'
+import FunctionCallingPanel from '@/components/agent/FunctionCallingPanel.vue'
+import SkillsPanel from '@/components/agent/SkillsPanel.vue'
 import { getLoading } from '@/utils/loading'
 
 const tabs = [
   { key: 'settings', label: '设置' },
   { key: 'models', label: '模型' },
   { key: 'usage', label: 'Token 用量' },
+  { key: 'function_calling', label: '功能调用' },
+  { key: 'skills', label: '技能' },
 ]
 
 const currentTab = ref('settings')
