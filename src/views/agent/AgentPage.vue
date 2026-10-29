@@ -27,6 +27,10 @@
         <TokenUsagePanel />
       </div>
 
+      <div v-if="currentTab === 'function_plugin'" class="tab-panel">
+        <FunctionPluginPanel />
+      </div>
+
       <div v-if="currentTab === 'function_calling'" class="tab-panel">
         <FunctionCallingPanel />
       </div>
@@ -44,6 +48,7 @@ import SettingsPanel from '@/components/agent/SettingsPanel.vue'
 import ModelsPanel from '@/components/agent/ModelsPanel.vue'
 import TokenUsagePanel from '@/components/agent/TokenUsagePanel.vue'
 import FunctionCallingPanel from '@/components/agent/FunctionCallingPanel.vue'
+import FunctionPluginPanel from '@/components/agent/FunctionPluginPanel.vue'
 import SkillsPanel from '@/components/agent/SkillsPanel.vue'
 import { getLoading } from '@/utils/loading'
 
@@ -51,6 +56,7 @@ const tabs = [
   { key: 'settings', label: '设置' },
   { key: 'models', label: '模型' },
   { key: 'usage', label: 'Token 用量' },
+  { key: 'function_plugin', label: '功能插件' },
   { key: 'function_calling', label: '功能调用' },
   { key: 'skills', label: '技能' },
 ]

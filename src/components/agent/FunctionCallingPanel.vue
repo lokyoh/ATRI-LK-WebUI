@@ -14,6 +14,13 @@
         title="list_skills 已关闭：非内嵌技能将无法被智能体查询。"
       />
 
+      <el-alert
+        type="info"
+        :closable="false"
+        show-icon
+        title="属于功能插件的功能调用在「功能插件」页管理，不在此页展示。"
+      />
+
       <el-table
         v-loading="loading"
         :data="functionCallings"
@@ -21,7 +28,14 @@
         stripe
         empty-text="暂无已注册的功能调用"
       >
-        <el-table-column prop="name" label="功能名" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="name" label="功能名" min-width="160" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span>{{ row.name }}</span>
+            <el-tag v-if="row.always_enabled" type="primary" size="small" class="core-tag">
+              核心
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="description"
           label="说明"
@@ -35,11 +49,20 @@
         </el-table-column>
         <el-table-column label="手动开关" width="110" align="center">
           <template #default="{ row }">
-            <el-switch
-              :model-value="row.manually_enabled"
-              :loading="pending.has(row.name)"
-              @change="(value: boolean) => toggleFunctionCalling(row.name, value)"
-            />
+            <el-tooltip
+              :disabled="!row.always_enabled"
+              content="核心功能，始终启用，不能关闭"
+              placement="top"
+            >
+              <span>
+                <el-switch
+                  :model-value="row.manually_enabled"
+                  :loading="pending.has(row.name)"
+                  :disabled="row.always_enabled"
+                  @change="(value: boolean) => toggleFunctionCalling(row.name, value)"
+                />
+              </span>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column label="环境可用性" min-width="130">
@@ -110,7 +133,9 @@ const loadFunctionCallings = async () => {
     const response = await getRequest(`${prefix}/agent/get_function_callings`)
     const payload = response.data as ResultResponse<FunctionCallingInfo[]>
     if (payload.suc) {
-      functionCallings.value = payload.data || []
+      const all = payload.data || []
+      // 插件内功能在「功能插件」页单独管理，这里只留独立功能
+      functionCallings.value = all.filter((item) => !item.plugin)
     } else {
       message.error(payload.info || '获取功能调用失败')
     }
@@ -125,6 +150,11 @@ const loadFunctionCallings = async () => {
 const toggleFunctionCalling = async (name: string, enabled: boolean) => {
   const target = functionCallings.value.find((item) => item.name === name)
   if (!target) return
+  // 核心功能（stop_thinking / send_message）后端不允许关闭，这里也直接拦下
+  if (target.always_enabled && !enabled) {
+    message.warning('核心功能不能关闭')
+    return
+  }
   const previous = target.manually_enabled
   // 乐观更新
   target.manually_enabled = enabled
@@ -187,5 +217,9 @@ onMounted(loadFunctionCallings)
 
 .state-inactive {
   color: var(--el-text-color-secondary);
+}
+
+.core-tag {
+  margin-left: 6px;
 }
 </style>

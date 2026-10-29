@@ -26,16 +26,18 @@
       v-if="inputValue.trim()"
       type="button"
       class="tag-input__add-btn"
+      aria-label="添加标签"
       @click="addTag"
       tabindex="-1"
     >
-      <i class="el-icon-plus"></i>
+      <Plus aria-hidden="true" />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { Plus } from '@element-plus/icons-vue'
 
 interface Props {
   modelValue?: string[]
@@ -209,8 +211,9 @@ $bg: var(--el-bg-color, #ffffff);
     transition: all 0.3s ease;
     flex-shrink: 0;
 
-    i {
-      font-size: 16px;
+    svg {
+      width: 16px;
+      height: 16px;
     }
 
     &:hover {

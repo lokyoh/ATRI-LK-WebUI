@@ -9,13 +9,48 @@ export interface FunctionCallingInfo {
   description: string
   args: FunctionCallingArgInfo[]
   manually_enabled: boolean
+  always_enabled: boolean
   can_enable: boolean
   can_enable_reason: string
+  plugin?: string | null
 }
 
 export interface FunctionCallingState {
   name: string
   manually_enabled: boolean
+}
+
+export interface PluginSkillInfo {
+  name: string
+  description: string
+  enabled: boolean
+  embedded: boolean
+  missing: boolean
+}
+
+export interface PluginFunctionInfo {
+  name: string
+  description: string
+  rare: boolean
+  enabled: boolean
+  always_enabled: boolean
+  can_enable: boolean
+  can_enable_reason: string
+  missing: boolean
+}
+
+export interface FunctionPluginInfo {
+  name: string
+  description: string
+  enabled: boolean
+  skills: PluginSkillInfo[]
+  functions: PluginFunctionInfo[]
+  rare_functions: PluginFunctionInfo[]
+}
+
+export interface FunctionPluginState {
+  name: string
+  enabled: boolean
 }
 
 export type SkillSource = 'builtin' | 'user' | 'modified'
