@@ -17,7 +17,8 @@
               <img
                 v-if="!isCollapsed"
                 class="w-48 h-24 object-contain animate-bounce-slow transition-opacity duration-300"
-                src="../assets/image/logo.png"
+                src="../assets/image/logo.webp"
+                decoding="async"
                 alt="Logo"
               />
             </div>
@@ -89,13 +90,13 @@
       >
         <!-- 顶部导航 -->
         <header
-          class="backdrop-blur-sm shadow-sm p-4 flex items-center justify-between sticky top-0 z-30"
+          class="home-header backdrop-blur-sm shadow-sm px-4 flex items-center justify-between sticky top-0 z-30"
           :style="{ backgroundColor: 'var(--bg-color-secondary)' }"
         >
           <!-- 移动端菜单按钮 -->
           <button
             @click="toggleMenu"
-            class="md:hidden p-2 rounded-full transition-all duration-300 text-md"
+            class="header-icon-trigger inline-flex md:hidden rounded-full transition-all duration-300 text-md"
             :style="{ backgroundColor: 'var(--bg-color-hover)' }"
           >
             <el-icon color="var(--el-color-primary)">
@@ -105,12 +106,12 @@
           </button>
 
           <!-- 左侧功能区 -->
-          <div class="flex items-center space-x-4">
+          <div class="header-actions flex items-center">
             <!-- 桌面端菜单展开/收起按钮 -->
             <button
               v-if="!isMobile"
               @click="toggleCollapse"
-              class="hidden md:flex items-center p-2 rounded-full transition-all duration-300 text-md"
+              class="header-icon-trigger hidden md:flex items-center rounded-full transition-all duration-300 text-md"
               :style="{ backgroundColor: 'var(--bg-color-hover)' }"
             >
               <el-icon color="var(--el-color-primary)">
@@ -122,7 +123,7 @@
             <!-- API地址设置按钮 -->
             <router-link
               :to="{ name: 'MyApi' }"
-              class="hidden md:flex items-center px-4 py-2 rounded-full transition-all duration-300 shadow-sm text-md"
+              class="header-link hidden md:flex items-center rounded-full transition-all duration-300 shadow-sm text-md"
               :style="{
                 background: `linear-gradient(to right, var(--primary-color-light-9), var(--primary-color-light-8))`,
                 color: 'var(--primary-color)',
@@ -139,7 +140,7 @@
               href="https://lokyoh.github.io/ATRI-LK-docs/"
               target="_blank"
               rel="noopener noreferrer"
-              class="hidden md:flex items-center px-4 py-2 rounded-full transition-all duration-300 shadow-sm text-md"
+              class="header-link hidden md:flex items-center rounded-full transition-all duration-300 shadow-sm text-md"
               :style="{
                 background: `linear-gradient(to right, var(--primary-color-light-9), var(--primary-color-light-8))`,
                 color: 'var(--primary-color)',
@@ -153,15 +154,39 @@
           </div>
 
           <!-- 右侧功能区 -->
-          <div class="flex items-center space-x-4">
+          <div class="header-actions flex items-center">
+            <el-tooltip
+              v-if="versionInfo"
+              :content="
+                versionInfo.has_update
+                  ? `${versionInfo.current} → ${versionInfo.latest}${versionInfo.notes ? ` · ${firstLine(versionInfo.notes)}` : ''}`
+                  : `当前版本 ${versionInfo.current}`
+              "
+              placement="bottom"
+            >
+              <el-button
+                class="header-update-button"
+                size="small"
+                :type="versionInfo.has_update ? 'warning' : 'primary'"
+                :loading="versionInfo.has_update ? updating : checkingVersion"
+                @click="versionInfo.has_update ? handleUpdate() : checkForUpdates()"
+              >
+                <el-icon class="mr-1">
+                  <top v-if="versionInfo.has_update" />
+                  <refresh v-else />
+                </el-icon>
+                {{ versionInfo.has_update ? '立即更新' : '检查更新' }}
+              </el-button>
+            </el-tooltip>
+
             <!-- 主题切换 -->
             <el-dropdown
               @command="handleThemeChange"
               trigger="click"
-              class="rounded-full p-2 transition-all duration-300 text-md"
+              class="rounded-full transition-all duration-300 text-md"
               :style="{ backgroundColor: 'var(--bg-color-hover)' }"
             >
-              <span class="el-dropdown-link cursor-pointer">
+              <span class="el-dropdown-link header-icon-trigger inline-flex cursor-pointer">
                 <el-icon color="var(--el-color-primary)">
                   <brush-filled />
                 </el-icon>
@@ -220,7 +245,7 @@
               </div>
 
               <template #reference>
-                <div class="flex items-center cursor-pointer group">
+                <div class="header-account-trigger flex items-center cursor-pointer group">
                   <span
                     class="mr-2 transition-all duration-300 text-md"
                     :style="{ color: 'var(--text-color)' }"
@@ -229,7 +254,7 @@
                   </span>
                   <el-image
                     :src="botInfo?.ava_url"
-                    class="w-10 h-10 rounded-full object-cover border-2 shadow-sm transition-all duration-300"
+                    class="w-7 h-7 rounded-full object-cover border-2 shadow-sm transition-all duration-300"
                     :style="{ borderColor: 'var(--primary-color)' }"
                   />
                 </div>
@@ -240,10 +265,10 @@
             <el-dropdown
               @command="dropdownClick"
               trigger="click"
-              class="rounded-full p-2 transition-all duration-300 text-md"
+              class="rounded-full transition-all duration-300 text-md"
               :style="{ backgroundColor: 'var(--bg-color-hover)' }"
             >
-              <span class="el-dropdown-link cursor-pointer flex items-center">
+              <span class="el-dropdown-link header-user-trigger cursor-pointer flex items-center">
                 <span
                   class="font-medium mx-2 transition-all duration-300"
                   :style="{ color: 'var(--text-color)' }"
@@ -301,7 +326,7 @@ import { ref, inject, nextTick, watch, computed, onMounted, onUnmounted, markRaw
 import { useRouter, useRoute } from 'vue-router'
 import { message } from '@/utils/message'
 import EventBus from '@/utils/event-bus'
-import { getRequest } from '@/utils/api'
+import { getRequest, postRequest } from '@/utils/api'
 import { useMainStore } from '@/stores/main'
 import { getHeaderHeight } from '@/utils/utils'
 import {
@@ -316,7 +341,10 @@ import {
   Sunny,
   Monitor,
   Document,
+  Top,
+  Refresh,
 } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 import SvgIcon from '@/components/SvgIcon/SvgIcon.vue'
 
 interface MenuItem {
@@ -612,10 +640,135 @@ watch(asideShow, () => {
   })
 })
 
+interface VersionInfo {
+  current: string
+  current_name: string
+  latest?: string | null
+  has_update?: boolean
+  update_time?: string | null
+  notes?: string | null
+  error?: string | null
+}
+
+const versionInfo = ref<VersionInfo | null>(null)
+
+const fetchVersionInfo = async (force = false): Promise<VersionInfo> => {
+  const response = await getRequest(
+    `${prefix}/main/get_version_info`,
+    force ? { force: true } : undefined,
+  )
+  const resp = response.data as { suc?: boolean; info?: string; data?: VersionInfo }
+  if (!resp?.suc || !resp.data) {
+    throw new Error(resp?.info || '获取更新信息失败')
+  }
+  versionInfo.value = resp.data
+  return resp.data
+}
+
+const updating = ref(false)
+const checkingVersion = ref(false)
+
+/** 首次加载只展示状态，不打断用户操作。 */
+const getVersionInfo = () => {
+  void fetchVersionInfo().catch((error) => {
+    console.error('getVersionInfo error', error)
+  })
+}
+
+const checkForUpdates = async () => {
+  if (checkingVersion.value) return
+  checkingVersion.value = true
+  try {
+    const info = await fetchVersionInfo(true)
+    if (info.error) {
+      throw new Error(info.error)
+    }
+    if (info.has_update) {
+      message?.success({ message: `发现新版本 ${info.latest}` })
+    } else {
+      message?.success({ message: '当前已是最新版本' })
+    }
+  } catch (error) {
+    console.error('checkForUpdates error', error)
+    message?.error({
+      message: `检查更新失败：${error instanceof Error ? error.message : error}`,
+    })
+  } finally {
+    checkingVersion.value = false
+  }
+}
+
+/** 发布说明是整段 markdown，页首悬浮提示只展示第一行。 */
+const firstLine = (text: string): string => {
+  const lines = (text || '')
+    .split('\n')
+    .map((line) => line.replace(/^[#*\-\s]+/u, '').trim())
+  return lines.find((line) => line.length > 0) ?? ''
+}
+
+const handleUpdate = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `将更新到 ${versionInfo.value?.latest}，更新完成后需要重启才会生效。`,
+      '确认更新',
+      { confirmButtonText: '开始更新', cancelButtonText: '再想想', type: 'warning' },
+    )
+  } catch (error) {
+    if (error === 'cancel' || error === 'close') return
+    console.error('confirmUpdate error', error)
+    message?.error({ message: '无法确认更新' })
+    return
+  }
+
+  updating.value = true
+  try {
+    const response = await postRequest(`${prefix}/configure/update`, {})
+    const resp = response.data as { suc?: boolean; info?: string }
+    if (!resp?.suc) {
+      message?.error({ message: resp?.info || '更新失败' })
+      return
+    }
+
+    message?.success({ message: resp.info || '更新完成' })
+    versionInfo.value = null
+  } catch (error) {
+    message?.error({ message: '更新失败：' + (error instanceof Error ? error.message : error) })
+    return
+  } finally {
+    updating.value = false
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      'WebUI 更新已完成，是否立即重启？',
+      '更新完成',
+      { confirmButtonText: '立即重启', cancelButtonText: '稍后重启', type: 'warning' },
+    )
+  } catch (error) {
+    if (error === 'cancel' || error === 'close') return
+    console.error('confirmRestart error', error)
+    message?.error({ message: '无法确认是否重启' })
+    return
+  }
+
+  try {
+    const response = await postRequest(`${prefix}/configure/restart`, {})
+    const resp = response.data as { suc?: boolean; info?: string }
+    if (resp?.suc) {
+      message?.success({ message: resp.info || '重启命令已执行' })
+    } else {
+      message?.error({ message: resp?.info || '重启失败' })
+    }
+  } catch (error) {
+    message?.error({ message: '重启失败：' + (error instanceof Error ? error.message : error) })
+  }
+}
+
 onMounted(() => {
   updatePrimaryColor()
   getMenus()
   getBotInfo()
+  getVersionInfo()
   window.addEventListener('resize', handleResize)
   checkScreenSize()
 })
@@ -626,6 +779,49 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.home-header {
+  height: 56px;
+  min-height: 56px;
+  gap: 12px;
+}
+
+.header-actions {
+  gap: 8px;
+}
+
+.header-icon-trigger {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-link,
+.header-update-button,
+.header-user-trigger,
+.header-account-trigger {
+  height: 36px;
+}
+
+.header-link {
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.header-update-button {
+  padding: 0 12px;
+}
+
+.header-user-trigger {
+  padding: 0 10px;
+}
+
+.header-account-trigger {
+  gap: 8px;
+  padding: 0 4px 0 10px;
+}
+
 :deep(.el-menu) {
   border-right: none;
 }
@@ -770,4 +966,9 @@ onUnmounted(() => {
     margin-left: 0;
   }
 }
+</style>
+
+<style>
+/* el-popover 会 teleport 到 body，样式不能放在 scoped 里 */
+
 </style>

@@ -52,6 +52,49 @@
           />
         </div>
 
+        <!-- 类型筛选 -->
+        <div class="search-tag">
+          <el-select
+            v-model="typeFilter"
+            placeholder="全部类型"
+            clearable
+            size="default"
+            class="store-filter-select"
+            popper-class="store-filter-popper"
+          >
+            <el-option v-for="t in typeOptions" :key="t.value" :label="t.label" :value="t.value">
+              <span class="filter-option">
+                <span>{{ t.label }}</span>
+                <span class="filter-option__count">{{ t.count }}</span>
+              </span>
+            </el-option>
+          </el-select>
+        </div>
+
+        <!-- 兼容筛选 -->
+        <div class="search-tag">
+          <el-select
+            v-model="compatFilter"
+            placeholder="全部兼容性"
+            clearable
+            size="default"
+            class="store-filter-select"
+            popper-class="store-filter-popper"
+          >
+            <el-option
+              v-for="c in compatOptions"
+              :key="c.value"
+              :label="c.label"
+              :value="c.value"
+            >
+              <span class="filter-option">
+                <span>{{ c.label }}</span>
+                <span class="filter-option__count">{{ c.count }}</span>
+              </span>
+            </el-option>
+          </el-select>
+        </div>
+
         <!-- 作者筛选 -->
         <div class="search-tag">
           <el-dropdown
@@ -176,12 +219,42 @@
               </div>
               <div class="plugin-card__row">
                 <span class="plugin-card__label">类型</span>
-                <el-tag :type="getPluginTypeColor(plugin.plugin_type)" size="small" effect="dark">
+                <el-tag
+                  v-if="plugin.plugin_type"
+                  :type="getPluginTypeColor(plugin.plugin_type)"
+                  size="small"
+                  effect="dark"
+                >
                   {{ plugin.plugin_type }}
                 </el-tag>
+                <span v-else class="plugin-card__value plugin-card__value--muted"> 未声明 </span>
+              </div>
+              <div v-if="hasRequirement(plugin)" class="plugin-card__row">
+                <span class="plugin-card__label">基于</span>
+                <div class="plugin-card__req">
+                  <el-tag
+                    v-for="req in requirementTags(plugin)"
+                    :key="req"
+                    size="small"
+                    effect="plain"
+                    class="plugin-card__tag"
+                  >
+                    {{ req }}
+                  </el-tag>
+                </div>
               </div>
               <div class="plugin-card__desc">
                 {{ plugin.description || '暂无介绍' }}
+              </div>
+              <div v-if="plugin.compat_status && plugin.compat_status !== 'supported'" class="plugin-card__warn">
+                <el-tag :type="compatTagType(plugin.compat_status)" size="small" effect="plain">
+                  {{ plugin.compat_label }}
+                </el-tag>
+                <span class="plugin-card__warn-text">{{ compatDetail(plugin) }}</span>
+              </div>
+              <div v-if="plugin.lkapi_note" class="plugin-card__note">
+                <el-tag type="warning" size="small" effect="plain"> lkapi </el-tag>
+                <span class="plugin-card__note-text">{{ plugin.lkapi_note }}</span>
               </div>
             </div>
 
@@ -201,9 +274,9 @@
                 }"
               />
               <my-button
-                v-if="installPlugin.includes(plugin.name) && plugin.need_update"
+                v-if="installPlugin.includes(plugin.name)"
                 icon="update"
-                text="更新"
+                :text="plugin.need_update ? '更新' : '重装'"
                 :iconSize="16"
                 :height="28"
                 :width="72"
@@ -234,6 +307,9 @@
         <div v-else class="empty-state">
           <div class="empty-state__icon">✨</div>
           <div class="empty-state__text">暂无匹配的插件</div>
+          <el-button v-if="hasActiveFilter" text type="primary" @click="clearFilters">
+            清除筛选条件
+          </el-button>
         </div>
       </div>
       <el-config-provider :locale="zhCn">
@@ -253,7 +329,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, inject, h, render, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject, h, render, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import MyButton from '../ui/MyButton.vue'
@@ -318,6 +394,16 @@ interface APIResponse {
   data?: PluginListData | unknown
 }
 
+interface ProgressItem {
+  name: string
+  action: string
+  stage: string
+  stage_label?: string
+  detail?: string
+  done?: boolean
+  elapsed?: number
+}
+
 interface PluginData {
   id: string
   name: string
@@ -329,6 +415,26 @@ interface PluginData {
   need_update?: boolean
   local_version?: string
   remote_version?: string
+  /** 插件开发所依据的框架版本（单一版本号）；空串表示未声明 */
+  require_framework?: string
+  /** 插件所依赖的 lkapi 接口版本；null 表示未声明 */
+  require_lkapi?: number | null
+  /** 当前框架版本 */
+  framework_version?: string
+  /** 当前框架的兼容区间，如 `0.24-0.25` */
+  supported_framework?: string
+  /** 当前 lkapi 版本 */
+  lkapi_version?: number | null
+  /** 与当前环境是否兼容（仅标注，不拦截安装） */
+  compatible?: boolean
+  /** 兼容状态：supported / unknown / outdated / newer */
+  compat_status?: string
+  /** 兼容状态的中文标签 */
+  compat_label?: string
+  /** 不兼容原因 */
+  compat_reason?: string
+  /** lkapi 版本变动提示 */
+  lkapi_note?: string
   module: string
   [key: string]: unknown
 }
@@ -340,24 +446,74 @@ const search = ref('')
 const installPlugin = ref<string[]>([])
 const currentPage = ref(1)
 const pageSize = ref(12)
+const typeFilter = ref('')
+const compatFilter = ref('')
+
+/** 兼容筛选项定义；顺序即展示顺序 */
+const COMPAT_FILTERS = [
+  { value: 'supported', label: '兼容' },
+  { value: 'outdated', label: '版本过时' },
+  { value: 'newer', label: '版本过新' },
+  { value: 'unknown', label: '未知兼容性' },
+]
+
+const pluginType = (plugin: PluginData) => plugin.plugin_type || ''
+
+const compatStatus = (plugin: PluginData) => plugin.compat_status || 'unknown'
+
+/** 类型筛选项：只列出当前数据里真实出现的类型，并带数量 */
+const typeOptions = computed(() => {
+  const counts = new Map<string, number>()
+  for (const plugin of tableData.value) {
+    const key = pluginType(plugin)
+    if (!key) continue
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([value, count]) => ({ value, label: value, count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+})
+
+/** 兼容筛选项：带数量，0 项仍保留以便用户确认「确实没有这类」 */
+const compatOptions = computed(() =>
+  COMPAT_FILTERS.map((item) => ({
+    ...item,
+    count: tableData.value.filter((p) => compatStatus(p) === item.value).length,
+  })),
+)
 
 const filterTableData = computed(() => {
   const searchValue = search.value.trim()
-  if (searchValue) {
-    return tableData.value.filter((v) => {
-      return v.author.includes(searchValue) || v.name.includes(searchValue)
-    })
-  } else {
-    return tableData.value
-  }
+  return tableData.value.filter((v) => {
+    if (searchValue && !(v.author.includes(searchValue) || v.name.includes(searchValue))) {
+      return false
+    }
+    if (typeFilter.value && pluginType(v) !== typeFilter.value) {
+      return false
+    }
+    if (compatFilter.value && compatStatus(v) !== compatFilter.value) {
+      return false
+    }
+    return true
+  })
 })
+
+const hasActiveFilter = computed(
+  () => Boolean(search.value.trim() || typeFilter.value || compatFilter.value),
+)
+
+const clearFilters = () => {
+  search.value = ''
+  typeFilter.value = ''
+  compatFilter.value = ''
+}
 
 const paginatedTableData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   return filterTableData.value.slice(start, start + pageSize.value)
 })
 
-watch(search, () => {
+watch([search, typeFilter, compatFilter], () => {
   currentPage.value = 1
 })
 
@@ -377,6 +533,14 @@ onMounted(() => {
 
 const getPluginTypeColor = (type: string) => {
   const typeMap: Record<string, string> = {
+    系统服务: 'danger',
+    LK扩展服务: 'success',
+    功能性服务: 'success',
+    娱乐服务: 'warning',
+    游戏服务: 'primary',
+    订阅服务: 'info',
+    其他服务: 'info',
+    隐藏服务: 'info',
     功能: 'success',
     娱乐: 'warning',
     工具: 'info',
@@ -385,6 +549,36 @@ const getPluginTypeColor = (type: string) => {
     其他: 'info',
   }
   return typeMap[type] || 'info'
+}
+
+/** 插件是否声明了种类之外的要求（框架 / lkapi） */
+const hasRequirement = (plugin: PluginData) =>
+  Boolean(plugin.require_framework) || plugin.require_lkapi != null
+
+/** 把框架 / lkapi 要求拆成标签数组 */
+const requirementTags = (plugin: PluginData) => {
+  const tags: string[] = []
+  if (plugin.require_framework) {
+    tags.push(`框架 ${plugin.require_framework}`)
+  }
+  if (plugin.require_lkapi != null) {
+    tags.push(`lkapi ${plugin.require_lkapi}`)
+  }
+  return tags
+}
+
+const compatTagType = (status?: string) => {
+  if (status === 'outdated' || status === 'newer') {
+    return 'danger'
+  }
+  return 'info'
+}
+
+const compatDetail = (plugin: PluginData) => {
+  if (plugin.compat_status === 'unknown') {
+    return '未声明所基于的框架版本'
+  }
+  return plugin.compat_reason || ''
 }
 
 const getPluginStatus = (plugin: PluginData) => {
@@ -404,6 +598,10 @@ const getPluginVersionLabel = (plugin: PluginData) => {
   return `v${plugin.version}`
 }
 
+const progressText = ref('')
+let progressTimer: ReturnType<typeof setInterval> | null = null
+let activeLoading: { setText: (t: string) => void } | null = null
+
 const handleRestart = async () => {
   const result = await showCuteConfirm({
     title: '重启确认',
@@ -419,6 +617,7 @@ const handleRestart = async () => {
     postRequest(`${prefix}/configure/restart`, {})
       .then((response) => {
         loading.close()
+        stopProgressPolling()
         const resp = response.data as APIResponse
         if (resp.suc) {
           message?.success({ message: resp.info || '重启命令已执行!' })
@@ -428,6 +627,7 @@ const handleRestart = async () => {
       })
       .catch((error) => {
         loading.close()
+        stopProgressPolling()
         message?.error({ message: '重启过程中发生错误：' + (error.message || error) })
         console.error('[StoreTemplate] Restart error:', error)
       })
@@ -437,22 +637,31 @@ const handleRestart = async () => {
 }
 
 const handleUpdate = async (_i: number, data: PluginData) => {
+  const isLatest = !data.need_update
   const result = await showCuteConfirm({
-    title: '更新确认',
-    message: `确定要更新这个插件吗`,
+    title: isLatest ? '重装确认' : '更新确认',
+    message: isLatest
+      ? `该插件已是最新版本，确定要重新下载安装吗？`
+      : `确定要更新这个插件吗`,
     cancelButtonText: '我再想想',
     confirmButtonText: '无视风险强制更新',
     type: 'warning',
   })
 
   if (result) {
-    const loading = getLoading('.store-content-panel')
+    pollProgress(data.name)
+    const loading = getLoading('.store-content-panel', { text: '正在处理喵...' })
+    activeLoading = loading
 
+    // 确认框的按钮文案是「无视风险强制更新」，这里如实传 force：
+    // 否则「已是最新」时点了也更新不了，按钮名不副实
     postRequest(`${prefix}/store/update_plugin`, {
       service: data.name,
+      force: true,
     })
       .then((response) => {
         loading.close()
+        stopProgressPolling()
         const resp = response.data as APIResponse
         if (resp.suc) {
           if (resp.warning) {
@@ -467,6 +676,7 @@ const handleUpdate = async (_i: number, data: PluginData) => {
       })
       .catch((error) => {
         loading.close()
+        stopProgressPolling()
         message?.error({ message: '更新过程中发生错误：' + (error.message || error) })
         console.error('[Plugin Store] Update error:', error)
       })
@@ -484,13 +694,16 @@ const handleRemove = async (_i: number, data: PluginData) => {
     type: 'warning',
   })
   if (result) {
-    const loading = getLoading('.store-content-panel')
+    pollProgress(data.name)
+    const loading = getLoading('.store-content-panel', { text: '正在处理喵...' })
+    activeLoading = loading
 
     postRequest(`${prefix}/store/remove_plugin`, {
       service: data.name,
     })
       .then((response) => {
         loading.close()
+        stopProgressPolling()
         const resp = response.data as APIResponse
         if (resp.suc) {
           if (resp.warning) {
@@ -505,6 +718,7 @@ const handleRemove = async (_i: number, data: PluginData) => {
       })
       .catch((error) => {
         loading.close()
+        stopProgressPolling()
         message?.error({ message: '移除过程中发生错误：' + (error.message || error) })
         console.error('[Plugin Store] Remove error:', error)
       })
@@ -522,13 +736,16 @@ const handleInstall = async (_i: number, data: PluginData) => {
     type: 'warning',
   })
   if (result) {
-    const loading = getLoading('.store-content-panel')
+    pollProgress(data.name)
+    const loading = getLoading('.store-content-panel', { text: '正在处理喵...' })
+    activeLoading = loading
 
     postRequest(`${prefix}/store/install_plugin`, {
       service: data.name,
     })
       .then((response) => {
         loading.close()
+        stopProgressPolling()
         const resp = response.data as APIResponse
         if (resp.suc) {
           if (resp.warning) {
@@ -543,6 +760,7 @@ const handleInstall = async (_i: number, data: PluginData) => {
       })
       .catch((error) => {
         loading.close()
+        stopProgressPolling()
         message?.error({ message: '安装过程中发生错误：' + (error.message || error) })
         console.error('[Plugin Store] Install error:', error)
       })
@@ -555,6 +773,42 @@ const handleCommand = (s: string) => {
   search.value = s
   message?.success(`已筛选作者：${s}`)
 }
+
+
+/** 安装/更新期间轮询后端进度，把当前阶段显示在 loading 文案里。 */
+const stopProgressPolling = () => {
+  if (progressTimer !== null) {
+    clearInterval(progressTimer)
+    progressTimer = null
+  }
+  progressText.value = ''
+  activeLoading = null
+}
+
+const pollProgress = (pluginName: string) => {
+  stopProgressPolling()
+  const tick = () => {
+    getRequest(`${prefix}/store/get_store_progress`)
+      .then((response) => {
+        const resp = response.data as APIResponse
+        const list = Array.isArray(resp?.data) ? (resp.data as ProgressItem[]) : []
+        const mine = list.find((p) => p.name === pluginName)
+        if (mine) {
+          progressText.value = mine.done ? '' : mine.stage_label || ''
+          if (!mine.done && progressText.value && activeLoading) {
+            activeLoading.setText(`(${mine.stage_label}) 正在处理喵...`)
+          }
+        }
+      })
+      .catch(() => {
+        /* 进度是尽力而为，失败不影响主流程 */
+      })
+  }
+  tick()
+  progressTimer = setInterval(tick, 800)
+}
+
+onUnmounted(stopProgressPolling)
 
 const getPluginList = () => {
   const loading = getLoading('.store-content-panel')
@@ -1005,6 +1259,51 @@ const getPluginList = () => {
   white-space: nowrap;
 }
 
+.plugin-card__value--muted {
+  color: var(--el-text-color-placeholder);
+}
+
+.plugin-card__req {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.plugin-card__warn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  background: var(--el-color-danger-light-9);
+  border: 1px solid var(--el-color-danger-light-7);
+}
+
+.plugin-card__warn-text {
+  color: var(--el-color-danger);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.plugin-card__note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  background: var(--el-color-warning-light-9);
+  border: 1px solid var(--el-color-warning-light-7);
+}
+
+.plugin-card__note-text {
+  color: var(--el-color-warning);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .plugin-card__desc {
   color: var(--el-text-color-secondary);
   font-size: 0.9rem;
@@ -1043,6 +1342,15 @@ const getPluginList = () => {
 
 .empty-state__text {
   font-size: 0.95rem;
+}
+
+.store-filter-select {
+  width: 140px;
+
+  :deep(.el-select__wrapper) {
+    border-radius: 9999px;
+    box-shadow: var(--el-box-shadow);
+  }
 }
 
 // 响应式调整
@@ -1164,6 +1472,22 @@ const getPluginList = () => {
 
   &:hover {
     transform: translateX(4px);
+  }
+}
+</style>
+
+<style lang="scss">
+.store-filter-popper {
+  .filter-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .filter-option__count {
+    color: var(--el-text-color-secondary);
+    font-size: 0.8rem;
   }
 }
 </style>

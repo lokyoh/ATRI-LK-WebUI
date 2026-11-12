@@ -12,7 +12,7 @@
 
         <!-- 顶部logo - 方形设计 -->
         <div class="logo-container">
-          <img src="@/assets/image/logo.png" alt="Logo" class="main-logo" />
+          <img src="@/assets/image/logo.webp" alt="Logo" class="main-logo" decoding="async" />
         </div>
 
         <!-- 内容区域 -->

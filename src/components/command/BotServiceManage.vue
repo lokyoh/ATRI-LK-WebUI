@@ -120,7 +120,7 @@ function getModuleData() {
       if (resp.data.warning) {
         message.warning(resp.data.info)
       } else {
-        message.success(resp.data.info)
+        // 读取成功不弹提示（下拉框里已经有内容了）
         botModuleData.value.allPlugins = resp.data.data.all_plugins
         botModuleData.value.allTasks = resp.data.data.all_tasks
         postData.value.blockPlugins = resp.data.data.block_plugins
@@ -129,8 +129,7 @@ function getModuleData() {
     } else {
       message.error(resp.data.info)
     }
-    loading.close()
-  })
+  }).finally(() => loading.close())
 }
 
 function clickServiceManage() {
@@ -148,8 +147,7 @@ function clickServiceManage() {
     } else {
       message.error(resp.data.info)
     }
-    loading.close()
-  })
+  }).finally(() => loading.close())
 }
 </script>
 

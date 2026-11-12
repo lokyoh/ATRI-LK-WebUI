@@ -18,7 +18,15 @@
           <div
             class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 flex items-center justify-center transition-all duration-300"
           >
-            <img src="@/assets/image/logo.png" alt="Logo" class="w-full h-full object-contain" />
+            <img
+              src="@/assets/image/logo.webp"
+              alt="Logo"
+              width="384"
+              height="384"
+              decoding="async"
+              fetchpriority="high"
+              class="w-full h-full object-contain"
+            />
           </div>
         </div>
 

@@ -30,13 +30,26 @@
             <el-option label="白名单" :value="false" />
           </el-select>
         </div>
-        <el-input
-          v-model="userListText"
-          type="textarea"
-          :rows="3"
-          placeholder="每行填写一个用户 ID"
-          resize="vertical"
-        />
+        <div class="list-editor">
+          <div v-for="(item, index) in userList" :key="index" class="list-editor-row">
+            <el-input
+              :model-value="item"
+              placeholder="用户 ID"
+              @update:model-value="updateUser(index, $event)"
+            />
+            <el-button
+              type="danger"
+              plain
+              :icon="Delete"
+              circle
+              aria-label="删除用户"
+              @click="removeUser(index)"
+            />
+          </div>
+          <el-button class="config-add-button" type="primary" plain :icon="Plus" @click="addUser">
+            添加
+          </el-button>
+        </div>
       </div>
 
       <div class="rule-field">
@@ -47,13 +60,26 @@
             <el-option label="白名单" :value="false" />
           </el-select>
         </div>
-        <el-input
-          v-model="groupListText"
-          type="textarea"
-          :rows="3"
-          placeholder="每行填写一个群组 ID"
-          resize="vertical"
-        />
+        <div class="list-editor">
+          <div v-for="(item, index) in groupList" :key="index" class="list-editor-row">
+            <el-input
+              :model-value="item"
+              placeholder="群组 ID"
+              @update:model-value="updateGroup(index, $event)"
+            />
+            <el-button
+              type="danger"
+              plain
+              :icon="Delete"
+              circle
+              aria-label="删除群组"
+              @click="removeGroup(index)"
+            />
+          </div>
+          <el-button class="config-add-button" type="primary" plain :icon="Plus" @click="addGroup">
+            添加
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -72,6 +98,7 @@
 
 <script setup lang="ts">
 import { computed, inject, ref, watch } from 'vue'
+import { Delete, Plus } from '@element-plus/icons-vue'
 import { getRequest, postRequest } from '@/utils/api'
 import { message } from '@/utils/message'
 
@@ -106,35 +133,65 @@ const saving = ref(false)
 const isGlobal = computed(() => props.scope === 'global')
 const config = ref<StatusConfig>(createEmptyConfig())
 
-const userListText = computed({
-  get: () =>
-    (config.value.is_user_black_list
-      ? config.value.user_black_list
-      : config.value.user_white_list
-    ).join('\n'),
-  set: (value: string) => {
-    if (config.value.is_user_black_list) {
-      config.value.user_black_list = parseIds(value)
-    } else {
-      config.value.user_white_list = parseIds(value)
-    }
-  },
-})
+//: 当前模式对应的实际列表。黑/白名单是两份独立数据，
+//: 切换模式只换「在编辑哪一份」，不能互相覆盖。
+const userList = computed(() =>
+  config.value.is_user_black_list
+    ? config.value.user_black_list
+    : config.value.user_white_list,
+)
 
-const groupListText = computed({
-  get: () =>
-    (config.value.is_group_black_list
-      ? config.value.group_black_list
-      : config.value.group_white_list
-    ).join('\n'),
-  set: (value: string) => {
-    if (config.value.is_group_black_list) {
-      config.value.group_black_list = parseIds(value)
-    } else {
-      config.value.group_white_list = parseIds(value)
-    }
-  },
-})
+const groupList = computed(() =>
+  config.value.is_group_black_list
+    ? config.value.group_black_list
+    : config.value.group_white_list,
+)
+
+function setUserList(next: string[]) {
+  const cleaned = next.map((item) => item.trim())
+  if (config.value.is_user_black_list) {
+    config.value.user_black_list = cleaned
+  } else {
+    config.value.user_white_list = cleaned
+  }
+}
+
+function setGroupList(next: string[]) {
+  const cleaned = next.map((item) => item.trim())
+  if (config.value.is_group_black_list) {
+    config.value.group_black_list = cleaned
+  } else {
+    config.value.group_white_list = cleaned
+  }
+}
+
+function addUser() {
+  setUserList([...userList.value, ''])
+}
+
+function removeUser(index: number) {
+  setUserList(userList.value.filter((_, i) => i !== index))
+}
+
+function updateUser(index: number, value: string) {
+  const next = [...userList.value]
+  next[index] = value
+  setUserList(next)
+}
+
+function addGroup() {
+  setGroupList([...groupList.value, ''])
+}
+
+function removeGroup(index: number) {
+  setGroupList(groupList.value.filter((_, i) => i !== index))
+}
+
+function updateGroup(index: number, value: string) {
+  const next = [...groupList.value]
+  next[index] = value
+  setGroupList(next)
+}
 
 watch(
   () => (props.scope === 'global' ? 'global' : props.botId),
@@ -152,13 +209,6 @@ function createEmptyConfig(): StatusConfig {
     group_white_list: [],
     user_white_list: [],
   }
-}
-
-function parseIds(value: string): string[] {
-  return value
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .filter(Boolean)
 }
 
 async function loadConfig() {
@@ -186,17 +236,30 @@ async function loadConfig() {
   }
 }
 
+/** 空行是「点了添加还没填」，存进去会变成一条无意义的空 ID。 */
+function compact(list: string[]): string[] {
+  return list.map((item) => item.trim()).filter(Boolean)
+}
+
 async function saveConfig() {
   if (!isGlobal.value && !props.botId) return
+
+  const payload: StatusConfig = {
+    ...config.value,
+    user_black_list: compact(config.value.user_black_list),
+    user_white_list: compact(config.value.user_white_list),
+    group_black_list: compact(config.value.group_black_list),
+    group_white_list: compact(config.value.group_white_list),
+  }
 
   saving.value = true
   try {
     const endpoint = isGlobal.value ? '/main/update_global_config' : '/main/update_bot_config'
     const data = isGlobal.value
-      ? config.value
+      ? payload
       : {
           bot_id: props.botId,
-          config: config.value,
+          config: payload,
         }
     const resp = await postRequest(`${prefix}${endpoint}`, data)
     const result = resp.data as ApiResult<unknown>
@@ -273,6 +336,27 @@ async function saveConfig() {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* 与「LK插件配置」里的列表编辑器保持同一套观感 */
+.list-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.list-editor-row :deep(.el-input) {
+  flex: 1;
+}
+
+.config-add-button {
+  align-self: flex-start;
 }
 
 .config-footer {

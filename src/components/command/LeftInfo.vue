@@ -119,8 +119,7 @@ function handleBotStatus() {
     } else {
       message.error(resp.data.info)
     }
-    loading.close()
-  })
+  }).finally(() => loading.close())
 }
 
 </script>

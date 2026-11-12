@@ -48,11 +48,13 @@
             :style="{ borderTop: '1px solid var(--border-color-light)' }"
           >
             <!-- 开关 -->
-            <div v-if="data.allow_switch" class="flex items-center" title="切换插件状态" @click.stop>
-              <MySwitch
-                v-model="data.status"
-                @change="onSwitchChange(data, $event)"
-              />
+            <div
+              v-if="data.allow_switch"
+              class="flex items-center"
+              title="切换插件状态"
+              @click.stop
+            >
+              <MySwitch v-model="data.status" @change="onSwitchChange(data, $event)" />
               <span
                 class="ml-2 text-xs"
                 :style="{
@@ -206,6 +208,109 @@
                 placeholder="输入用户/群组 ID 后按回车添加"
               />
             </div>
+
+            <!-- 运行时策略 -->
+            <div class="pt-3 mt-1" :style="{ borderTop: '1px dashed var(--border-color-light)' }">
+              <h5 class="text-sm font-bold mb-3" :style="{ color: 'var(--primary-color)' }">
+                <i class="fas fa-bolt mr-2"></i>运行时策略
+              </h5>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium mb-2">冷却时间（秒）</label>
+                  <NeonInput
+                    :model-value="editData.configs.cd"
+                    type="number"
+                    placeholder="0 表示不限制"
+                    @input="(v) => (editData.configs.cd = Math.max(0, Number(v) || 0))"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">次数上限</label>
+                  <NeonInput
+                    :model-value="editData.configs.max_count"
+                    type="number"
+                    placeholder="0 表示不限制"
+                    @input="
+                      (v) => (editData.configs.max_count = Math.max(0, Math.floor(Number(v) || 0)))
+                    "
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">统计窗口（秒）</label>
+                  <NeonInput
+                    :model-value="editData.configs.limit_window"
+                    type="number"
+                    placeholder="0 表示不限制"
+                    @input="(v) => (editData.configs.limit_window = Math.max(0, Number(v) || 0))"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">作用范围</label>
+                  <NekoSelect
+                    :value="editData.configs.limit_scope"
+                    :options="limitScopeOptions"
+                    @change="onLimitScopeChange"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">并发上限</label>
+                  <NeonInput
+                    :model-value="editData.configs.concurrency"
+                    type="number"
+                    placeholder="0 表示不限制"
+                    @input="
+                      (v) =>
+                        (editData.configs.concurrency = Math.max(0, Math.floor(Number(v) || 0)))
+                    "
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">撤回延迟（秒）</label>
+                  <NeonInput
+                    :model-value="editData.configs.withdraw_delay"
+                    type="number"
+                    placeholder="0 表示不撤回"
+                    @input="(v) => (editData.configs.withdraw_delay = Math.max(0, Number(v) || 0))"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mt-3">
+                <div
+                  class="flex items-center justify-between p-3 rounded-lg"
+                  :style="{ background: 'var(--bg-color)' }"
+                >
+                  <span class="text-sm font-medium">禁用私聊</span>
+                  <MySwitch v-model="blockPrivate" />
+                </div>
+                <div
+                  class="flex items-center justify-between p-3 rounded-lg"
+                  :style="{ background: 'var(--bg-color)' }"
+                >
+                  <span class="text-sm font-medium">禁用群聊</span>
+                  <MySwitch v-model="blockGroup" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mt-3">
+                <div>
+                  <label class="block text-sm font-medium mb-2">父插件</label>
+                  <NeonInput
+                    :model-value="editData.configs.parent ?? ''"
+                    placeholder="留空表示无父插件"
+                    @input="(v) => (editData.configs.parent = String(v) || null)"
+                  />
+                </div>
+                <div
+                  class="flex items-center justify-between p-3 rounded-lg"
+                  :style="{ background: 'var(--bg-color)' }"
+                >
+                  <span class="text-sm font-medium">跳过调用统计</span>
+                  <MySwitch v-model="editData.configs.ignore_statistics" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -214,12 +319,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, inject, h, render } from 'vue'
+import { ref, computed, onMounted, inject, h, render } from 'vue'
 import { useRouter } from 'vue-router'
 import UpdateDialog from './UpdateDialog.vue'
 import NormalButton from '@/components/ui/NormalButton.vue'
 import MySwitch from '@/components/ui/MySwitch.vue'
 import NeonDialog from '@/components/ui/NeonDialog.vue'
+import NeonInput from '@/components/ui/NeonInput.vue'
+import NekoSelect from '@/components/ui/NekoSelect.vue'
 import TagInput from '@/components/ui/TagInput.vue'
 import CuteConfirm from '@/components/ui/CuteConfirm.vue'
 import { getRequest, postRequest } from '@/utils/api'
@@ -287,6 +394,15 @@ interface PluginData {
     disable_group?: string[]
     white_list_mode?: boolean
     white_list?: string[]
+    cd?: number
+    max_count?: number
+    limit_window?: number
+    limit_scope?: 'user' | 'group' | 'both'
+    block_type?: string[]
+    parent?: string | null
+    ignore_statistics?: boolean
+    withdraw_delay?: number
+    concurrency?: number
   }
   [key: string]: unknown
 }
@@ -305,18 +421,68 @@ interface EditData {
     disable_group: string[]
     white_list_mode: boolean
     white_list: string[]
+    cd: number
+    max_count: number
+    limit_window: number
+    limit_scope: 'user' | 'group' | 'both'
+    block_type: string[]
+    parent: string | null
+    ignore_statistics: boolean
+    withdraw_delay: number
+    concurrency: number
   }
 }
 
-const editData = ref<EditData>({
-  configs: {
-    enabled: true,
-    disable_user: [],
-    disable_group: [],
-    white_list_mode: false,
-    white_list: [],
-  },
+const DEFAULT_CONFIGS = (): EditData['configs'] => ({
+  enabled: true,
+  disable_user: [],
+  disable_group: [],
+  white_list_mode: false,
+  white_list: [],
+  cd: 0,
+  max_count: 0,
+  limit_window: 0,
+  limit_scope: 'user',
+  block_type: [],
+  parent: null,
+  ignore_statistics: false,
+  withdraw_delay: 0,
+  concurrency: 0,
 })
+
+const editData = ref<EditData>({
+  configs: DEFAULT_CONFIGS(),
+})
+
+const limitScopeOptions = [
+  { value: 'user', label: '按用户' },
+  { value: 'group', label: '按群聊' },
+  { value: 'both', label: '用户 + 群聊' },
+]
+
+function onLimitScopeChange(value: string | number | object) {
+  editData.value.configs.limit_scope = String(value) as 'user' | 'group' | 'both'
+}
+
+const blockPrivate = computed({
+  get: () => editData.value.configs.block_type.includes('private'),
+  set: (value: boolean) => toggleBlockType('private', value),
+})
+
+const blockGroup = computed({
+  get: () => editData.value.configs.block_type.includes('group'),
+  set: (value: boolean) => toggleBlockType('group', value),
+})
+
+function toggleBlockType(type: 'private' | 'group', enabled: boolean) {
+  const types = new Set(editData.value.configs.block_type)
+  if (enabled) {
+    types.add(type)
+  } else {
+    types.delete(type)
+  }
+  editData.value.configs.block_type = [...types]
+}
 
 interface Props {
   pluginType?: string
@@ -433,27 +599,29 @@ function fetchPluginConfig(pluginName: string) {
         const pluginData = resp.data.data
         // 初始化编辑数据 - 所有插件都显示配置信息
         if (pluginData.configs) {
+          const configs = pluginData.configs
           editData.value = {
             configs: {
-              enabled: pluginData.configs.enabled ?? true,
-              disable_user: [...(pluginData.configs.disable_user ?? [])],
-              disable_group: [...(pluginData.configs.disable_group ?? [])],
-              white_list_mode: pluginData.configs.white_list_mode ?? false,
-              white_list: [...(pluginData.configs.white_list ?? [])],
+              enabled: configs.enabled ?? true,
+              disable_user: [...(configs.disable_user ?? [])],
+              disable_group: [...(configs.disable_group ?? [])],
+              white_list_mode: configs.white_list_mode ?? false,
+              white_list: [...(configs.white_list ?? [])],
+              cd: configs.cd ?? 0,
+              max_count: configs.max_count ?? 0,
+              limit_window: configs.limit_window ?? 0,
+              limit_scope: configs.limit_scope ?? 'user',
+              block_type: [...(configs.block_type ?? [])],
+              parent: configs.parent ?? null,
+              ignore_statistics: configs.ignore_statistics ?? false,
+              withdraw_delay: configs.withdraw_delay ?? 0,
+              concurrency: configs.concurrency ?? 0,
             },
           }
         } else {
           console.warn('插件数据中没有 configs 字段')
           // 即使没有 configs 也初始化默认值
-          editData.value = {
-            configs: {
-              enabled: true,
-              disable_user: [],
-              disable_group: [],
-              white_list_mode: false,
-              white_list: [],
-            },
-          }
+          editData.value = { configs: DEFAULT_CONFIGS() }
         }
       } else {
         console.warn('获取插件数据失败或无数据:', resp.data)
@@ -462,15 +630,7 @@ function fetchPluginConfig(pluginName: string) {
     .catch((error) => {
       console.error('获取插件配置失败:', error)
       // 错误时也初始化默认值
-      editData.value = {
-        configs: {
-          enabled: true,
-          disable_user: [],
-          disable_group: [],
-          white_list_mode: false,
-          white_list: [],
-        },
-      }
+      editData.value = { configs: DEFAULT_CONFIGS() }
     })
 }
 
@@ -488,6 +648,15 @@ async function handleDetailConfirm() {
     disable_group: editData.value.configs.disable_group,
     white_list_mode: editData.value.configs.white_list_mode,
     white_list: editData.value.configs.white_list,
+    cd: editData.value.configs.cd,
+    max_count: editData.value.configs.max_count,
+    limit_window: editData.value.configs.limit_window,
+    limit_scope: editData.value.configs.limit_scope,
+    block_type: editData.value.configs.block_type,
+    parent: editData.value.configs.parent,
+    ignore_statistics: editData.value.configs.ignore_statistics,
+    withdraw_delay: editData.value.configs.withdraw_delay,
+    concurrency: editData.value.configs.concurrency,
   }
 
   try {

@@ -16,10 +16,6 @@ export const getLoading = (
     ...options,
   });
 
-  setTimeout(() => {
-    loading.close();
-  }, 5000);
-
   return loading;
 };
 

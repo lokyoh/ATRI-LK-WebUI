@@ -56,7 +56,12 @@
         border: '1px solid var(--border-color-light)',
       }"
     >
-      <PluginListTemplate ref="pluginListRef" :pluginType="activeBtn" :key="pltKey" />
+      <PluginListTemplate
+        v-if="activeBtn"
+        ref="pluginListRef"
+        :pluginType="activeBtn"
+        :key="pltKey"
+      />
     </div>
 
     <!-- 安装依赖对话框 -->
@@ -204,27 +209,38 @@ interface PluginType {
   last?: boolean
 }
 
-const pluginTypes = ref<PluginType[]>([
-  { value: '系统服务', label: '系统服务', countKey: 'system', first: true },
-  { value: 'LK扩展服务', label: 'LK扩展服务', countKey: 'lkplugin' },
-  { value: '功能性服务', label: '功能性服务', countKey: 'function' },
-  { value: '娱乐服务', label: '娱乐服务', countKey: 'entertainment' },
-  { value: '游戏服务', label: '游戏服务', countKey: 'game' },
-  { value: '订阅服务', label: '订阅服务', countKey: 'subscribe' },
-  { value: '其他服务', label: '其他服务', countKey: 'other' },
-  { value: '隐藏服务', label: '隐藏服务', countKey: 'hidden', last: true },
-])
-const pluginCount = ref<{ [key: string]: number }>({
-  system: 0,
-  lkplugin: 0,
-  function: 0,
-  entertainment: 0,
-  game: 0,
-  subscribe: 0,
-  other: 0,
-  hidden: 0,
-})
-const activeBtn = ref('系统服务')
+interface ServiceTypeInfo {
+  key: string
+  name: string
+  value: string
+}
+
+// 类型列表由后端 /plugin/get_plugin_types 提供（源自主项目 Service.ServiceType），
+// 新增服务类型时前端无需改动。接口不可用时回退到内置快照，避免页面空标签。
+const FALLBACK_SERVICE_TYPES: ServiceTypeInfo[] = [
+  { key: 'system', name: 'SYSTEM', value: '系统服务' },
+  { key: 'lkplugin', name: 'LKPLUGIN', value: 'LK扩展服务' },
+  { key: 'function', name: 'FUNCTION', value: '功能性服务' },
+  { key: 'entertainment', name: 'ENTERTAINMENT', value: '娱乐服务' },
+  { key: 'game', name: 'GAME', value: '游戏服务' },
+  { key: 'subscribe', name: 'SUBSCRIBE', value: '订阅服务' },
+  { key: 'other', name: 'OTHER', value: '其他服务' },
+  { key: 'hidden', name: 'HIDDEN', value: '隐藏服务' },
+]
+
+function buildPluginTypes(types: ServiceTypeInfo[]): PluginType[] {
+  return types.map((t, index) => ({
+    value: t.value,
+    label: t.value,
+    countKey: t.key,
+    first: index === 0,
+    last: index === types.length - 1,
+  }))
+}
+
+const pluginTypes = ref<PluginType[]>(buildPluginTypes(FALLBACK_SERVICE_TYPES))
+const pluginCount = ref<{ [key: string]: number }>({})
+const activeBtn = ref('')
 const pltKey = ref(0)
 const showInstallDependencyDialog = ref(false)
 const dependencyName = ref('')
@@ -233,7 +249,7 @@ const dependencyOperation = ref('install')
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
-  getPluginCount()
+  getPluginTypes()
   handleResize()
 })
 
@@ -251,6 +267,38 @@ function clickPluginType(pluginType: string) {
   pltKey.value++
 }
 
+function getPluginTypes() {
+  getRequest(`${prefix}/plugin/get_plugin_types`)
+    .then((resp) => {
+      const data = resp?.data?.suc ? resp.data.data : null
+      const types: ServiceTypeInfo[] = Array.isArray(data) && data.length ? data : []
+      if (!types.length) {
+        message.warning('获取服务类型失败，使用内置类型列表')
+        applyPluginTypes(FALLBACK_SERVICE_TYPES)
+        return
+      }
+      applyPluginTypes(types)
+    })
+    .catch((error) => {
+      message.warning('请求服务类型失败，使用内置类型列表：' + error)
+      applyPluginTypes(FALLBACK_SERVICE_TYPES)
+    })
+    .finally(() => {
+      getPluginCount()
+    })
+}
+
+function applyPluginTypes(types: ServiceTypeInfo[]) {
+  pluginTypes.value = buildPluginTypes(types)
+  // 数量字典重建为当前类型的键，避免残留旧键
+  pluginCount.value = Object.fromEntries(types.map((t) => [t.key, 0]))
+  // 保持当前选中项；它已不存在时回到第一个类型
+  if (!pluginTypes.value.some((t) => t.value === activeBtn.value)) {
+    activeBtn.value = pluginTypes.value[0]?.value ?? ''
+    pltKey.value++
+  }
+}
+
 function getPluginCount() {
   getRequest(`${prefix}/plugin/get_plugin_count`)
     .then((resp) => {
@@ -262,7 +310,7 @@ function getPluginCount() {
         if (resp.data.warning) {
           message.warning(resp.data.warning)
         } else {
-          // 只更新存在的字段
+          // 只更新已声明的类型键，忽略后端多给的无关字段
           const data = resp.data.data || resp.data
           Object.keys(pluginCount.value).forEach((key) => {
             if (key in data) {

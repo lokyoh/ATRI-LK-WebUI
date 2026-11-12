@@ -267,7 +267,7 @@ function getBotList() {
       if (resp.data.warning) {
         message.warning(resp.data.warning)
       } else {
-        message.success(resp.data.info)
+        // 读取成功不弹提示（数据已经渲染出来了）
         botList.value = resp.data.data
         for (const bot of botList.value) {
           bot.connectTime = '00:00'

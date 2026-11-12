@@ -10,6 +10,7 @@ import PluginManagePage from "@/views/plugin/PluginManagePage.vue";
 import StoreManagePage from "@/views/store/StoreManagePage.vue";
 import AgentPage from "@/views/agent/AgentPage.vue";
 import LogPage from "@/views/log/LogPage.vue";
+import LkbotUserPage from "@/views/lkbot/LkbotUserPage.vue";
 // 定义路由类型
 const routes: Array<RouteRecordRaw> = [
   {
@@ -72,6 +73,12 @@ const routes: Array<RouteRecordRaw> = [
         name: "日志",
         component: LogPage,
         meta: { requiresAuth: true, title: "日志" },
+      },
+      {
+        path: "/lkbot-user",
+        name: "用户管理",
+        component: LkbotUserPage,
+        meta: { requiresAuth: true, title: "用户管理" },
       },
     ],
   },

@@ -298,7 +298,9 @@
 /* 卡片悬浮效果 */
 .el-card,
 .base-border {
-  transition: all 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 20px var(--primary-color-light) !important;
@@ -307,7 +309,7 @@
 
 /* 按钮样式 */
 .el-button {
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease;
   &:hover {
     transform: scale(1.05);
   }

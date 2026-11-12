@@ -401,7 +401,7 @@ function getNonebotConfig() {
         if (resp.data.warning) {
           message.warning(resp.data.info)
         } else {
-          message.success(resp.data.info)
+          // 读取成功不弹提示（数据已经渲染出来了）
           botConfig.value = resp.data.data
           botConfig.value.nicknames = ''
           if (botConfig.value.nickname) {
@@ -411,9 +411,8 @@ function getNonebotConfig() {
       } else {
         message.error(resp.data.info)
       }
-      loading.close()
     },
-  )
+  ).finally(() => loading.close())
 }
 
 function clickGroupType(type: string) {
@@ -448,10 +447,6 @@ function getActiveGroupData(date_type: string | null = null, no_loading = false)
           message.warning(resp.data.info)
         }
       } else {
-        if (loading) {
-          message.success(resp.data.info)
-        }
-
         const tmpOpt = getChartOption()
         const group_list: string[] = []
         const data = resp.data.data.map((e) => {
@@ -519,10 +514,7 @@ function getActiveGroupData(date_type: string | null = null, no_loading = false)
         message.error(resp.data.info)
       }
     }
-    if (loading) {
-      loading.close()
-    }
-  })
+  }).finally(() => loading?.close())
 }
 
 function clickHotPluginType(type: string) {
@@ -552,7 +544,6 @@ function getHotPlugin(date_type: string | null = null) {
       if (resp.data.warning) {
         message.warning(resp.data.info)
       } else {
-        message.success(resp.data.info)
         const tmpOpt = getChartOption()
         const hotPluginList: string[] = []
         const data = resp.data.data.map((e) => {
@@ -616,8 +607,7 @@ function getHotPlugin(date_type: string | null = null) {
     } else {
       message.error(resp.data.info)
     }
-    loading.close()
-  })
+  }).finally(() => loading.close())
 }
 </script>
 

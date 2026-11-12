@@ -13,8 +13,8 @@
 
       <!-- 对话框卡片 -->
       <div
-        class="relative rounded-xl shadow-lg w-full max-w-md overflow-hidden border-2 animate-pop-in"
-        :class="dialogBorderClass"
+        class="relative rounded-xl shadow-lg w-full overflow-hidden border-2 animate-pop-in"
+        :class="[widthClass, dialogBorderClass]"
         :style="{
           backgroundColor: 'var(--bg-color-secondary)',
           borderColor: 'var(--border-color)',
@@ -80,6 +80,8 @@ interface Props {
   confirmText?: string
   showCancel?: boolean
   closeOnClickModal?: boolean
+  width?: 'md' | 'lg' | 'xl'
+  /** 弹窗宽度。默认 md（原行为），内容多的页面用 lg / xl */
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -90,6 +92,16 @@ const props = withDefaults(defineProps<Props>(), {
   confirmText: '确定',
   showCancel: true,
   closeOnClickModal: false,
+  width: 'md',
+})
+
+const widthClass = computed(() => {
+  const map: Record<string, string> = {
+    md: 'max-w-md',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+  }
+  return map[props.width] || map.md
 })
 
 const emit = defineEmits<{

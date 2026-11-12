@@ -408,15 +408,15 @@ function getAllChatAndCallCount(no_loading = false) {
         if (resp.data.warning) {
           message.warning(resp.data.warning)
         } else {
-          message.success(resp.data.info)
+          // 读取成功不弹提示：数据已经画在界面上了，
+          // 每次刷新都弹一句「拿到了」只是噪音。
           allChatAndCall.value = resp.data.data
         }
       } else {
         if (loading) message.error(resp.data.info)
       }
-      if (loading) loading.close()
     },
-  )
+  ).finally(() => loading?.close())
 }
 
 function getMonthChatAndCallCount(no_loading = false) {
@@ -430,7 +430,7 @@ function getMonthChatAndCallCount(no_loading = false) {
         if (resp.data.warning) {
           message.warning(resp.data.warning)
         } else {
-          message.success(resp.data.info)
+          // 读取成功不弹提示：数据已经画在界面上了
           chatAndCallMonth.value = resp.data.data
           const chatOpt = JSON.parse(JSON.stringify(chartOpt.value))
           const callOpt = JSON.parse(JSON.stringify(chartOpt.value))
@@ -479,9 +479,8 @@ function getMonthChatAndCallCount(no_loading = false) {
       } else {
         if (loading) message.error(resp.data.info)
       }
-      if (loading) loading.close()
     },
-  )
+  ).finally(() => loading?.close())
 }
 
 function getChatAndCallCount(no_loading = false) {
@@ -495,15 +494,13 @@ function getChatAndCallCount(no_loading = false) {
         if (resp.data.warning) {
           if (loading) message.warning(resp.data.warning)
         } else {
-          if (loading) message.success(resp.data.info)
           chatAndCall.value = resp.data.data
         }
       } else {
         if (loading) message.error(resp.data.info)
       }
-      if (loading) loading.close()
     },
-  )
+  ).finally(() => loading?.close())
 }
 </script>
 
