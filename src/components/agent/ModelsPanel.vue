@@ -86,6 +86,22 @@
                         {{ type }}
                       </el-tag>
                     </template>
+                    <el-tag
+                      v-for="keyName in normalizeKeySelectors(model.api_key)"
+                      :key="`${model.name}-key-${keyName}`"
+                      size="small"
+                      effect="plain"
+                    >
+                      密钥: {{ displayKeyName(keyName) }}
+                    </el-tag>
+                    <el-tag
+                      v-if="!normalizeKeySelectors(model.api_key).length"
+                      size="small"
+                      type="info"
+                      effect="plain"
+                    >
+                      默认密钥
+                    </el-tag>
                   </div>
                   <div class="model-meta">{{ model.model }} · temp {{ model.temperature }}</div>
                   <div class="model-meta">{{ pricingText(model.pricing) }}</div>
@@ -180,6 +196,26 @@
         <el-form-item label="温度">
           <el-input-number v-model="modelForm.temperature" :min="0" :max="2" :step="0.1" />
         </el-form-item>
+        <el-form-item label="API 密钥">
+          <el-select
+            :model-value="normalizeKeySelectors(modelForm.api_key)"
+            :multiple="true"
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+            placeholder="留空 = 使用第一个密钥"
+            class="w-full"
+            @update:model-value="handleKeySelectionChange"
+          >
+            <el-option label="全部密钥（含以后新增）" value="all" />
+            <el-option
+              v-for="item in activeProvider?.api_key || []"
+              :key="item.name"
+              :label="item.name"
+              :value="item.name"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="类型">
           <el-select
             :model-value="normalizeModelTypes(modelForm.type)"
@@ -266,6 +302,7 @@ interface LLMModel {
   model: string
   temperature: number
   type: string | string[]
+  api_key?: string | string[]
   pricing?: ModelPricing | null
   data?: Record<string, any>
 }
@@ -353,6 +390,19 @@ const providerKeysPayload = () =>
       previous_name: item.previous_name || '',
     }))
 
+const normalizeKeySelectors = (value?: string | string[] | null): string[] => {
+  if (!value) return []
+  return Array.isArray(value) ? [...value] : [value]
+}
+
+const displayKeyName = (name: string) =>
+  name === 'all' || name === '*' ? '全部密钥' : name
+
+/** “全部密钥”与具体名称互斥，避免保存出无意义的组合 */
+const handleKeySelectionChange = (values: string[]) => {
+  modelForm.api_key = values.includes('all') ? ['all'] : [...values]
+}
+
 const normalizeModelTypes = (value?: string | string[] | null) => {
   if (!value) return []
   const values = Array.isArray(value) ? value : [value]
@@ -389,6 +439,7 @@ const modelForm = reactive<LLMModel>({
   model: '',
   temperature: 0.7,
   type: [],
+  api_key: [],
   data: {},
 })
 
@@ -526,6 +577,7 @@ const openModelDialog = (model?: LLMModel | null) => {
       model: model.model,
       temperature: model.temperature,
       type: normalizeModelTypes(model.type),
+      api_key: normalizeKeySelectors(model.api_key),
       data: model.data || {},
     })
   } else {
@@ -537,6 +589,7 @@ const openModelDialog = (model?: LLMModel | null) => {
       model: '',
       temperature: 0.7,
       type: modelTypes.value[0] ? [modelTypes.value[0]] : [],
+      api_key: [],
       data: {},
     })
   }
@@ -645,6 +698,8 @@ const handleSaveModel = async () => {
     pricingPayload = pricing
   }
 
+  const keySelectors = normalizeKeySelectors(modelForm.api_key)
+
   submitting.value = true
   try {
     if (modelEditMode.value && modelOriginalName.value) {
@@ -661,6 +716,7 @@ const handleSaveModel = async () => {
         model: modelForm.model,
         temperature: modelForm.temperature,
         type: normalizedTypes.length === 1 ? normalizedTypes[0] : normalizedTypes,
+        api_key: keySelectors.length === 1 ? keySelectors[0] : keySelectors,
         pricing: pricingPayload,
         data: parsedData,
       },
