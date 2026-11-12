@@ -167,6 +167,10 @@ export const useMainStore = defineStore(
       });
     }
 
+    function closeStatusSocket() {
+      statusWebSocket.close();
+    }
+
     // function initLogSocket(callable: (data: string) => void) {
     //   logWebSocket.initWebSocket((event: MessageEvent) => {
     //     callable(event.data);
@@ -194,6 +198,7 @@ export const useMainStore = defineStore(
       readChat,
       clearChat,
       initStatusSocket,
+      closeStatusSocket,
       // initLogSocket,
       // initChatSocket,
     };

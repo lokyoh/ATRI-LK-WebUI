@@ -228,7 +228,12 @@ interface GetBotInfoResponse {
 }
 
 const botList = ref<BotInfo[]>([])
-const conTimes = ref<number[]>([])
+
+/**
+ * 连接时长每秒都要重算，但只用一个定时器：所有机器人在同一个 tick 里刷新。
+ * 原来是每个 bot 一个 setInterval，bot 越多定时器越多，刷新列表时还会叠加。
+ */
+let tickTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   getBotList()
@@ -253,12 +258,25 @@ function formateSeconds(endTime: number): string {
   return result
 }
 
-function addInterval(bot: BotInfo) {
-  const timerId = setInterval(() => {
-    const time = Math.floor(new Date().getTime() / 1000)
-    bot.connectTime = formateSeconds(time - bot.connect_time)
+/**
+ * 连接时长每秒都要重算，但只有一个定时器：所有机器人在同一个 tick 里刷新。
+ * 原来是每个 bot 一个 setInterval，bot 越多定时器越多，且刷新列表时会叠加。
+ */
+function startTick() {
+  if (tickTimer) return
+  tickTimer = setInterval(() => {
+    const now = Math.floor(Date.now() / 1000)
+    for (const bot of botList.value) {
+      bot.connectTime = formateSeconds(now - bot.connect_time)
+    }
   }, 1000)
-  conTimes.value.push(timerId)
+}
+
+function stopTick() {
+  if (tickTimer) {
+    clearInterval(tickTimer)
+    tickTimer = null
+  }
 }
 
 function getBotList() {
@@ -268,11 +286,12 @@ function getBotList() {
         message.warning(resp.data.warning)
       } else {
         // 读取成功不弹提示（数据已经渲染出来了）
-        botList.value = resp.data.data
-        for (const bot of botList.value) {
-          bot.connectTime = '00:00'
-          addInterval(bot)
-        }
+        const now = Math.floor(Date.now() / 1000)
+        botList.value = resp.data.data.map((bot) => ({
+          ...bot,
+          connectTime: formateSeconds(now - bot.connect_time),
+        }))
+        startTick()
       }
     } else {
       message.error(resp.data.info)
@@ -281,11 +300,7 @@ function getBotList() {
 }
 
 onUnmounted(() => {
-  if (conTimes.value) {
-    for (const timer of conTimes.value) {
-      clearInterval(timer)
-    }
-  }
+  stopTick()
 })
 </script>
 

@@ -390,7 +390,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { ElMessageBox } from 'element-plus'
@@ -411,6 +411,24 @@ const prefix = inject<string>('prefix', '/atri/api')
 const loading = ref(false)
 const users = ref<LkUserInfo[]>([])
 const keyword = ref('')
+const appliedKeyword = ref('')
+
+/**
+ * 搜索框输入即筛选在几千条用户上会明显卡手：
+ * 每次按键都全量 filter + toLowerCase，还要重排整张表。
+ * 输入停顿 180ms 再落地到 appliedKeyword，人感觉是「即时」的，但计算量降到一次。
+ */
+let keywordTimer: ReturnType<typeof setTimeout> | null = null
+watch(keyword, (value) => {
+  if (keywordTimer) clearTimeout(keywordTimer)
+  keywordTimer = setTimeout(() => {
+    appliedKeyword.value = value
+    keywordTimer = null
+  }, 180)
+})
+onUnmounted(() => {
+  if (keywordTimer) clearTimeout(keywordTimer)
+})
 
 const detailVisible = ref(false)
 const detail = ref<LkUserDetail | null>(null)
@@ -431,7 +449,7 @@ const pickerItem = ref('')
 const editForm = ref({ name: '', exp: 0, money: 0, love: 0, signdays: 0 })
 
 const filteredUsers = computed(() => {
-  const key = keyword.value.trim().toLowerCase()
+  const key = appliedKeyword.value.trim().toLowerCase()
   if (!key) return users.value
   return users.value.filter((u) =>
     [u.name, u.id].some((field) => String(field).toLowerCase().includes(key)),

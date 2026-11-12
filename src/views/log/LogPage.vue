@@ -68,6 +68,7 @@ const levelMap: Record<LogLevel | 'all', string> = {
 }
 
 const levels = ['all', 'info', 'warn', 'error', 'debug'] as const
+const MAX_LOG_ENTRIES = 500
 const activeLevel = ref<(typeof levels)[number]>('all')
 const logData = ref<LogEntry[]>([])
 const wsRef = ref<WebSocket | null>(null)
@@ -108,7 +109,13 @@ const appendLogEntry = (raw: string) => {
   const parsed = parseBackendLog(raw)
   if (!parsed) return
 
-  logData.value = [...logData.value, parsed].slice(-500)
+  // 定长追加：日志是持续流入的，用 [...list, x].slice(-500) 每来一条都复制整个数组，
+  // 500 条时就是每秒几十次 O(n) 复制。原地 push + 超长时 splice 更省。
+  const list = logData.value
+  list.push(parsed)
+  if (list.length > MAX_LOG_ENTRIES) {
+    list.splice(0, list.length - MAX_LOG_ENTRIES)
+  }
   scrollToBottom()
 }
 
@@ -292,8 +299,9 @@ onBeforeUnmount(() => {
   max-height: 100%;
   height: 62vh;
   overflow: auto;
-  background: #0f172a;
-  color: #dbeafe;
+  /* 控制台背景走中性填充色：既跟随主题，又不会被粉/蓝主题染成大面积色块 */
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-primary);
   font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
   font-size: 13px;
   line-height: 1.7;
@@ -302,31 +310,31 @@ onBeforeUnmount(() => {
 .console-line {
   width: 100%;
   padding: 5px 12px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(15, 23, 42, 0.8);
+  border-bottom: 1px solid var(--el-border-color-light);
+  background: transparent;
 }
 
 .console-line.level-info {
-  border-left: 3px solid rgba(96, 165, 250, 0.7);
+  border-left: 3px solid var(--el-color-primary);
 }
 
 .console-line.level-warn {
-  border-left: 3px solid rgba(251, 191, 36, 0.7);
+  border-left: 3px solid var(--el-color-warning);
 }
 
 .console-line.level-error {
-  border-left: 3px solid rgba(248, 113, 113, 0.7);
+  border-left: 3px solid var(--el-color-danger);
 }
 
 .console-line.level-debug {
-  border-left: 3px solid rgba(52, 211, 153, 0.7);
+  border-left: 3px solid var(--el-color-success);
 }
 
 .console-message {
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #e2e8f0;
+  color: var(--el-text-color-primary);
   font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
   font-size: 13px;
   line-height: 1.7;
@@ -335,7 +343,7 @@ onBeforeUnmount(() => {
 .empty-state {
   padding: 28px 16px;
   text-align: center;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
 }
 
 @media (max-width: 900px) {

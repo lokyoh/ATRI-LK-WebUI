@@ -35,12 +35,12 @@ import LeftInfo from '@/components/command/LeftInfo.vue'
 import BotServiceManage from '@/components/command/BotServiceManage.vue'
 import BotStatusConfig from '@/components/command/BotStatusConfig.vue'
 import LKPluginConfig from '@/components/command/LKPluginConfig.vue'
-import { getHeaderHeight } from '@/utils/utils'
+import { getContentViewportHeight } from '@/utils/utils'
 
 const windowHeight = ref(window.innerHeight)
 
 const computedHeight = computed(() => {
-  return windowHeight.value - getHeaderHeight()
+  return getContentViewportHeight(windowHeight.value)
 })
 
 onMounted(() => {

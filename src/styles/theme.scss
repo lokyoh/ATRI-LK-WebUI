@@ -25,6 +25,24 @@
   --text-color-disabled: #a0aec0;
   --el-color-white: #ffffff;
 
+  // Element 的 light-7 / light-9 / dark-2 在四个主题块里都没有被接管，
+  // 不补会回落到 Element 默认的固定红/黄（切主题后颜色明显发脏）。
+  // 用基色派生，主题块只改基色即可自动跟随。
+  --el-color-danger-light-7: color-mix(in srgb, var(--danger-color) 30%, var(--bg-color-secondary));
+  --el-color-danger-light-9: color-mix(in srgb, var(--danger-color) 10%, var(--bg-color-secondary));
+  --el-color-warning-light-7: color-mix(in srgb, var(--warning-color) 30%, var(--bg-color-secondary));
+  --el-color-warning-light-9: color-mix(in srgb, var(--warning-color) 10%, var(--bg-color-secondary));
+  --el-color-warning-dark-2: color-mix(in srgb, var(--warning-color) 80%, #000000);
+
+  --el-overlay-color-lighter: rgba(0, 0, 0, 0.5);
+  --el-box-shadow:
+    0 12px 32px 4px rgba(0, 0, 0, 0.04),
+    0 8px 20px rgba(0, 0, 0, 0.08);
+  --el-box-shadow-dark:
+    0 16px 48px 16px rgba(0, 0, 0, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.12),
+    0 8px 16px -8px rgba(0, 0, 0, 0.16);
+
   // el-collapse-item 相关颜色
   --el-collapse-item-bg: #ffffff;
   --el-collapse-item-hover-bg: #fff0f5;
@@ -217,11 +235,21 @@
   --echarts-danger: #e53e3e;
   --echarts-info: #3182ce;
   --echarts-border: #e2e8f0;
-  --echarts-text: #2d3748;
-  --echarts-text-secondary: #4a5568;
-  --echarts-text: #ffffff; // 主文本改为白色
-  --echarts-text-secondary: #e2e8f0; // 次要文本改为浅色
+  // 暗色主题下图表文字必须是浅色；上面不加第二组同名变量覆盖，
+  // 同名重复声明只会让后来者盖掉前者，读起来也容易误判成两套值。
+  --echarts-text: #ffffff;
+  --echarts-text-secondary: #e2e8f0;
   --echarts-shadow: rgba(49, 130, 206, 0.3);
+  --echarts-bg: #1a202c;
+  --echarts-bg-overlay: rgba(45, 55, 72, 0.95);
+
+  // 表格与滚动条在暗色下要有自己的值，否则会回落到 :root 的粉色
+  --table-border-color: rgba(99, 179, 237, 0.25);
+  --table-header-bg: rgba(45, 55, 72, 0.9);
+  --table-row-bg: rgba(26, 32, 44, 0.85);
+  --table-row-hover-bg: rgba(55, 65, 81, 0.6);
+  --scrollbar-thumb-color: #4a5568;
+  --scrollbar-thumb-hover-color: #63b3ed;
 }
 
 [data-theme='light'] {
@@ -311,8 +339,21 @@
   --el-fill-color-darker: #cbd5e0;
   --el-fill-color-blank: var(--bg-color-secondary);
 
+  --el-box-shadow:
+    0 12px 32px 4px rgba(0, 0, 0, 0.04),
+    0 8px 20px rgba(0, 0, 0, 0.08);
   --el-box-shadow-light: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   --el-box-shadow-lighter: 0 2px 6px 0 rgba(0, 0, 0, 0.05);
+  --el-box-shadow-dark:
+    0 16px 48px 16px rgba(0, 0, 0, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.12),
+    0 8px 16px -8px rgba(0, 0, 0, 0.16);
+
+  // 表格颜色：不写会回落到 :root 的粉色系
+  --table-border-color: rgba(49, 130, 206, 0.25);
+  --table-header-bg: rgba(237, 242, 247, 0.9);
+  --table-row-bg: rgba(255, 255, 255, 0.95);
+  --table-row-hover-bg: rgba(226, 232, 240, 0.6);
 
   // 菜单图标颜色
   --menu-icon-color: var(--primary-color);
@@ -423,8 +464,10 @@
   --el-fill-color-darker: #1e2227;
   --el-fill-color-blank: #373c47;
 
+  --el-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.35);
   --el-box-shadow-light: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
   --el-box-shadow-lighter: 0 2px 8px 0 rgba(0, 0, 0, 0.2);
+  --el-box-shadow-dark: 0 2px 16px 0 rgba(0, 0, 0, 0.45);
 
   // 菜单图标颜色
   --menu-icon-color: var(--primary-color);

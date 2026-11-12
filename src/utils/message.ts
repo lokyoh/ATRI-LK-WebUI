@@ -14,7 +14,14 @@ type NotifyType = keyof Pick<typeof ElNotification, "success" | "warning" | "inf
 type AllOptions = string | Options;
 
 class KawaiiMessage {
-  [showMessage](type: MessageType, options: AllOptions, single: boolean) {
+  [showMessage](type: MessageType, options: AllOptions | undefined | null, single: boolean) {
+    // 调用方常写成 `message.error(resp.data.info)`，接口异常时 info 可能是
+    // undefined，原样透传会让 ElMessage 内部读 options.message 时抛错。
+    // 这里统一兜底成一句可读的文案。
+    if (options === undefined || options === null) {
+      options = type === "error" ? "操作失败，请稍后重试" : "";
+    }
+
     // 默认添加可爱前缀
     if (typeof options === "string") {
       options = {
@@ -67,7 +74,11 @@ export const message = new KawaiiMessage();
 const showNotify = Symbol("showNotify");
 
 class KawaiiNotify {
-  [showNotify](type: NotifyType, options: AllOptions, single: boolean) {
+  [showNotify](type: NotifyType, options: AllOptions | undefined | null, single: boolean) {
+    if (options === undefined || options === null) {
+      options = type === "error" ? "操作失败，请稍后重试" : "";
+    }
+
     // 默认添加可爱前缀
     if (typeof options === "string") {
       options = {

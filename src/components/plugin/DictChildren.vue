@@ -37,7 +37,7 @@
 
           <el-select
             v-else-if="field.options?.length"
-            :model-value="field.value as string | number"
+            :model-value="selectValue(field.value)"
             :disabled="disabled || !field.editable"
             :placeholder="field.itemField?.label || '请选择'"
             @update:model-value="emit('field-change', field, $event)"
@@ -141,7 +141,7 @@
                 >
                   <el-select
                     v-if="mapListItemField(field)?.options?.length"
-                    :model-value="item as string | number | boolean"
+                    :model-value="selectValue(item)"
                     :disabled="disabled || !field.editable"
                     :placeholder="mapListItemField(field)?.label || '请选择'"
                     @update:model-value="updateMapUser(field, entry.id, index, $event)"
@@ -201,7 +201,7 @@
               </template>
               <el-select
                 v-else-if="field.itemField?.options?.length"
-                :model-value="entry.value as string | number | boolean"
+                :model-value="selectValue(entry.value)"
                 :disabled="disabled || !field.editable"
                 :placeholder="field.itemField?.label || '请选择'"
                 @update:model-value="updateMapValue(field, entry.id, $event)"
@@ -329,6 +329,18 @@ watch(
 
 function fieldPath(field: PluginConfigField): string {
   return props.pathPrefix ? `${props.pathPrefix}.${field.key}` : field.key
+}
+
+/**
+ * el-select 的 model-value 需要标量。
+ * 模板里原来写 `field.value as string | number`，那个 `|` 会被 Vue 模板编译器
+ * 当成表达式过滤器（vue/no-deprecated-filter），这里收进函数。
+ */
+function selectValue(value: unknown): string | number | boolean | undefined {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value
+  }
+  return undefined
 }
 
 function formatJson(value: unknown): string {

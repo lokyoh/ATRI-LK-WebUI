@@ -181,35 +181,9 @@ const buttonClasses = computed(() => {
       }
     }
   } else if (props.type && props.plain) {
-    // 简约版本
-    switch (props.type) {
-      case 'primary':
-        classes.push('border-2 border-pink-500 text-pink-500 hover:bg-pink-50')
-        break
-      case 'secondary':
-        classes.push('border-2 border-purple-500 text-purple-500 hover:bg-purple-50')
-        break
-      case 'danger':
-        classes.push('border-2 border-red-500 text-red-500 hover:bg-red-50')
-        break
-      case 'success':
-        classes.push('border-2 border-green-500 text-green-500 hover:bg-green-50')
-        break
-      case 'warning':
-        classes.push('border-2 border-yellow-500 text-yellow-500 hover:bg-yellow-50')
-        break
-      case 'info':
-        classes.push('border-2 border-blue-500 text-blue-500 hover:bg-blue-50')
-        break
-      case 'light':
-        classes.push('border-2 border-gray-300 text-gray-600 hover:bg-gray-50')
-        break
-      case 'dark':
-        classes.push('border-2 border-gray-700 text-gray-700 hover:bg-gray-100')
-        break
-      case 'normal':
-        classes.push('border-2 border-gray-500 text-gray-500 hover:bg-gray-50')
-    }
+    // 简约版本：颜色由 buttonStyles 里按 --el-color-* 计算，
+    // 这里只保留阴影与文字色，避免 Tailwind 的固定 pink/purple 在暗色主题下失真。
+    classes.push('shadow-sm hover:shadow-md')
   }
 
   if (props.rounded) {
@@ -279,8 +253,23 @@ const buttonStyles = computed(() => {
   }
 
   if (props.plain) {
+    // 描边版本：背景透明、边框与文字都用该类型的主题色；
+    // 原来写的是 `border: 1px solid transparent`（先置空背景再取色），边框实际不可见。
+    const accent =
+      {
+        primary: 'var(--el-color-primary)',
+        danger: 'var(--el-color-danger)',
+        success: 'var(--el-color-success)',
+        warning: 'var(--el-color-warning)',
+        info: 'var(--el-color-info)',
+        secondary: 'var(--el-color-info)',
+        light: 'var(--el-border-color)',
+        dark: 'var(--el-border-color-darker)',
+        normal: 'var(--el-border-color)',
+      }[props.type ?? 'primary'] ?? 'var(--el-color-primary)'
     styles.backgroundColor = 'transparent'
-    styles.border = `1px solid ${styles.backgroundColor}`
+    styles.border = `1px solid ${accent}`
+    styles.color = accent
   }
 
   if (props.rounded) {

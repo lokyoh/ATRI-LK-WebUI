@@ -304,7 +304,8 @@ interface LLMModel {
   type: string | string[]
   api_key?: string | string[]
   pricing?: ModelPricing | null
-  data?: Record<string, any>
+  // 附加配置是后端原样透传的任意 JSON，这里只要求是对象
+  data?: Record<string, unknown>
 }
 
 interface LLMProviderKey {
@@ -670,17 +671,17 @@ const handleSaveModel = async () => {
     return
   }
 
-  let parsedData: Record<string, any> = {}
+  let parsedData: Record<string, unknown> = {}
   const rawData = modelDataText.value.trim()
   if (rawData) {
     try {
-      const parsed = JSON.parse(rawData)
+      const parsed: unknown = JSON.parse(rawData)
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        parsedData = parsed
+        parsedData = parsed as Record<string, unknown>
       } else {
         throw new Error('JSON 必须是对象')
       }
-    } catch (error) {
+    } catch {
       message.warning('附加配置必须是合法的 JSON 对象')
       return
     }

@@ -396,7 +396,7 @@ function installDependency() {
 }
 
 .plugin-list-container:hover {
-  box-shadow: var(--primary-shadow);
+  box-shadow: var(--el-box-shadow-light);
 }
 
 /* 响应式调整 */

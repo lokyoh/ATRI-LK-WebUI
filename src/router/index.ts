@@ -1,83 +1,74 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import { useRouteStore } from "@/stores/route";
-import LoginPage from "@/views/LoginPage.vue";
-import MyApi from "@/views/MyApi.vue";
-import HomePage from "@/views/HomePage.vue";
-import DashBoardPage from "@/views/dashboard/DashBoardPage.vue";
-import AboutPage from "@/views/about/AboutPage.vue";
-import MainCommandPage from "@/views/command/MainCommandPage.vue";
-import PluginManagePage from "@/views/plugin/PluginManagePage.vue";
-import StoreManagePage from "@/views/store/StoreManagePage.vue";
-import AgentPage from "@/views/agent/AgentPage.vue";
-import LogPage from "@/views/log/LogPage.vue";
-import LkbotUserPage from "@/views/lkbot/LkbotUserPage.vue";
-// 定义路由类型
+
+// 登录与地址设置是进入后台前就要加载的页面，保持同步；
+// 其余页面按需加载，避免登录页把整个后台拉进首包。
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "Login",
-    component: LoginPage,
+    component: () => import("@/views/LoginPage.vue"),
     meta: { requiresAuth: false },
   },
   {
     path: "/myapi",
     name: "MyApi",
-    component: MyApi,
+    component: () => import("@/views/MyApi.vue"),
     meta: { requiresAuth: false },
   },
   {
     path: "/home",
     name: "Home",
-    component: HomePage,
+    component: () => import("@/views/HomePage.vue"),
     redirect: "/dashboard",
     meta: { requiresAuth: true },
     children: [
       {
         path: "/dashboard",
         name: "仪表盘",
-        component: DashBoardPage,
+        component: () => import("@/views/dashboard/DashBoardPage.vue"),
         meta: { requiresAuth: true, title: "仪表盘" },
       },
       {
         path: "/command",
         name: "BOT控制台",
-        component: MainCommandPage,
+        component: () => import("@/views/command/MainCommandPage.vue"),
         meta: { requiresAuth: true, title: "BOT控制台" },
       },
       {
         path: "/plugin",
         name: "插件列表",
-        component: PluginManagePage,
+        component: () => import("@/views/plugin/PluginManagePage.vue"),
         meta: { requiresAuth: true, title: "插件列表" },
       },
       {
         path: "/store",
         name: "插件商店",
-        component: StoreManagePage,
+        component: () => import("@/views/store/StoreManagePage.vue"),
         meta: { requiresAuth: true, title: "插件商店" },
       },
       {
         path: "/about",
         name: "关于我们",
-        component: AboutPage,
+        component: () => import("@/views/about/AboutPage.vue"),
         meta: { requiresAuth: true, title: "关于我们" },
       },
       {
         path: "/agent",
         name: "AI模型设置",
-        component: AgentPage,
+        component: () => import("@/views/agent/AgentPage.vue"),
         meta: { requiresAuth: true, title: "AI模型设置" },
       },
       {
         path: "/log",
         name: "日志",
-        component: LogPage,
+        component: () => import("@/views/log/LogPage.vue"),
         meta: { requiresAuth: true, title: "日志" },
       },
       {
         path: "/lkbot-user",
         name: "用户管理",
-        component: LkbotUserPage,
+        component: () => import("@/views/lkbot/LkbotUserPage.vue"),
         meta: { requiresAuth: true, title: "用户管理" },
       },
     ],

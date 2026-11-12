@@ -129,7 +129,7 @@ import { AnsiUp } from 'ansi_up'
 import { useMainStore } from '@/stores/main'
 import { ref, onMounted, onUnmounted, nextTick, inject, computed } from 'vue'
 import { getLoading } from '@/utils/loading'
-import * as echarts from 'echarts/core'
+import * as echarts from '@/utils/echarts'
 import { isMobile } from '@/utils/validate'
 import { getRequest } from '@/utils/api'
 import { message } from '@/utils/message'
@@ -290,7 +290,6 @@ const welcomeBox = ref<HTMLElement | null>(null)
 const systemCard = ref<HTMLElement | null>(null)
 const chatCard = ref<HTMLElement | null>(null)
 const midInfo = ref<HTMLElement | null>(null)
-const ws = ref<WebSocket | null>(null)
 
 const systemStatus = computed(() => store.wsStatusData as WsStatusData | null)
 
@@ -338,9 +337,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (ws.value) {
-    ws.value.close()
-  }
+  // 状态 WebSocket 由仪表盘共同持有：离开仪表盘必须断开，
+  // 否则它会在后台一直重连并持续写 store。
+  store.closeStatusSocket()
   if (chatCntInterval.value) {
     clearInterval(chatCntInterval.value)
   }

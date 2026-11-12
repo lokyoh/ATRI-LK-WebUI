@@ -328,7 +328,7 @@ import { message } from '@/utils/message'
 import EventBus from '@/utils/event-bus'
 import { getRequest, postRequest } from '@/utils/api'
 import { useMainStore } from '@/stores/main'
-import { getHeaderHeight } from '@/utils/utils'
+import { getContentViewportHeight } from '@/utils/utils'
 import {
   Fold,
   Expand,
@@ -443,7 +443,7 @@ const updatePrimaryColor = () => {
   primaryColor.value = style.getPropertyValue('--primary-color').trim()
 }
 const computedHeight = computed(() => {
-  return windowHeight.value - getHeaderHeight() + 7
+  return getContentViewportHeight(windowHeight.value)
 })
 
 function dropdownClick(command: string) {
@@ -894,81 +894,10 @@ onUnmounted(() => {
   margin-right: 0;
 }
 
-/* 淡入淡出动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-/* 旋转动画 */
-.rotate-180 {
-  transform: rotate(180deg);
-}
-
-.aside-enter-active,
-.aside-leave-active {
-  transition:
-    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.aside-enter,
-.aside-leave-to {
-  transform: translateX(-100%);
-}
-
-/* 菜单项动画 */
-.menu-item-animate {
-  transition: all 0.3s ease;
-  transform-origin: left center;
-}
-
-/* 优化后的弹跳动画 */
-@keyframes smooth-bounce {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
-
-  50% {
-    transform: translateY(-12px) scale(1.05);
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+/* 缓慢弹跳动画：用户要求减少动态时直接关掉 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-bounce-slow {
+    animation: none;
   }
 }
-
-.animate-smooth-bounce {
-  animation: smooth-bounce 3s infinite;
-}
-
-/* 优化过渡曲线 */
-.smooth-transition {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.main-content {
-  width: calc(100% - var(--sidebar-width));
-  margin-left: var(--sidebar-width);
-  transition:
-    width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    margin-left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .main-content {
-    width: 100%;
-    margin-left: 0;
-  }
-}
-</style>
-
-<style>
-/* el-popover 会 teleport 到 body，样式不能放在 scoped 里 */
-
 </style>

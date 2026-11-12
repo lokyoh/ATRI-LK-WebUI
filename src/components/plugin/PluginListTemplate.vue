@@ -684,7 +684,7 @@ async function handleDetailConfirm() {
 
 <style scoped>
 .plugin-card {
-  box-shadow: var(--card-shadow);
+  box-shadow: var(--el-box-shadow-light);
   background-image:
     radial-gradient(circle at 10% 20%, var(--primary-color-light) 0%, var(--bg-color-hover) 90%),
     linear-gradient(to bottom right, var(--bg-color), var(--bg-color-secondary));
@@ -700,7 +700,7 @@ async function handleDetailConfirm() {
 
 .plugin-card:hover {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: var(--primary-shadow);
+  box-shadow: var(--el-box-shadow);
 }
 
 /* 选中状态动画 */
@@ -711,7 +711,7 @@ async function handleDetailConfirm() {
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 var(--primary-shadow);
+    box-shadow: 0 0 0 0 var(--el-color-primary-light-7);
   }
 
   70% {
