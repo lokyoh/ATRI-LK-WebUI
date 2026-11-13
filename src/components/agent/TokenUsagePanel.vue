@@ -117,7 +117,13 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="pageRecords" stripe empty-text="暂无 Token 用量记录">
+      <el-table
+        v-loading="loading"
+        :data="pageRecords"
+        :tooltip-options="overflowTooltipOptions"
+        stripe
+        empty-text="暂无 Token 用量记录"
+      >
         <el-table-column prop="time" label="时间" min-width="180" />
         <el-table-column prop="modelName" label="模型" min-width="150" show-overflow-tooltip />
         <el-table-column prop="event" label="事件" min-width="140" show-overflow-tooltip />
@@ -171,6 +177,7 @@
 import { computed, inject, onMounted, ref } from 'vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { getRequest } from '@/utils/api'
+import { overflowTooltipOptions } from '@/utils/table'
 import { message } from '@/utils/message'
 import type {
   ModelPricingInfo,

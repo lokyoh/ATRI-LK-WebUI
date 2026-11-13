@@ -307,8 +307,15 @@
           }"
           @click="handleMainClick"
         >
+          <!--
+            这里不能加 backdrop-blur（backdrop-filter）：它会为 fixed 定位的后代
+            建立新的包含块，Element Plus 的表格溢出提示、tooltip、下拉浮层都用
+            strategy:fixed 来逃出 .el-table 的 overflow:hidden。一旦包含块变成
+            这个路由容器，坐标就整体偏移一个顶栏高度，表现为「浮层错位」。
+            背景本身是不透明的 --bg-color-secondary，模糊也没有可见效果。
+          -->
           <router-view
-            class="backdrop-blur-sm rounded-xl p-6 h-full"
+            class="rounded-xl p-6 h-full"
             :style="{
               backgroundColor: 'var(--bg-color-secondary)',
               height: computedHeight + 'px',

@@ -25,6 +25,7 @@
         v-loading="loading"
         :data="functionCallings"
         :row-class-name="rowClassName"
+        :tooltip-options="overflowTooltipOptions"
         stripe
         empty-text="暂无已注册的功能调用"
       >
@@ -99,6 +100,7 @@ import { computed, inject, onMounted, ref } from 'vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import type { FunctionCallingArgInfo, FunctionCallingInfo } from '@/types/agent'
 import { getRequest, postRequest } from '@/utils/api'
+import { overflowTooltipOptions } from '@/utils/table'
 import { message } from '@/utils/message'
 
 interface ResultResponse<T> {

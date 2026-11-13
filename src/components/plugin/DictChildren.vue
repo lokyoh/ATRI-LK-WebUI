@@ -35,6 +35,71 @@
             @update:model-value="emit('field-change', field, $event)"
           />
 
+          <div v-else-if="field.type === 'category-collection'" class="category-collection">
+            <div v-for="key in categoryKeys(field)" :key="key" class="category-card">
+              <div class="category-card-header">
+                <div class="category-card-title">
+                  <el-input
+                    v-if="isCategoryKeyEditable(field)"
+                    :model-value="categoryKeyDraft(field, key)"
+                    :disabled="disabled || !field.editable"
+                    :placeholder="field.keyLabel || '分类键'"
+                    :aria-label="field.keyLabel || '分类键'"
+                    class="category-key-input"
+                    @update:model-value="updateCategoryKeyDraft(field, key, $event)"
+                    @blur="commitCategoryKey(field, key)"
+                    @keyup.enter="commitCategoryKey(field, key)"
+                  />
+                  <el-tag v-else type="info" effect="plain">{{ key }}</el-tag>
+                  <span v-if="categoryCaption(field, key)" class="category-caption">
+                    {{ categoryCaption(field, key) }}
+                  </span>
+                </div>
+                <el-button
+                  v-if="canRemoveCategory(field, key)"
+                  type="danger"
+                  plain
+                  :icon="Delete"
+                  circle
+                  aria-label="删除分类"
+                  :disabled="disabled || !field.editable"
+                  @click="removeCategory(field, key)"
+                />
+              </div>
+              <DictChildren
+                :children="categoryChildren(field, key)"
+                :path-prefix="categoryPath(field, key)"
+                :disabled="disabled || !field.editable"
+                :json-drafts="jsonDrafts"
+                :json-errors="jsonErrors"
+                @field-change="
+                  (changed, value) => updateCategoryChild(field, key, changed, value)
+                "
+                @json-input="(path, value) => emit('json-input', path, value)"
+                @json-blur="(path) => emit('json-blur', path)"
+                @field-error="(path, error) => emit('field-error', path, error)"
+              />
+            </div>
+            <div v-if="canAddCategory(field)" class="category-actions">
+              <el-button
+                class="config-add-button"
+                type="primary"
+                plain
+                :icon="Plus"
+                :disabled="disabled || !field.editable"
+                @click="addCategory(field)"
+              >
+                添加{{ field.keyLabel || '分类' }}
+              </el-button>
+              <span v-if="field.maxItems !== undefined" class="category-count">
+                {{ categoryKeys(field).length }} / {{ field.maxItems }}
+              </span>
+            </div>
+            <div v-if="field.validationHint" class="category-hint">
+              {{ field.validationHint }}
+            </div>
+          </div>
+
           <el-select
             v-else-if="field.options?.length"
             :model-value="selectValue(field.value)"
@@ -319,11 +384,18 @@ const emit = defineEmits<{
 const mapListDrafts = ref<Record<string, MapListEntry[]>>({})
 let nextMapEntryId = 0
 
+/** 分类集合的键草稿：``键`` → 正在输入的文本。 */
+const categoryKeyDrafts = ref<Record<string, string>>({})
+
+// 只在“字段结构变化”（键集合变了）时清空本地草稿。
+// 不能监听 children 的数组引用：分类卡片每次渲染都会新建子字段数组，
+// 那样会把正在输入的键草稿和映射草稿在每个字符后都清掉。
 watch(
-  () => props.children,
+  () => props.children.map((child) => child.key).join('\u0000'),
   () => {
     mapListDrafts.value = {}
     nextMapEntryId = 0
+    categoryKeyDrafts.value = {}
   },
 )
 
@@ -542,6 +614,168 @@ function removeMapUser(field: PluginConfigField, id: number, index: number) {
   entry.value = mapListValue(entry).filter((_, itemIndex) => itemIndex !== index)
   updateMap(field)
 }
+
+/* ------------------------------------------------------------------
+ * 分类集合（ui_type="category-collection"）
+ *
+ * 和 map-list 的差别：键集合可能固定、分类值是「一组结构化子字段」、
+ * 固定分类的展示顺序由 fixed_keys 决定。所以这里不能退化成键值对编辑器，
+ * 而是把每个分类渲染成一张卡片，卡片内递归复用 DictChildren。
+ * 草稿只保存「正在输入的键文本」，目录本身始终从 field.value 推导。
+ * ------------------------------------------------------------------ */
+
+function categoryRecord(field: PluginConfigField): Record<string, unknown> {
+  const raw = field.value
+  return raw && typeof raw === 'object' && !Array.isArray(raw)
+    ? (raw as Record<string, unknown>)
+    : {}
+}
+
+/** 展示顺序：固定分类在前（按 fixedKeys 顺序），其余按配置里的既有顺序追加。 */
+function categoryKeys(field: PluginConfigField): string[] {
+  const keys = Object.keys(categoryRecord(field))
+  const fixed = field.fixedKeys || []
+  return [
+    ...fixed.filter((key) => keys.includes(key)),
+    ...keys.filter((key) => !fixed.includes(key)),
+  ]
+}
+
+function categoryItem(
+  field: PluginConfigField,
+  key: string,
+): Record<string, unknown> | undefined {
+  const item = categoryRecord(field)[key]
+  return item && typeof item === 'object' && !Array.isArray(item)
+    ? (item as Record<string, unknown>)
+    : undefined
+}
+
+function categoryChildren(field: PluginConfigField, key: string): PluginConfigField[] {
+  const children = field.itemField?.children
+  if (!children?.length) return []
+  const item = categoryItem(field, key) || {}
+  return children.map((child) => ({
+    ...child,
+    value: (child.key in item ? item[child.key] : child.value) as PluginConfigField['value'],
+  }))
+}
+
+function categoryPath(field: PluginConfigField, key: string): string {
+  return `${fieldPath(field)}.${key}`
+}
+
+/** 分类标题旁的人读文案，取 categoryLabel 指向的子字段（如「显示名」）。 */
+function categoryCaption(field: PluginConfigField, key: string): string {
+  const labelKey = field.categoryLabel
+  if (!labelKey) return ''
+  const label = categoryItem(field, key)?.[labelKey]
+  return typeof label === 'string' ? label : ''
+}
+
+function isCategoryKeyEditable(field: PluginConfigField): boolean {
+  return field.allowAdd !== false
+}
+
+/** 固定分类不允许删除（后端也会拒绝缺少固定分类的提交）。 */
+function canRemoveCategory(field: PluginConfigField, key: string): boolean {
+  if (field.fixedKeys?.includes(key)) return false
+  return field.allowRemove !== false
+}
+
+function canAddCategory(field: PluginConfigField): boolean {
+  if (field.allowAdd === false) return false
+  if (
+    field.maxItems !== undefined &&
+    Object.keys(categoryRecord(field)).length >= field.maxItems
+  ) {
+    return false
+  }
+  return true
+}
+
+function categoryKeyDraft(field: PluginConfigField, key: string): string {
+  return categoryKeyDrafts.value[categoryPath(field, key)] ?? key
+}
+
+function updateCategoryKeyDraft(field: PluginConfigField, key: string, draft: string) {
+  categoryKeyDrafts.value[categoryPath(field, key)] = draft
+}
+
+/**
+ * 键改名要重建整个对象：键顺序就是展示顺序，原地改键会打乱它。
+ * 固定分类键不许被占用成新键，否则后端会按「不允许新增分类」整份拒绝。
+ */
+function commitCategoryKey(field: PluginConfigField, key: string) {
+  const path = categoryPath(field, key)
+  const draft = (categoryKeyDrafts.value[path] ?? key).trim()
+  delete categoryKeyDrafts.value[path]
+  if (!draft || draft === key) return
+
+  const keyLabel = field.keyLabel || '分类键'
+  if (categoryKeys(field).includes(draft)) {
+    emit('field-error', fieldPath(field), `“${keyLabel}”${draft}重复`)
+    return
+  }
+  if (field.fixedKeys?.includes(draft)) {
+    emit('field-error', fieldPath(field), `“${keyLabel}”${draft}已是固定分类，不能占用`)
+    return
+  }
+
+  const current = categoryRecord(field)
+  emit('field-error', fieldPath(field), undefined)
+  emit(
+    'field-change',
+    field,
+    Object.fromEntries(
+      Object.keys(current).map((item) => [
+        item === key ? draft : item,
+        current[item],
+      ]),
+    ),
+  )
+}
+
+function updateCategoryChild(
+  field: PluginConfigField,
+  key: string,
+  changed: PluginConfigField,
+  value: unknown,
+) {
+  const current = categoryRecord(field)
+  const item = { ...categoryItem(field, key) }
+  item[changed.key] = value
+  emit('field-change', field, { ...current, [key]: item })
+}
+
+function addCategory(field: PluginConfigField) {
+  const itemField = field.itemField
+  const current = categoryRecord(field)
+  const base = itemField?.default && typeof itemField.default === 'object'
+    ? cloneConfigValue(itemField.default)
+    : {}
+  const prefix = field.keyLabel === '用户 ID' ? '新用户' : 'new'
+  let key = prefix
+  let index = 2
+  while (key in current) {
+    key = `${prefix}${index++}`
+  }
+  emit('field-change', field, { ...current, [key]: base })
+}
+
+function removeCategory(field: PluginConfigField, key: string) {
+  const current = categoryRecord(field)
+  delete categoryKeyDrafts.value[categoryPath(field, key)]
+  emit(
+    'field-change',
+    field,
+    Object.fromEntries(
+      Object.keys(current)
+        .filter((item) => item !== key)
+        .map((item) => [item, current[item]]),
+    ),
+  )
+}
 </script>
 
 <style lang="scss" scoped>
@@ -643,6 +877,60 @@ function removeMapUser(field: PluginConfigField, id: number, index: number) {
 .map-list-group-header :deep(.el-input),
 .map-list-user :deep(.el-input) {
   flex: 1;
+}
+
+.category-collection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--el-border-color-light, #e4e7ed);
+  border-radius: 8px;
+  background: var(--el-fill-color-blank, #fff);
+}
+
+.category-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-card-title {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.category-key-input {
+  flex: 0 1 200px;
+}
+
+.category-caption {
+  overflow: hidden;
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-count,
+.category-hint {
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 12px;
 }
 
 .config-add-button {

@@ -19,6 +19,7 @@
         v-loading="loading"
         :data="filteredTasks"
         :row-class-name="rowClassName"
+        :tooltip-options="overflowTooltipOptions"
         stripe
         empty-text="暂无定时任务"
       >
@@ -89,6 +90,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { ElMessageBox } from 'element-plus'
 import type { AgentTaskInfo } from '@/types/agent-task'
 import { getRequest, postRequest } from '@/utils/api'
+import { overflowTooltipOptions } from '@/utils/table'
 import { message } from '@/utils/message'
 
 interface ResultResponse<T> {

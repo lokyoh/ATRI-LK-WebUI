@@ -13,6 +13,7 @@
         v-loading="loading"
         :data="skills"
         :row-class-name="rowClassName"
+        :tooltip-options="overflowTooltipOptions"
         stripe
         empty-text="暂无技能"
       >
@@ -169,6 +170,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { ElMessageBox } from 'element-plus'
 import type { SkillDetail, SkillInfo, SkillSource } from '@/types/agent'
 import { getRequest, postRequest } from '@/utils/api'
+import { overflowTooltipOptions } from '@/utils/table'
 import { message } from '@/utils/message'
 
 interface ResultResponse<T> {

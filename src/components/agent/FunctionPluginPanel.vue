@@ -39,6 +39,7 @@
             :data="plugin.skills"
             size="small"
             :row-class-name="memberRowClass(plugin)"
+            :tooltip-options="overflowTooltipOptions"
             empty-text="—"
           >
             <el-table-column prop="name" label="名称" min-width="140" show-overflow-tooltip>
@@ -84,6 +85,7 @@
             :data="plugin.functions"
             size="small"
             :row-class-name="memberRowClass(plugin)"
+            :tooltip-options="overflowTooltipOptions"
           >
             <el-table-column prop="name" label="功能名" min-width="160" show-overflow-tooltip>
               <template #default="{ row }">
@@ -151,6 +153,7 @@
             :data="plugin.rare_functions"
             size="small"
             :row-class-name="memberRowClass(plugin)"
+            :tooltip-options="overflowTooltipOptions"
           >
             <el-table-column prop="name" label="功能名" min-width="160" show-overflow-tooltip>
               <template #default="{ row }">
@@ -227,6 +230,7 @@ import type {
   PluginSkillInfo,
 } from '@/types/agent'
 import { getRequest, postRequest } from '@/utils/api'
+import { overflowTooltipOptions } from '@/utils/table'
 import { message } from '@/utils/message'
 
 interface ResultResponse<T> {

@@ -91,6 +91,19 @@ function initializeJsonDrafts(configFields: PluginConfigField[], parentPath = ''
       jsonDrafts.value[path] = JSON.stringify(field.value, null, 2) ?? ''
     }
     if (field.children) initializeJsonDrafts(field.children, path)
+    if (field.type === 'category-collection' && field.itemField?.children) {
+      // 分类卡片的子字段路径是 `<字段>.<分类键>.<子字段>`。草稿必须按每个
+      // 实际存在的分类键分别初始化，否则分类内的 JSON 字段提交时找不到草稿，
+      // 会被 parseJsonDraft 直接跳过、静默漏存。
+      const items = field.value
+      const keys =
+        items && typeof items === 'object' && !Array.isArray(items)
+          ? Object.keys(items)
+          : []
+      for (const key of keys) {
+        initializeJsonDrafts(field.itemField.children, `${path}.${key}`)
+      }
+    }
   }
 }
 
@@ -111,20 +124,38 @@ function updateFieldError(path: string, error: string | undefined) {
   }
 }
 
-function findField(path: string): PluginConfigField | undefined {
+/**
+ * 按点号路径找字段。分类集合的子字段路径是 `<字段>.<分类键>.<子字段>`，
+ * 比普通 group 多一层「分类键」，所以这里要记住上一步是不是分类集合，
+ * 跳过分类型的那一段路径；用栈保存状态以支持分类里再嵌套分类。
+ */
+function findField(
+  path: string,
+  root: PluginConfigField[],
+): PluginConfigField | undefined {
   const keys = path.split('.')
-  let currentFields = fields.value
+  let currentFields = root
   let field: PluginConfigField | undefined
+  const skipKey: boolean[] = []
   for (const key of keys) {
+    if (skipKey.pop()) {
+      // 这一段是分类键：分类键本身不是字段，直接切到 item 子字段继续
+      currentFields = field?.itemField?.children || []
+      continue
+    }
     field = currentFields.find((item) => item.key === key)
     if (!field) return undefined
+    if (field.type === 'category-collection') {
+      skipKey.push(true)
+      continue
+    }
     currentFields = field.children || []
   }
   return field
 }
 
 function parseJsonDraft(path: string): boolean {
-  const field = findField(path)
+  const field = findField(path, fields.value)
   if (!field) return false
   try {
     const value: unknown = JSON.parse(jsonDrafts.value[path] ?? '')

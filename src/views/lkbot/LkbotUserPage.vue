@@ -217,7 +217,12 @@
           <el-tag type="warning" effect="light" round> {{ detail.backpack.length }} 种物品 </el-tag>
         </div>
         <div v-if="detail.backpack.length" class="backpack-table">
-          <el-table :data="detail.backpack" size="small" class="inventory-table">
+          <el-table
+            :data="detail.backpack"
+            size="small"
+            class="inventory-table"
+            :tooltip-options="overflowTooltipOptions"
+          >
             <el-table-column prop="name" label="物品名称" min-width="180" show-overflow-tooltip>
               <template #default="{ row }">
                 <span class="item-name">{{ row.name }}</span>
@@ -396,6 +401,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { ElMessageBox } from 'element-plus'
 import type { LkItemCatalog, LkUserDetail, LkUserInfo } from '@/types/lkbot-user'
 import { getRequest, postRequest } from '@/utils/api'
+import { overflowTooltipOptions } from '@/utils/table'
 import { message } from '@/utils/message'
 import CuteButton from '@/components/ui/CuteButton.vue'
 import NeonDialog from '@/components/ui/NeonDialog.vue'
