@@ -42,6 +42,10 @@
       <div v-if="currentTab === 'tasks'" class="tab-panel">
         <TasksPanel />
       </div>
+
+      <div v-if="currentTab === 'home'" class="tab-panel">
+        <HomePanel />
+      </div>
     </div>
   </div>
 </template>
@@ -55,6 +59,7 @@ import FunctionCallingPanel from '@/components/agent/FunctionCallingPanel.vue'
 import FunctionPluginPanel from '@/components/agent/FunctionPluginPanel.vue'
 import SkillsPanel from '@/components/agent/SkillsPanel.vue'
 import TasksPanel from '@/components/agent/TasksPanel.vue'
+import HomePanel from '@/components/agent/HomePanel.vue'
 import { getLoading } from '@/utils/loading'
 
 const tabs = [
@@ -65,6 +70,7 @@ const tabs = [
   { key: 'function_calling', label: '功能调用' },
   { key: 'skills', label: '技能' },
   { key: 'tasks', label: '定时任务' },
+  { key: 'home', label: '家' },
 ]
 
 const currentTab = ref('settings')
