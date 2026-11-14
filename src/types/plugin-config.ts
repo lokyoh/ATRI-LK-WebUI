@@ -62,9 +62,19 @@ export interface PluginConfigItemField {
   children?: PluginConfigField[]
 }
 
+export interface PluginConfigSection {
+  key: string
+  label: string
+  description: string
+  /** 归属本节的顶层字段 key，顺序与 fields 一致 */
+  keys: string[]
+}
+
 export interface PluginConfigSchema {
   schemaVersion: string
   type: string
   service: string
   fields: PluginConfigField[]
+  /** 后端声明了 Section 时才有；没有就按平铺列表渲染 */
+  sections?: PluginConfigSection[]
 }

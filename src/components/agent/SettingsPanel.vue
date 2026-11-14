@@ -19,8 +19,19 @@
     </div>
 
     <div v-loading="loading" class="settings-content">
+      <ConfigSections
+        v-if="fields.length && sections.length"
+        :sections="sections"
+        :fields="fields"
+        :json-drafts="jsonDrafts"
+        :json-errors="jsonErrors"
+        @field-change="updateField"
+        @json-input="updateJsonDraft"
+        @json-blur="parseJsonDraft"
+        @field-error="updateFieldError"
+      />
       <DictChildren
-        v-if="fields.length"
+        v-else-if="fields.length"
         :children="fields"
         :json-drafts="jsonDrafts"
         :json-errors="jsonErrors"
@@ -37,7 +48,12 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue'
 import DictChildren from '@/components/plugin/DictChildren.vue'
-import type { PluginConfigField, PluginConfigSchema } from '@/types/plugin-config'
+import ConfigSections from '@/components/plugin/ConfigSections.vue'
+import type {
+  PluginConfigField,
+  PluginConfigSchema,
+  PluginConfigSection,
+} from '@/types/plugin-config'
 import { getRequest, postRequest } from '@/utils/api'
 import { message } from '@/utils/message'
 
@@ -50,6 +66,7 @@ interface SettingsResponse {
 
 const prefix = inject<string>('prefix', '/atri/api')
 const fields = ref<PluginConfigField[]>([])
+const sections = ref<PluginConfigSection[]>([])
 const jsonDrafts = ref<Record<string, string>>({})
 const jsonErrors = ref<Record<string, string>>({})
 const loading = ref(false)
@@ -73,6 +90,7 @@ async function loadSettings() {
     }
 
     fields.value = payload.data.fields
+    sections.value = payload.data.sections ?? []
     jsonDrafts.value = {}
     jsonErrors.value = {}
     initializeJsonDrafts(fields.value)

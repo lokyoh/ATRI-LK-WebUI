@@ -21,7 +21,19 @@
     <div class="plugin-content">
       <!-- 自定义配置区域 -->
       <div v-if="customConfigs.length > 0" class="settings-container">
+        <ConfigSections
+          v-if="sections.length"
+          :sections="sections"
+          :fields="customConfigs"
+          :json-drafts="jsonDrafts"
+          :json-errors="jsonErrors"
+          @field-change="updateField"
+          @json-input="updateJsonDraft"
+          @json-blur="parseJsonDraft"
+          @field-error="updateFieldError"
+        />
         <DictChildren
+          v-else
           :children="customConfigs"
           :json-drafts="jsonDrafts"
           :json-errors="jsonErrors"
@@ -56,9 +68,14 @@
 <script setup lang="ts">
 import { ref, inject, watch } from 'vue'
 import DictChildren from '@/components/plugin/DictChildren.vue'
+import ConfigSections from '@/components/plugin/ConfigSections.vue'
 import { getRequest, postRequest } from '@/utils/api'
 import { message } from '@/utils/message'
-import type { PluginConfigField, PluginConfigSchema } from '@/types/plugin-config'
+import type {
+  PluginConfigField,
+  PluginConfigSchema,
+  PluginConfigSection,
+} from '@/types/plugin-config'
 
 interface Props {
   service?: string
@@ -79,6 +96,7 @@ const modelVisible = defineModel<boolean>('visible', { required: true })
 const prefix = inject<string>('prefix') as string
 
 const customConfigs = ref<PluginConfigField[]>([])
+const sections = ref<PluginConfigSection[]>([])
 const jsonDrafts = ref<Record<string, string>>({})
 const jsonErrors = ref<Record<string, string>>({})
 const saving = ref(false)
@@ -112,6 +130,7 @@ async function getCustomConfigs() {
         throw new TypeError('插件配置响应缺少 fields schema')
       }
       customConfigs.value = schema.fields
+      sections.value = schema.sections ?? []
       jsonDrafts.value = {}
       jsonErrors.value = {}
       initializeJsonDrafts(schema.fields)

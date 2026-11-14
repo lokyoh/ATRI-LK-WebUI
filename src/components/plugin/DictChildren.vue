@@ -1,6 +1,10 @@
 <template>
   <div class="config-fields">
-    <div v-for="field in children" :key="field.key" class="config-field">
+    <div
+      v-for="field in children"
+      :key="field.key"
+      :class="['config-field', { 'config-field--stacked': stacksLabel(field) }]"
+    >
       <template v-if="field.type === 'group'">
         <div class="group-heading">
           <div class="field-label">{{ field.label }}</div>
@@ -35,8 +39,15 @@
             @update:model-value="emit('field-change', field, $event)"
           />
 
-          <div v-else-if="field.type === 'category-collection'" class="category-collection">
-            <div v-for="key in categoryKeys(field)" :key="key" class="category-card">
+          <div
+            v-else-if="field.type === 'category-collection'"
+            :class="['category-collection', { 'category-collection--compact': isCompactCategory(field) }]"
+          >
+            <div
+              v-for="key in categoryKeys(field)"
+              :key="key"
+              :class="['category-card', { 'category-card--compact': isCompactCategory(field) }]"
+            >
               <div class="category-card-header">
                 <div class="category-card-title">
                   <el-input
@@ -677,6 +688,16 @@ function isCategoryKeyEditable(field: PluginConfigField): boolean {
   return field.allowAdd !== false
 }
 
+/** 固定分类（不可增删，如三级权限）用紧凑排版，卡片只留给可增删的分类。 */
+function isCompactCategory(field: PluginConfigField): boolean {
+  return field.allowAdd === false
+}
+
+/** 分类集合内容宽，标签要独占一行放在上面，而不是挤在左边占一列。 */
+function stacksLabel(field: PluginConfigField): boolean {
+  return field.type === 'category-collection'
+}
+
 /** 固定分类不允许删除（后端也会拒绝缺少固定分类的提交）。 */
 function canRemoveCategory(field: PluginConfigField, key: string): boolean {
   if (field.fixedKeys?.includes(key)) return false
@@ -794,6 +815,11 @@ function removeCategory(field: PluginConfigField, key: string) {
   border: 1px solid var(--el-border-color-light, #e4e7ed);
   border-radius: 8px;
   background: var(--el-bg-color-overlay, #fff);
+}
+
+/* 分类集合这类宽内容：标题在上、内容在下，不用左右分栏。 */
+.config-field--stacked {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .group-heading {
@@ -919,6 +945,46 @@ function removeCategory(field: PluginConfigField, key: string) {
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.category-collection--compact {
+  gap: 8px;
+}
+
+/* 固定分类（如三级权限）：等级标签占第一行，字段逐条竖排并贴左。 */
+.category-card--compact {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.category-card--compact .category-card-header {
+  flex: 0 0 auto;
+}
+
+/* 标签在上、控件在下，左对齐；不再让标签占一列把控件挤到中间。 */
+.category-card--compact :deep(.config-fields) {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.category-card--compact :deep(.config-field) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+/* 控件贴左，但不拉满整行，免得一行只有一个按钮还横跨整张卡。 */
+.category-card--compact :deep(.field-control) {
+  max-width: 26rem;
 }
 
 .category-actions {

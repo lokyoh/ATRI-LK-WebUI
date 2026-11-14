@@ -9,8 +9,16 @@
     </header>
 
     <div v-loading="loading" class="config-content">
+      <ConfigSections
+        v-if="fields.length && sections.length"
+        :sections="sections"
+        :fields="fields"
+        :json-drafts="{}"
+        :json-errors="{}"
+        @field-change="updateField"
+      />
       <DictChildren
-        v-if="fields.length"
+        v-else-if="fields.length"
         :children="fields"
         :json-drafts="{}"
         :json-errors="{}"
@@ -35,12 +43,18 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue'
 import DictChildren from '@/components/plugin/DictChildren.vue'
-import type { PluginConfigField, PluginConfigSchema } from '@/types/plugin-config'
+import ConfigSections from '@/components/plugin/ConfigSections.vue'
+import type {
+  PluginConfigField,
+  PluginConfigSchema,
+  PluginConfigSection,
+} from '@/types/plugin-config'
 import { getRequest, postRequest } from '@/utils/api'
 import { message } from '@/utils/message'
 
 const prefix = inject<string>('prefix') as string
 const fields = ref<PluginConfigField[]>([])
+const sections = ref<PluginConfigSection[]>([])
 const loading = ref(false)
 const saving = ref(false)
 
@@ -62,6 +76,7 @@ async function loadConfig() {
       throw new TypeError('LK 插件配置响应缺少 fields schema')
     }
     fields.value = schema.fields
+    sections.value = schema.sections ?? []
   } catch (error) {
     console.error('获取 LK 插件配置失败:', error)
     message.error(error instanceof Error ? `获取配置失败：${error.message}` : '获取配置失败')

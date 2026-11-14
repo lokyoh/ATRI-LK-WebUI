@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import { useRouteStore } from "@/stores/route";
+import { startRouteLoading, stopRouteLoading } from "@/utils/route-loading";
 
 // 登录与地址设置是进入后台前就要加载的页面，保持同步；
 // 其余页面按需加载，避免登录页把整个后台拉进首包。
@@ -90,6 +91,8 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from) => {
+  // 只有跨页面跳转才盖全屏遮罩；同页内的 replace 不该闪。
+  if (to.path !== from.path) startRouteLoading();
   const isAuthenticated = window.sessionStorage.getItem("isAuthenticated");
   const routerStore = useRouteStore();
   routerStore.setFromRoute(from);
@@ -101,8 +104,11 @@ router.beforeEach((to, from) => {
   }
 });
 
-// 添加路由加载后的标题设置（可选）
+// 导航被取消（比如用户又点了别的）时也要收掉遮罩，否则它会一直挂着。
+router.onError(() => stopRouteLoading());
+
 router.afterEach((to) => {
+  stopRouteLoading();
   // 设置页面标题
   if (to.meta.title) {
     document.title = to.meta.title as string;
