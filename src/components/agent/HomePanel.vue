@@ -4,9 +4,6 @@
       <h4>亚托莉的家</h4>
       <div class="header-actions">
         <el-button size="small" :loading="loading" @click="load">刷新</el-button>
-        <el-button size="small" type="primary" plain :loading="generating" @click="generate">
-          让她扩写
-        </el-button>
       </div>
     </div>
 
@@ -147,7 +144,7 @@ import { HOME_TEXT_SECTIONS, type HomeContainer, type HomeInfo, type HomeRoom } 
 
 const prefix = inject<string>('prefix')
 const loading = ref(false)
-const generating = ref(false)
+
 const saving = ref('')
 const content = ref('')
 const summary = ref('')
@@ -266,17 +263,7 @@ function addContainer() {
   containers.push({ name: '', items: [''] })
 }
 
-async function generate() {
-  generating.value = true
-  try {
-    await submit('generate')
-  } catch (error) {
-    console.error('生成家失败:', error)
-    message?.error('生成失败')
-  } finally {
-    generating.value = false
-  }
-}
+
 
 load()
 </script>
