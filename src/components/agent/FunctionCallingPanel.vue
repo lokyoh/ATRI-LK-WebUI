@@ -35,6 +35,13 @@
             <el-tag v-if="row.always_enabled" type="primary" size="small" class="core-tag">
               核心
             </el-tag>
+            <el-tooltip
+              v-if="row.rare"
+              content="不常用功能：不进提示词，只能经 call 调用"
+              placement="top"
+            >
+              <el-tag type="warning" size="small" class="core-tag">不常用</el-tag>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column
@@ -64,6 +71,31 @@
                 />
               </span>
             </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="默认权限" min-width="230">
+          <template #default="{ row }">
+            <div class="permission-cell">
+              <el-tooltip
+                v-for="level in LEVEL_ORDER"
+                :key="level"
+                :disabled="!row.permission?.[level]?.chain?.length"
+                placement="top"
+              >
+                <template #content>
+                  <div class="permission-chain">
+                    {{ (row.permission?.[level]?.chain || []).join(' → ') }}
+                  </div>
+                </template>
+                <el-tag
+                  size="small"
+                  :type="row.permission?.[level]?.allowed ? 'success' : 'info'"
+                >
+                  {{ LEVEL_LABELS[level] }}
+                </el-tag>
+              </el-tooltip>
+              <span class="scope-label">{{ SCOPE_LABELS[row.scope] || row.scope }}</span>
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="环境可用性" min-width="130">
@@ -98,7 +130,13 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import type { FunctionCallingArgInfo, FunctionCallingInfo } from '@/types/agent'
+import {
+  LEVEL_LABELS,
+  LEVEL_ORDER,
+  SCOPE_LABELS,
+  type FunctionCallingArgInfo,
+  type FunctionCallingInfo,
+} from '@/types/agent'
 import { getRequest, postRequest } from '@/utils/api'
 import { overflowTooltipOptions } from '@/utils/table'
 import { message } from '@/utils/message'
@@ -136,8 +174,9 @@ const loadFunctionCallings = async () => {
     const payload = response.data as ResultResponse<FunctionCallingInfo[]>
     if (payload.suc) {
       const all = payload.data || []
-      // 插件内功能在「功能插件」页单独管理，这里只留独立功能
-      functionCallings.value = all.filter((item) => !item.plugin)
+      // 插件内常用功能在「功能插件」页管理；不常用功能只在这里可见，
+      // 否则「call 能调什么」在 UI 上完全没有入口。
+      functionCallings.value = all.filter((item) => !item.plugin || item.rare)
     } else {
       message.error(payload.info || '获取功能调用失败')
     }
@@ -211,6 +250,23 @@ onMounted(loadFunctionCallings)
 
 .function-calling-panel :deep(.row-inactive) {
   color: var(--el-text-color-placeholder);
+}
+
+.permission-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.scope-label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.permission-chain {
+  max-width: 320px;
+  line-height: 1.5;
 }
 
 .state-effective {

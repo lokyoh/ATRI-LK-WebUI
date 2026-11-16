@@ -41,6 +41,20 @@ export interface OutfitInfo {
   current: string
 }
 
+export interface LifeOption {
+  value: string
+  label: string
+}
+
+/** 后端给的选项与文案，前端只负责显示 */
+export interface LifeOptions {
+  kinds: LifeOption[]
+  note_labels: Record<string, string>
+  note_colors: Record<string, string>
+  source_labels: Record<string, string>
+  source_colors: Record<string, string>
+}
+
 /** 写日程时提交的一条；字段与后端 ScheduleEntry 一致 */
 export interface ScheduleEntryInput {
   start: string

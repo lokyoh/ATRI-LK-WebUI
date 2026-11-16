@@ -7,7 +7,7 @@
       </div>
       <div class="action-bar">
         <el-button @click="loadProviders" :loading="loading">刷新</el-button>
-        <el-button type="primary" @click="openProviderDialog">添加 Provider</el-button>
+        <el-button type="primary" @click="openProviderDialog()">添加 Provider</el-button>
       </div>
     </div>
 
@@ -39,7 +39,7 @@
               <p>{{ activeProvider.provider_type || '未指定类型' }}</p>
             </div>
             <div class="detail-actions">
-              <el-button size="small" type="primary" @click="openModelDialog">添加模型</el-button>
+              <el-button size="small" type="primary" @click="openModelDialog()">添加模型</el-button>
               <el-button size="small" plain @click="openProviderDialog(activeProvider)"
                 >编辑 Provider</el-button
               >
@@ -83,7 +83,7 @@
                         :type="typeColor(type)"
                         class="model-type-tag"
                       >
-                        {{ type }}
+                        {{ typeLabel(modelTypes, type) }}
                       </el-tag>
                     </template>
                     <el-tag
@@ -142,16 +142,25 @@
         </el-form-item>
         <el-form-item label="Provider 类型">
           <el-select
-            v-model="providerForm.provider_type"
+            :model-value="providerForm.provider_type"
+            @update:model-value="handleProviderTypeChange"
             placeholder="请选择 Provider 类型"
             :loading="typeOptionsLoading"
             class="w-full"
           >
-            <el-option v-for="type in providerTypes" :key="type" :label="type" :value="type" />
+            <el-option
+              v-for="item in providerTypes"
+              :key="item.value"
+              :label="typeLabel(providerTypes, item.value)"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="API 地址">
-          <el-input v-model="providerForm.url" placeholder="https://api.example.com/v1" />
+          <el-input
+            v-model="providerForm.url"
+            :placeholder="providerTypeHint(providerForm.provider_type)"
+          />
         </el-form-item>
         <el-form-item label="API Key">
           <div class="key-editor">
@@ -228,9 +237,35 @@
             :loading="typeOptionsLoading"
             class="w-full"
           >
-            <el-option v-for="type in modelTypes" :key="type" :label="type" :value="type" />
+            <el-option
+              v-for="item in modelTypes"
+              :key="item.value"
+              :label="typeLabel(modelTypes, item.value)"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
+        <el-form-item label="缓存标识字段">
+          <el-select v-model="modelForm.cache_field" :disabled="cacheLocked" class="w-full">
+            <el-option
+              v-for="item in cacheFields"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+          <span class="feature-hint">
+            缓存标识形如 atri-8f3k2a1q-think。留空 = 不发。
+            DeepSeek 固定使用 user_id，不可改。
+          </span>
+        </el-form-item>
+        <el-form-item label="流式输出">
+          <el-switch v-model="modelForm.stream" />
+          <span class="feature-hint">
+            按分块接收再拼成完整结果，长回复不会卡在读超时上；解析与发送逻辑不变。
+          </span>
+        </el-form-item>
+
         <el-form-item label="附加配置 (JSON)">
           <el-input
             v-model="modelDataText"
@@ -304,6 +339,8 @@ interface LLMModel {
   type: string | string[]
   api_key?: string | string[]
   pricing?: ModelPricing | null
+  cache_field?: string
+  stream?: boolean
   // 附加配置是后端原样透传的任意 JSON，这里只要求是对象
   data?: Record<string, unknown>
 }
@@ -337,11 +374,20 @@ interface ProviderResponse {
   data?: LLMProvider[]
 }
 
+interface TypeOption {
+  value: string
+  label: string
+  color?: string
+  endpoint?: string
+  /** 供应商定死了该项，用户不可改 */
+  locked?: boolean
+}
+
 interface TypeOptionsResponse {
   suc: boolean
   code: number
   info: string
-  data?: string[]
+  data?: TypeOption[]
 }
 
 const prefix = inject<string>('prefix', '/atri/api')
@@ -350,8 +396,32 @@ const submitting = ref(false)
 const testingModelName = ref('')
 const typeOptionsLoading = ref(false)
 const providers = ref<LLMProvider[]>([])
-const providerTypes = ref<string[]>([])
-const modelTypes = ref<string[]>([])
+const providerTypes = ref<TypeOption[]>([])
+const modelTypes = ref<TypeOption[]>([])
+const cacheFields = ref<TypeOption[]>([])
+
+/** 显示名与配色全部来自后端；这里只做「值 → 选项」的查表。 */
+const typeOption = (options: TypeOption[], value: string) =>
+  options.find((item) => item.value === value)
+
+const typeLabel = (options: TypeOption[], value: string) => {
+  const label = typeOption(options, value)?.label
+  return label ? `${label}（${value}）` : value
+}
+
+const providerTypeHint = (type: string) =>
+  typeOption(providerTypes.value, type)?.endpoint || 'https://api.example.com/v1'
+
+/** 选类型即填官方地址；用户已手改过就不覆盖。 */
+const handleProviderTypeChange = (value: string) => {
+  const previousHint = providerTypeHint(providerForm.provider_type)
+  providerForm.provider_type = value
+  const hint = typeOption(providerTypes.value, value)?.endpoint || ''
+  if (!hint) return
+  if (!providerForm.url.trim() || providerForm.url.trim() === previousHint) {
+    providerForm.url = hint
+  }
+}
 const activeProviderName = ref('')
 const providerDialogVisible = ref(false)
 const modelDialogVisible = ref(false)
@@ -441,6 +511,8 @@ const modelForm = reactive<LLMModel>({
   temperature: 0.7,
   type: [],
   api_key: [],
+  cache_field: '',
+  stream: false,
   data: {},
 })
 
@@ -450,18 +522,7 @@ const activeProvider = computed(() => {
   )
 })
 
-const typeColor = (t: string) => {
-  if (!t) return 'info'
-  const map: Record<string, string> = {
-    chat: 'success',
-    tool: 'warning',
-    image: 'info',
-    embedding: 'primary',
-    tts: 'info',
-    sys1: 'danger',
-  }
-  return map[t] || 'info'
-}
+const typeColor = (t: string) => typeOption(modelTypes.value, t)?.color || 'info'
 
 const loadProviders = async () => {
   loading.value = true
@@ -515,9 +576,7 @@ const loadTypeOptions = async () => {
   if (modelResult.status === 'fulfilled') {
     const payload = modelResult.value.data as TypeOptionsResponse
     if (payload?.suc && Array.isArray(payload.data)) {
-      modelTypes.value = payload.data.filter(
-        (type) => typeof type === 'string' && type.trim() && type.toLowerCase() !== 'click',
-      )
+      modelTypes.value = payload.data
     } else {
       console.error('loadModelTypes failed', payload?.info)
       message.error(payload?.info || '获取模型类型失败')
@@ -526,7 +585,24 @@ const loadTypeOptions = async () => {
     console.error('loadModelTypes error', modelResult.reason)
     message.error('获取模型类型失败')
   }
+
   typeOptionsLoading.value = false
+}
+
+/** 供应商定死字段时只返回一项，此时下拉不可改。 */
+const cacheLocked = computed(() => cacheFields.value.some((item) => item.locked))
+
+const loadCacheFields = async () => {
+  const providerType = activeProvider.value?.provider_type || ''
+  const resp = await postRequest(
+    `${prefix}/agent/get_cache_field?provider_type_name=${encodeURIComponent(providerType)}`,
+  )
+  const payload = resp.data as TypeOptionsResponse
+  if (payload?.suc && Array.isArray(payload.data)) {
+    cacheFields.value = payload.data
+  } else {
+    console.error('loadCacheFields failed', payload?.info)
+  }
 }
 
 const selectProvider = (providerName: string) => {
@@ -552,17 +628,18 @@ const openProviderDialog = (provider?: LLMProvider | null) => {
     })
   } else {
     providerOriginalName.value = ''
+    const defaultType = providerTypes.value[0]?.value || ''
     Object.assign(providerForm, {
       provider_name: '',
-      provider_type: providerTypes.value[0] || '',
-      url: '',
+      provider_type: defaultType,
+      url: typeOption(providerTypes.value, defaultType)?.endpoint || '',
       api_key: [emptyKey()],
       models: [],
     })
   }
 }
 
-const openModelDialog = (model?: LLMModel | null) => {
+const openModelDialog = async (model?: LLMModel | null) => {
   if (!activeProvider.value) {
     message.warning('请先选择一个 Provider')
     return
@@ -576,9 +653,11 @@ const openModelDialog = (model?: LLMModel | null) => {
     Object.assign(modelForm, {
       name: model.name,
       model: model.model,
-      temperature: model.temperature,
+      temperature: Number(model.temperature ?? 0.7),
       type: normalizeModelTypes(model.type),
       api_key: normalizeKeySelectors(model.api_key),
+      cache_field: model.cache_field || '',
+      stream: !!model.stream,
       data: model.data || {},
     })
   } else {
@@ -589,12 +668,18 @@ const openModelDialog = (model?: LLMModel | null) => {
       name: '',
       model: '',
       temperature: 0.7,
-      type: modelTypes.value[0] ? [modelTypes.value[0]] : [],
+      type: modelTypes.value[0] ? [modelTypes.value[0].value] : [],
       api_key: [],
-      data: {},
+      cache_field: '',
+      stream: false,
+          data: {},
     })
   }
   modelDataText.value = JSON.stringify(modelForm.data || {}, null, 2)
+  await loadCacheFields()
+  if (cacheLocked.value && cacheFields.value[0]) {
+    modelForm.cache_field = cacheFields.value[0].value
+  }
 }
 
 const handleSaveProvider = async () => {
@@ -719,6 +804,8 @@ const handleSaveModel = async () => {
         type: normalizedTypes.length === 1 ? normalizedTypes[0] : normalizedTypes,
         api_key: keySelectors.length === 1 ? keySelectors[0] : keySelectors,
         pricing: pricingPayload,
+        cache_field: modelForm.cache_field || '',
+        stream: !!modelForm.stream,
         data: parsedData,
       },
     )
@@ -1041,6 +1128,14 @@ onMounted(() => {
 
 .pricing-grid :deep(.el-input-number) {
   width: 100%;
+}
+
+.feature-hint {
+  display: block;
+  margin-top: 4px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .empty-state {

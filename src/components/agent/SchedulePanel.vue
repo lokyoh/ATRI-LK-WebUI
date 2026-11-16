@@ -101,8 +101,12 @@
               class="time-input"
             />
             <el-select v-model="item.kind" class="kind-input">
-              <el-option label="待在某地" value="stay" />
-              <el-option label="在路上" value="travel" />
+              <el-option
+                v-for="option in options.kinds"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
             </el-select>
             <el-input
               v-if="item.kind === 'stay'"
@@ -142,6 +146,7 @@ import { Delete } from '@element-plus/icons-vue'
 import { getRequest, postRequest } from '@/utils/api'
 import { message } from '@/utils/message'
 import type {
+  LifeOptions,
   LocationInfo,
   OutfitInfo,
   ScheduleEntryInfo,
@@ -162,6 +167,13 @@ const editorVisible = ref(false)
 const entries = ref<ScheduleEntryInfo[]>([])
 const location = ref<LocationInfo | null>(null)
 const outfit = ref<OutfitInfo | null>(null)
+const options = ref<LifeOptions>({
+  kinds: [],
+  note_labels: {},
+  note_colors: {},
+  source_labels: {},
+  source_colors: {},
+})
 
 interface Draft extends ScheduleEntryInput {
   __key: number
@@ -203,30 +215,27 @@ async function removeEntry(row: Row) {
     removing.value = ''
   }
 }
-const isCarried = (row: ScheduleEntryInfo) =>
-  row.note === 'carried' || Boolean(row.origin_start && row.origin_start !== row.start)
 // 遗留条目的 start 只是当天那一段的 00:00，活动其实从前一天就开始了。
 const shownStart = (row: ScheduleEntryInfo) => row.origin_start || row.start
 
-const sourceLabel = (row: ScheduleEntryInfo) => {
-  if (isCarried(row)) return '昨日遗留'
-  if (row.source === 'routine') return '固定作息'
-  if (row.source === 'go') return '临时前往'
-  if (row.note === 'auto') return '自动补路程'
-  return '填入'
-}
+const sourceLabel = (row: ScheduleEntryInfo) =>
+  options.value.note_labels[row.note] ??
+  options.value.source_labels[row.source] ??
+  row.source
 
-const sourceTagType = (row: ScheduleEntryInfo) => {
-  if (isCarried(row)) return 'warning'
-  if (row.source === 'routine') return 'info'
-  if (row.source === 'go') return 'warning'
-  return 'success'
-}
+const sourceTagType = (row: ScheduleEntryInfo) =>
+  options.value.note_colors[row.note] ?? options.value.source_colors[row.source] ?? 'success'
 
-function apply(data: { schedule: ScheduleEntryInfo[]; location: LocationInfo; outfit: OutfitInfo }) {
+function apply(data: {
+  schedule: ScheduleEntryInfo[]
+  location: LocationInfo
+  outfit: OutfitInfo
+  options?: LifeOptions
+}) {
   entries.value = data.schedule ?? []
   location.value = data.location ?? null
   outfit.value = data.outfit ?? null
+  if (data.options) options.value = data.options
 }
 
 async function load() {
