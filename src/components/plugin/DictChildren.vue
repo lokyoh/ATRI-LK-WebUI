@@ -364,7 +364,10 @@
 import { ref, watch } from 'vue'
 import { Delete, Plus } from '@element-plus/icons-vue'
 import MySwitch from '@/components/ui/MySwitch.vue'
-import type { PluginConfigField } from '@/types/plugin-config'
+import type {
+  PluginConfigField,
+  PluginConfigItemField,
+} from '@/types/plugin-config'
 
 defineOptions({ name: 'DictChildren' })
 
@@ -769,12 +772,23 @@ function updateCategoryChild(
   emit('field-change', field, { ...current, [key]: item })
 }
 
+/** 新建分类的初始值：按子字段默认值铺底，卡片不会一片空白。 */
+function categoryBase(itemField?: PluginConfigItemField): Record<string, unknown> {
+  const base: Record<string, unknown> =
+    itemField?.default && typeof itemField.default === 'object'
+      ? (cloneConfigValue(itemField.default) as Record<string, unknown>)
+      : {}
+  for (const child of itemField?.children || []) {
+    base[child.key] = child.itemField
+      ? categoryBase(child.itemField)
+      : cloneConfigValue(child.value)
+  }
+  return base
+}
+
 function addCategory(field: PluginConfigField) {
-  const itemField = field.itemField
   const current = categoryRecord(field)
-  const base = itemField?.default && typeof itemField.default === 'object'
-    ? cloneConfigValue(itemField.default)
-    : {}
+  const base = categoryBase(field.itemField)
   const prefix = field.keyLabel === '用户 ID' ? '新用户' : 'new'
   let key = prefix
   let index = 2
