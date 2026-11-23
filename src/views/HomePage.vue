@@ -2,84 +2,14 @@
   <div class="min-h-screen" :style="{ background: 'var(--bg-color)' }">
     <div class="flex">
       <!-- 侧边栏 -->
-      <aside
-        class="backdrop-blur-sm shadow-xl fixed md:relative z-50 h-screen flex flex-col transition-all duration-500 ease-in-out"
-        :style="{
-          width: getMenuWidth(),
-          transform: getTransform(),
-          backgroundColor: 'var(--bg-color-secondary)',
-        }"
-      >
-        <div class="flex flex-col h-full overflow-hidden">
-          <!-- 顶部内容 -->
-          <div class="flex-1 overflow-y-auto">
-            <div class="p-4 flex justify-center" style="height: 130px; margin-top: 20px">
-              <img
-                v-if="!isCollapsed"
-                class="w-48 h-24 object-contain animate-bounce-slow transition-opacity duration-300"
-                src="../assets/image/logo.webp"
-                decoding="async"
-                alt="Logo"
-              />
-            </div>
-
-            <div class="px-2 pb-4">
-              <el-menu
-                class="border-0 transition-all duration-300"
-                @select="handleSelect"
-                :background-color="'transparent'"
-                :text-color="'var(--text-color-secondary)'"
-                :active-text-color="'var(--primary-color)'"
-                :collapse="isCollapsed"
-                :collapse-transition="false"
-              >
-                <el-menu-item
-                  v-for="menu in menus"
-                  :key="menu.module"
-                  :index="menu.router"
-                  class="group rounded-lg my-1 transition-all duration-300 flex justify-center"
-                  :style="{
-                    backgroundColor:
-                      curSelectMenu === menu.router ? 'var(--bg-color-hover)' : 'transparent',
-                  }"
-                >
-                  <div class="flex items-center w-full">
-                    <span
-                      class="h-8 w-1 rounded-full mr-4 transition-all duration-300"
-                      :style="{
-                        backgroundColor:
-                          curSelectMenu === menu.router ? 'var(--primary-color)' : 'transparent',
-                      }"
-                    ></span>
-                    <SvgIcon :name="menu.icon" size="24" :color="primaryColor" />
-                    <span
-                      v-if="!isCollapsed"
-                      class="ml-3 text-lg font-medium transition-all duration-300"
-                      :style="{
-                        color:
-                          curSelectMenu === menu.router
-                            ? 'var(--primary-color)'
-                            : 'var(--text-color)',
-                        fontWeight: curSelectMenu === menu.router ? 'bold' : 'normal',
-                      }"
-                      >{{ menu.name }}</span
-                    >
-                    <el-tooltip
-                      v-else
-                      effect="light"
-                      :content="menu.name"
-                      placement="right"
-                      popper-class="shadow-lg"
-                    >
-                      <span></span>
-                    </el-tooltip>
-                  </div>
-                </el-menu-item>
-              </el-menu>
-            </div>
-          </div>
-        </div>
-      </aside>
+      <AppSidebar
+        :menus="menus"
+        :active="curSelectMenu"
+        :collapsed="isCollapsed"
+        :mobile="isMobile"
+        :show="asideShow"
+        @select="handleSelect"
+      />
 
       <!-- 主内容区 -->
       <div
@@ -89,214 +19,13 @@
         }"
       >
         <!-- 顶部导航 -->
-        <header
-          class="home-header backdrop-blur-sm shadow-sm px-4 flex items-center justify-between sticky top-0 z-30"
-          :style="{ backgroundColor: 'var(--bg-color-secondary)' }"
-        >
-          <!-- 移动端菜单按钮 -->
-          <button
-            @click="toggleMenu"
-            class="header-icon-trigger inline-flex md:hidden rounded-full transition-all duration-300 text-md"
-            :style="{ backgroundColor: 'var(--bg-color-hover)' }"
-          >
-            <el-icon color="var(--el-color-primary)">
-              <Fold v-if="isMobile ? asideShow : !isCollapsed" />
-              <Expand v-else />
-            </el-icon>
-          </button>
-
-          <!-- 左侧功能区 -->
-          <div class="header-actions flex items-center">
-            <!-- 桌面端菜单展开/收起按钮 -->
-            <button
-              v-if="!isMobile"
-              @click="toggleCollapse"
-              class="header-icon-trigger hidden md:flex items-center rounded-full transition-all duration-300 text-md"
-              :style="{ backgroundColor: 'var(--bg-color-hover)' }"
-            >
-              <el-icon color="var(--el-color-primary)">
-                <Fold v-if="!isCollapsed" />
-                <Expand v-else />
-              </el-icon>
-            </button>
-
-            <!-- API地址设置按钮 -->
-            <router-link
-              :to="{ name: 'MyApi' }"
-              class="header-link hidden md:flex items-center rounded-full transition-all duration-300 shadow-sm text-md"
-              :style="{
-                background: `linear-gradient(to right, var(--primary-color-light-9), var(--primary-color-light-8))`,
-                color: 'var(--primary-color)',
-              }"
-            >
-              <el-icon color="var(--el-color-primary)">
-                <connection />
-              </el-icon>
-              <span>地址设置</span>
-            </router-link>
-
-            <!-- 文档链接 -->
-            <a
-              href="https://lokyoh.github.io/ATRI-LK-docs/"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="header-link hidden md:flex items-center rounded-full transition-all duration-300 shadow-sm text-md"
-              :style="{
-                background: `linear-gradient(to right, var(--primary-color-light-9), var(--primary-color-light-8))`,
-                color: 'var(--primary-color)',
-              }"
-            >
-              <el-icon color="var(--el-color-primary)">
-                <document />
-              </el-icon>
-              <span>文档</span>
-            </a>
-          </div>
-
-          <!-- 右侧功能区 -->
-          <div class="header-actions flex items-center">
-            <el-tooltip
-              v-if="versionInfo"
-              :content="
-                versionInfo.has_update
-                  ? `${versionInfo.current} → ${versionInfo.latest}${versionInfo.notes ? ` · ${firstLine(versionInfo.notes)}` : ''}`
-                  : `当前版本 ${versionInfo.current}`
-              "
-              placement="bottom"
-            >
-              <el-button
-                class="header-update-button"
-                size="small"
-                :type="versionInfo.has_update ? 'warning' : 'primary'"
-                :loading="versionInfo.has_update ? updating : checkingVersion"
-                @click="versionInfo.has_update ? handleUpdate() : checkForUpdates()"
-              >
-                <el-icon class="mr-1">
-                  <top v-if="versionInfo.has_update" />
-                  <refresh v-else />
-                </el-icon>
-                {{ versionInfo.has_update ? '立即更新' : '检查更新' }}
-              </el-button>
-            </el-tooltip>
-
-            <!-- 主题切换 -->
-            <el-dropdown
-              @command="handleThemeChange"
-              trigger="click"
-              class="rounded-full transition-all duration-300 text-md"
-              :style="{ backgroundColor: 'var(--bg-color-hover)' }"
-            >
-              <span class="el-dropdown-link header-icon-trigger inline-flex cursor-pointer">
-                <el-icon color="var(--el-color-primary)">
-                  <brush-filled />
-                </el-icon>
-              </span>
-              <template v-slot:dropdown>
-                <el-dropdown-menu
-                  class="shadow-lg rounded-xl overflow-hidden transition-all duration-300 text-md"
-                >
-                  <el-dropdown-item
-                    v-for="theme in themes"
-                    :key="theme.value"
-                    :command="theme.value"
-                    class="flex items-center px-4 py-2 transition-all duration-200"
-                    :style="{ backgroundColor: 'var(--bg-color-hover)' }"
-                  >
-                    <el-icon :color="theme.color">
-                      <component :is="theme.icon" />
-                    </el-icon>
-                    <span :style="{ color: 'var(--text-color)' }">{{ theme.label }}</span>
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-
-            <!-- 账号切换 -->
-            <el-popover
-              placement="bottom-end"
-              width="280"
-              trigger="hover"
-              popper-class="rounded-xl shadow-xl overflow-hidden transition-all duration-300 text-md"
-            >
-              <div class="max-h-96 overflow-y-auto custom-scrollbar">
-                <div
-                  v-for="bot in botList"
-                  :key="bot.self_id"
-                  @click="getBotInfo(bot.self_id)"
-                  class="flex items-center p-3 cursor-pointer transition-all duration-300"
-                  :style="{
-                    backgroundColor: bot.is_select ? 'var(--bg-color-hover)' : 'transparent',
-                  }"
-                >
-                  <el-image
-                    :src="bot.ava_url"
-                    class="w-10 h-10 rounded-full object-cover border-2 transition-all duration-300"
-                    :style="{ borderColor: 'var(--primary-color-light)' }"
-                  />
-                  <div class="ml-3">
-                    <p :style="{ color: 'var(--text-color)' }" class="font-medium">
-                      {{ bot.nickname }}
-                    </p>
-                    <span :style="{ color: 'var(--text-color-secondary)' }" class="text-xs">{{
-                      bot.self_id
-                    }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <template #reference>
-                <div class="header-account-trigger flex items-center cursor-pointer group">
-                  <span
-                    class="mr-2 transition-all duration-300 text-md"
-                    :style="{ color: 'var(--text-color)' }"
-                  >
-                    切换账号
-                  </span>
-                  <el-image
-                    :src="botInfo?.ava_url"
-                    class="w-7 h-7 rounded-full object-cover border-2 shadow-sm transition-all duration-300"
-                    :style="{ borderColor: 'var(--primary-color)' }"
-                  />
-                </div>
-              </template>
-            </el-popover>
-
-            <!-- 用户下拉菜单 -->
-            <el-dropdown
-              @command="dropdownClick"
-              trigger="click"
-              class="rounded-full transition-all duration-300 text-md"
-              :style="{ backgroundColor: 'var(--bg-color-hover)' }"
-            >
-              <span class="el-dropdown-link header-user-trigger cursor-pointer flex items-center">
-                <span
-                  class="font-medium mx-2 transition-all duration-300"
-                  :style="{ color: 'var(--text-color)' }"
-                  >{{ botInfo?.nickname || '用户' }}</span
-                >
-                <el-icon color="var(--el-color-primary)">
-                  <arrow-down />
-                </el-icon>
-              </span>
-              <template v-slot:dropdown>
-                <el-dropdown-menu
-                  class="shadow-lg rounded-xl overflow-hidden transition-all duration-300"
-                >
-                  <el-dropdown-item
-                    command="logout"
-                    class="flex items-center px-4 py-2 transition-all duration-200"
-                    :style="{ backgroundColor: 'var(--bg-color-hover)' }"
-                  >
-                    <el-icon color="var(--el-color-primary)">
-                      <Switch />
-                    </el-icon>
-                    <span :style="{ color: 'var(--danger-color)' }">退出登录</span>
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
-        </header>
+        <AppHeader
+          :mobile="isMobile"
+          :collapsed="isCollapsed"
+          :show="asideShow"
+          @toggle-menu="toggleMenu"
+          @toggle-collapse="toggleCollapse"
+        />
 
         <!-- 主内容 -->
         <main
@@ -329,38 +58,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject, nextTick, watch, computed, onMounted, onUnmounted, markRaw } from 'vue'
+import { ref, inject, provide, nextTick, watch, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from '@/utils/message'
 import EventBus from '@/utils/event-bus'
-import { getRequest, postRequest } from '@/utils/api'
+import { getRequest } from '@/utils/api'
 import { useMainStore } from '@/stores/main'
+import type { BotInfo } from '@/types/bot'
+import type { MenuItem } from '@/types/menu'
 import { getContentViewportHeight } from '@/utils/utils'
-import {
-  Fold,
-  Expand,
-  Connection,
-  BrushFilled,
-  ArrowDown,
-  Switch,
-  MagicStick,
-  Moon,
-  Sunny,
-  Monitor,
-  Document,
-  Top,
-  Refresh,
-} from '@element-plus/icons-vue'
-import { ElMessageBox } from 'element-plus'
-import SvgIcon from '@/components/SvgIcon/SvgIcon.vue'
-
-interface MenuItem {
-  module: string
-  name: string
-  router: string
-  icon: string
-  default: boolean
-}
+import AppSidebar from '@/components/layout/AppSidebar.vue'
+import AppHeader from '@/components/layout/AppHeader.vue'
 
 interface MenuData {
   bot_type: string
@@ -375,34 +83,17 @@ interface GetMenusResponse {
   data: MenuData
 }
 
-interface BaseInfo {
-  self_id: string
-  nickname: string
-  ava_url: string
-  friend_count: number
-  group_count: number
-  received_messages: number
-  connect_time: number
-  connect_date: string
-  connect_count: number
-  status: boolean
-  is_select: boolean
-  day_call: number
-  version: string
-}
-
 interface GetBaseInfoResponse {
   suc: boolean
   code: number
   info: string
   warning?: string
-  data: BaseInfo[]
+  data: BotInfo[]
 }
 
 const router = useRouter()
 const route = useRoute()
 const prefix = inject<string>('prefix')
-const setAppTheme = inject('setAppTheme')
 const store = useMainStore()
 
 const asideShow = ref(false)
@@ -410,70 +101,21 @@ const isCollapsed = ref(false)
 const isMobile = ref(false)
 const rvKey = ref(0)
 const menus = ref<MenuItem[]>([])
-const botList = ref<BaseInfo[]>([])
-const botInfo = ref<BaseInfo | null>(null)
+const botList = ref<BotInfo[]>([])
+const botInfo = ref<BotInfo | null>(null)
 const curSelectMenu = ref('')
 const firstLoad = ref(true)
 const windowHeight = ref(window.innerHeight)
 let currentScreenMode: 'small' | 'medium' | 'wide' | null = null
-const themes = ref([
-  {
-    value: 'pink',
-    label: '可爱少女',
-    icon: markRaw(MagicStick),
-    color: '#F59E0B',
-  },
-  {
-    value: 'dark',
-    label: '暗黑模式',
-    icon: markRaw(Moon),
-    color: '#6B7280',
-  },
-  {
-    value: 'light',
-    label: '亮色模式',
-    icon: markRaw(Sunny),
-    color: '#F59E0B',
-  },
-  {
-    value: 'one-dark',
-    label: 'One Dark',
-    icon: markRaw(Monitor),
-    color: '#7C3AED',
-  },
-])
 
-const primaryColor = ref('')
-
-const updatePrimaryColor = () => {
-  const style = getComputedStyle(document.documentElement)
-  primaryColor.value = style.getPropertyValue('--primary-color').trim()
-}
 const computedHeight = computed(() => {
   return getContentViewportHeight(windowHeight.value)
 })
 
-function dropdownClick(command: string) {
-  if (command === 'logout') {
-    window.sessionStorage.removeItem('isAuthenticated') // 清除登录状态
-    message.success('已退出登录！')
-    router.push('/')
-  }
-}
-
-function getMenuWidth() {
-  if (isCollapsed.value) {
-    return isMobile.value ? '0rem' : '5.5rem'
-  }
-  return '16rem'
-}
-
-function getTransform() {
-  if (isMobile.value) {
-    return asideShow.value ? 'translateX(0)' : 'translateX(-100%)'
-  }
-  return asideShow.value ? 'translateX(0)' : 'translateX(-1%)'
-}
+// BOT控制台左侧信息卡的「切换账号」：数据与动作由 HomePage 提供，
+// 切换逻辑（getBotInfo 的 rvKey 刷新等）保持单一来源
+provide('botList', botList)
+provide('switchBot', (botId: string) => getBotInfo(botId))
 
 function handleResize() {
   windowHeight.value = window.innerHeight
@@ -614,7 +256,6 @@ async function getBotInfo(bot_id: string | null = null) {
           }
         }
       }
-      store.clearChat()
       if (['/command', '/manage'].includes(route.path)) {
         if (route.path == '/command' && firstLoad.value) {
           firstLoad.value = false
@@ -628,17 +269,6 @@ async function getBotInfo(bot_id: string | null = null) {
     }
   })
 }
-function handleThemeChange(command: string) {
-  if (typeof setAppTheme === 'function') {
-    setAppTheme(command)
-    updatePrimaryColor()
-    EventBus.emit('change-theme', {
-      timestamp: Date.now(),
-    })
-  } else {
-    console.error('setAppTheme function not provided/injected correctly.')
-  }
-}
 
 watch(asideShow, () => {
   EventBus.emit('sidebar-aside', {
@@ -647,135 +277,9 @@ watch(asideShow, () => {
   })
 })
 
-interface VersionInfo {
-  current: string
-  current_name: string
-  latest?: string | null
-  has_update?: boolean
-  update_time?: string | null
-  notes?: string | null
-  error?: string | null
-}
-
-const versionInfo = ref<VersionInfo | null>(null)
-
-const fetchVersionInfo = async (force = false): Promise<VersionInfo> => {
-  const response = await getRequest(
-    `${prefix}/main/get_version_info`,
-    force ? { force: true } : undefined,
-  )
-  const resp = response.data as { suc?: boolean; info?: string; data?: VersionInfo }
-  if (!resp?.suc || !resp.data) {
-    throw new Error(resp?.info || '获取更新信息失败')
-  }
-  versionInfo.value = resp.data
-  return resp.data
-}
-
-const updating = ref(false)
-const checkingVersion = ref(false)
-
-/** 首次加载只展示状态，不打断用户操作。 */
-const getVersionInfo = () => {
-  void fetchVersionInfo().catch((error) => {
-    console.error('getVersionInfo error', error)
-  })
-}
-
-const checkForUpdates = async () => {
-  if (checkingVersion.value) return
-  checkingVersion.value = true
-  try {
-    const info = await fetchVersionInfo(true)
-    if (info.error) {
-      throw new Error(info.error)
-    }
-    if (info.has_update) {
-      message?.success({ message: `发现新版本 ${info.latest}` })
-    } else {
-      message?.success({ message: '当前已是最新版本' })
-    }
-  } catch (error) {
-    console.error('checkForUpdates error', error)
-    message?.error({
-      message: `检查更新失败：${error instanceof Error ? error.message : error}`,
-    })
-  } finally {
-    checkingVersion.value = false
-  }
-}
-
-/** 发布说明是整段 markdown，页首悬浮提示只展示第一行。 */
-const firstLine = (text: string): string => {
-  const lines = (text || '')
-    .split('\n')
-    .map((line) => line.replace(/^[#*\-\s]+/u, '').trim())
-  return lines.find((line) => line.length > 0) ?? ''
-}
-
-const handleUpdate = async () => {
-  try {
-    await ElMessageBox.confirm(
-      `将更新到 ${versionInfo.value?.latest}，更新完成后需要重启才会生效。`,
-      '确认更新',
-      { confirmButtonText: '开始更新', cancelButtonText: '再想想', type: 'warning' },
-    )
-  } catch (error) {
-    if (error === 'cancel' || error === 'close') return
-    console.error('confirmUpdate error', error)
-    message?.error({ message: '无法确认更新' })
-    return
-  }
-
-  updating.value = true
-  try {
-    const response = await postRequest(`${prefix}/configure/update`, {})
-    const resp = response.data as { suc?: boolean; info?: string }
-    if (!resp?.suc) {
-      message?.error({ message: resp?.info || '更新失败' })
-      return
-    }
-
-    message?.success({ message: resp.info || '更新完成' })
-    versionInfo.value = null
-  } catch (error) {
-    message?.error({ message: '更新失败：' + (error instanceof Error ? error.message : error) })
-    return
-  } finally {
-    updating.value = false
-  }
-
-  try {
-    await ElMessageBox.confirm(
-      'WebUI 更新已完成，是否立即重启？',
-      '更新完成',
-      { confirmButtonText: '立即重启', cancelButtonText: '稍后重启', type: 'warning' },
-    )
-  } catch (error) {
-    if (error === 'cancel' || error === 'close') return
-    console.error('confirmRestart error', error)
-    message?.error({ message: '无法确认是否重启' })
-    return
-  }
-
-  try {
-    const response = await postRequest(`${prefix}/configure/restart`, {})
-    const resp = response.data as { suc?: boolean; info?: string }
-    if (resp?.suc) {
-      message?.success({ message: resp.info || '重启命令已执行' })
-    } else {
-      message?.error({ message: resp?.info || '重启失败' })
-    }
-  } catch (error) {
-    message?.error({ message: '重启失败：' + (error instanceof Error ? error.message : error) })
-  }
-}
-
 onMounted(() => {
-  updatePrimaryColor()
   getMenus()
   getBotInfo()
-  getVersionInfo()
   window.addEventListener('resize', handleResize)
   checkScreenSize()
 })
@@ -784,127 +288,3 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
 </script>
-
-<style scoped>
-.home-header {
-  height: 56px;
-  min-height: 56px;
-  gap: 12px;
-}
-
-.header-actions {
-  gap: 8px;
-}
-
-.header-icon-trigger {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-link,
-.header-update-button,
-.header-user-trigger,
-.header-account-trigger {
-  height: 36px;
-}
-
-.header-link {
-  gap: 6px;
-  padding: 0 12px;
-}
-
-.header-update-button {
-  padding: 0 12px;
-}
-
-.header-user-trigger {
-  padding: 0 10px;
-}
-
-.header-account-trigger {
-  gap: 8px;
-  padding: 0 4px 0 10px;
-}
-
-:deep(.el-menu) {
-  border-right: none;
-}
-
-/* 自定义滚动条 */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--primary-color-light-9);
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--primary-color-light-7);
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-color-light-5);
-}
-
-/* 缓慢弹跳动画 */
-@keyframes bounce-slow {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-bounce-slow {
-  animation: bounce-slow 3s infinite;
-}
-
-/* 菜单项悬停效果 */
-:deep(.el-menu-item:hover) {
-  background-color: var(--bg-color-hover) !important;
-}
-
-:deep(.el-menu-item.is-active) {
-  background-color: var(--bg-color-hover) !important;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .el-dropdown-link span {
-    display: none;
-  }
-}
-
-/* 折叠菜单样式 */
-:deep(.el-menu--collapse) {
-  width: 100%;
-}
-
-:deep(.el-menu--collapse .el-menu-item) {
-  display: flex;
-  justify-content: center;
-  padding: 0 10px !important;
-  width: 100%;
-}
-
-:deep(.el-menu--collapse .el-menu-item) {
-  margin-right: 0;
-}
-
-/* 缓慢弹跳动画：用户要求减少动态时直接关掉 */
-@media (prefers-reduced-motion: reduce) {
-  .animate-bounce-slow {
-    animation: none;
-  }
-}
-</style>

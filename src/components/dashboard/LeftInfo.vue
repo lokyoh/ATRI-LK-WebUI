@@ -192,6 +192,7 @@
 import { ref, onMounted, onUnmounted, inject } from 'vue'
 import { message } from '@/utils/message'
 import { getRequest } from '@/utils/api'
+import type { BotInfo } from '@/types/bot'
 import {
   Calendar,
   Message,
@@ -205,19 +206,6 @@ import {
 
 const prefix = inject<string>('prefix')
 
-interface BotInfo {
-  self_id: string
-  nickname: string
-  ava_url: string
-  platform: string
-  friend_count: number
-  group_count: number
-  received_messages: number
-  day_call: number
-  connect_time: number
-  connect_date: string
-  connectTime?: string
-}
 
 interface GetBotInfoResponse {
   suc: boolean

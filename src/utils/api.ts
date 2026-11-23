@@ -42,6 +42,14 @@ axios.interceptors.response.use(
   (success: AxiosResponse<ResponseData>) => {
     const { status, data } = success;
 
+    // 滑动续期：token 剩余寿命过半时后端经此响应头下发新 token，
+    // 换写 cookie，活跃用户无感续签
+    const rawToken = success.headers?.["x-refreshed-token"];
+    const refreshedToken = Array.isArray(rawToken) ? rawToken[0] : rawToken;
+    if (typeof refreshedToken === "string" && refreshedToken) {
+      setCookie("tokenStr", `Bearer ${refreshedToken}`, TOKEN_COOKIE_DAYS);
+    }
+
     // 业务逻辑错误
     if (status === 200) {
       // 检查业务状态码
@@ -231,6 +239,10 @@ export const getBaseUrlLocalStorage = (): string | null => {
   return localStorage.getItem("baseUrl");
 };
 
+// token cookie 的保存时长：与后端 ACCESS_TOKEN_EXPIRE_MINUTES（120 分钟）对齐
+// token 过期后本就需要重新登录，cookie 留更久只会存着死 token
+export const TOKEN_COOKIE_DAYS = 2 / 24;
+
 // 设置cookie方法
 export const setCookie = (name: string, value: string, days: number = 7): void => {
   const exp = new Date();
@@ -247,4 +259,11 @@ export const getCookie = (name: string): string | null => {
 
 export const clearCookie = (name: string): void => {
   setCookie(name, "", -1);
+};
+
+// WebSocket 握手鉴权：连接建立后的首条消息必须为 {"token": "<jwt>", ...extra}
+//（cookie 里存的是 "Bearer <jwt>"，后端会剥掉前缀）
+export const buildWsHandshake = (extra?: Record<string, unknown>): string => {
+  const token = getCookie("tokenStr") ?? "";
+  return JSON.stringify({ token, ...extra });
 };

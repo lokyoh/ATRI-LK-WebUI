@@ -77,6 +77,9 @@
       </div>
     </div>
 
+    <!-- 切换账号：原页首右上角入口，移至控制台信息卡 -->
+    <BotSwitcher />
+
     <BotStatusConfig scope="bot" :bot-id="botInfo?.self_id" />
 
   </div>
@@ -88,6 +91,7 @@ import SvgIcon from '../SvgIcon/SvgIcon.vue'
 import { getLoading } from '@/utils/loading'
 import { postRequest } from '@/utils/api'
 import BotStatusConfig from '@/components/command/BotStatusConfig.vue'
+import BotSwitcher from '@/components/command/BotSwitcher.vue'
 import { message } from '@/utils/message'
 import { useMainStore } from '@/stores/main'
 

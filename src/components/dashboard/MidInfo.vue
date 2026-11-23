@@ -130,6 +130,7 @@ import { useMainStore } from '@/stores/main'
 import { ref, onMounted, onUnmounted, nextTick, inject, computed } from 'vue'
 import { getLoading } from '@/utils/loading'
 import * as echarts from '@/utils/echarts'
+import type { BotInfo } from '@/types/bot'
 import { isMobile } from '@/utils/validate'
 import { getRequest } from '@/utils/api'
 import { message } from '@/utils/message'
@@ -139,21 +140,6 @@ import type { WsStatusData } from '@/stores/main'
 const store = useMainStore()
 const prefix = inject<string>('prefix')
 
-interface BaseInfo {
-  self_id: string
-  nickname: string
-  ava_url: string
-  friend_count: number
-  group_count: number
-  received_messages: number
-  connect_time: number
-  connect_date: string
-  connect_count: number
-  status: boolean
-  is_select: boolean
-  day_call: number
-  version: string
-}
 interface allChatAndCallCount {
   chat_week: number
   chat_month: number
@@ -163,24 +149,10 @@ interface allChatAndCallCount {
   call_year: number
   [key: string]: number
 }
-interface getAllChatAndCallCountResponse {
-  suc: boolean
-  code: number
-  info: string
-  warning?: string
-  data: allChatAndCallCount
-}
 interface chatCallMonthCount {
   chat: number[]
   call: number[]
   date: string[]
-}
-interface getMonthChatAndCallCountResponse {
-  suc: boolean
-  code: number
-  info: string
-  warning?: string
-  data: chatCallMonthCount
 }
 interface queryChatCallCount {
   chat_num: number
@@ -189,12 +161,16 @@ interface queryChatCallCount {
   call_day: number
   [key: string]: number
 }
-interface getChatAndCallCountResponse {
+interface dashboardStatsResponse {
   suc: boolean
   code: number
   info: string
   warning?: string
-  data: queryChatCallCount
+  data: {
+    count: queryChatCallCount
+    all: allChatAndCallCount
+    month: chatCallMonthCount
+  }
 }
 
 const systemCards = ref([
@@ -229,7 +205,7 @@ const detailCards = ref([
   { title: '一年内调用', key: 'call_year' },
 ])
 const windowHeight = ref(window.innerHeight)
-const botInfo = ref<BaseInfo | null>(null)
+const botInfo = ref<BotInfo | null>(null)
 const chatAndCall = ref<queryChatCallCount>({ chat_num: 0, chat_day: 0, call_num: 0, call_day: 0 })
 const allChatAndCall = ref<allChatAndCallCount>({
   chat_week: 0,
@@ -307,14 +283,10 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
   clgDiv.value = document.getElementById('clg')
   ansi_up.value = new AnsiUp()
-  getChatAndCallCount()
-  getAllChatAndCallCount()
-  getMonthChatAndCallCount()
+  fetchDashboardStats()
   store.initStatusSocket()
   chatCntInterval.value = setInterval(() => {
-    getChatAndCallCount(true)
-    getAllChatAndCallCount(true)
-    getMonthChatAndCallCount(true)
+    fetchDashboardStats(true)
   }, 30000)
   if (chatChart.value) {
     chatChartInstance = echarts.init(chatChart.value)
@@ -329,7 +301,7 @@ onMounted(() => {
     mutations.forEach((mutation) => {
       if (mutation.attributeName === 'data-theme') {
         updatePrimaryColor()
-        getMonthChatAndCallCount()
+        fetchDashboardStats(true)
       }
     })
   })
@@ -396,110 +368,77 @@ function handleResize() {
   if (callChart.value) callChartInstance?.resize()
 }
 
-function getAllChatAndCallCount(no_loading = false) {
+// 合并轮询：一次请求同时拿今日/累计计数与 30 天趋势（原为三个端点各拉一次）
+async function fetchDashboardStats(no_loading = false) {
   let loading: ReturnType<typeof getLoading> | null = null
   if (!no_loading) {
     loading = getLoading('.detail-more')
   }
-  getRequest(`${prefix}/dashboard/get_all_chat_and_call_count`).then(
-    (resp: { data: getAllChatAndCallCountResponse }) => {
-      if (resp.data.suc) {
-        if (resp.data.warning) {
-          message.warning(resp.data.warning)
-        } else {
-          // 读取成功不弹提示：数据已经画在界面上了，
-          // 每次刷新都弹一句「拿到了」只是噪音。
-          allChatAndCall.value = resp.data.data
-        }
+  try {
+    const resp = await getRequest(`${prefix}/dashboard/get_dashboard_stats`)
+    const data = (resp as { data: dashboardStatsResponse }).data
+    if (data.suc) {
+      if (data.warning) {
+        if (loading) message.warning(data.warning)
       } else {
-        if (loading) message.error(resp.data.info)
+        // 读取成功不弹提示：数据已经画在界面上了
+        chatAndCall.value = data.data.count
+        allChatAndCall.value = data.data.all
+        chatAndCallMonth.value = data.data.month
+        updateCharts()
       }
-    },
-  ).finally(() => loading?.close())
+    } else {
+      if (loading) message.error(data.info)
+    }
+  } finally {
+    loading?.close()
+  }
 }
 
-function getMonthChatAndCallCount(no_loading = false) {
-  let loading: ReturnType<typeof getLoading> | null = null
-  if (!no_loading) {
-    loading = getLoading('.detail-more')
+function updateCharts() {
+  const chatOpt = JSON.parse(JSON.stringify(chartOpt.value))
+  const callOpt = JSON.parse(JSON.stringify(chartOpt.value))
+  chatOpt.xAxis.data = chatAndCallMonth.value.date
+  callOpt.xAxis.data = chatAndCallMonth.value.date
+  chatOpt.title.text = '聊天记录'
+  callOpt.title.text = '调用记录'
+  chatOpt.series[0].data = chatAndCallMonth.value.chat
+  callOpt.series[0].data = chatAndCallMonth.value.call
+
+  // 获取当前主题的实际颜色值
+  const computedStyle = getComputedStyle(document.documentElement)
+  const primaryColor = computedStyle.getPropertyValue('--primary-color').trim()
+  const primaryColorLight = computedStyle.getPropertyValue('--primary-color-light').trim()
+  const textColor = computedStyle.getPropertyValue('--text-color').trim()
+  const textColorSecondary = computedStyle.getPropertyValue('--text-color-secondary').trim()
+  const bgColor = computedStyle.getPropertyValue('--bg-color').trim()
+  const bgColorSecondary = computedStyle.getPropertyValue('--bg-color-secondary').trim()
+  const borderColor = computedStyle.getPropertyValue('--border-color').trim()
+
+  // 更新图表配置中的颜色
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateChartColors = (opt: any) => {
+    opt.title.textStyle.color = primaryColor
+    opt.title.subtextStyle.color = textColorSecondary
+    opt.xAxis.axisLine.lineStyle.color = textColorSecondary
+    opt.xAxis.axisLabel.color = textColorSecondary
+    opt.yAxis.axisLine.lineStyle.color = textColorSecondary
+    opt.yAxis.axisLabel.color = textColorSecondary
+    opt.tooltip.backgroundColor = bgColorSecondary
+    opt.tooltip.borderColor = borderColor
+    opt.tooltip.textStyle.color = textColor
+    opt.series[0].lineStyle.color = primaryColorLight
+    opt.series[0].itemStyle.color = primaryColor
+    opt.backgroundColor = bgColor
   }
-  getRequest(`${prefix}/dashboard/get_chat_and_call_month`).then(
-    (resp: { data: getMonthChatAndCallCountResponse }) => {
-      if (resp.data.suc) {
-        if (resp.data.warning) {
-          message.warning(resp.data.warning)
-        } else {
-          // 读取成功不弹提示：数据已经画在界面上了
-          chatAndCallMonth.value = resp.data.data
-          const chatOpt = JSON.parse(JSON.stringify(chartOpt.value))
-          const callOpt = JSON.parse(JSON.stringify(chartOpt.value))
-          chatOpt.xAxis.data = chatAndCallMonth.value.date
-          callOpt.xAxis.data = chatAndCallMonth.value.date
-          chatOpt.title.text = '聊天记录'
-          callOpt.title.text = '调用记录'
-          chatOpt.series[0].data = chatAndCallMonth.value.chat
-          callOpt.series[0].data = chatAndCallMonth.value.call
 
-          // 获取当前主题的实际颜色值
-          const computedStyle = getComputedStyle(document.documentElement)
-          const primaryColor = computedStyle.getPropertyValue('--primary-color').trim()
-          const primaryColorLight = computedStyle.getPropertyValue('--primary-color-light').trim()
-          const textColor = computedStyle.getPropertyValue('--text-color').trim()
-          const textColorSecondary = computedStyle.getPropertyValue('--text-color-secondary').trim()
-          const bgColor = computedStyle.getPropertyValue('--bg-color').trim()
-          const bgColorSecondary = computedStyle.getPropertyValue('--bg-color-secondary').trim()
-          const borderColor = computedStyle.getPropertyValue('--border-color').trim()
+  updateChartColors(chatOpt)
+  updateChartColors(callOpt)
 
-          // 更新图表配置中的颜色
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const updateChartColors = (opt: any) => {
-            opt.title.textStyle.color = primaryColor
-            opt.title.subtextStyle.color = textColorSecondary
-            opt.xAxis.axisLine.lineStyle.color = textColorSecondary
-            opt.xAxis.axisLabel.color = textColorSecondary
-            opt.yAxis.axisLine.lineStyle.color = textColorSecondary
-            opt.yAxis.axisLabel.color = textColorSecondary
-            opt.tooltip.backgroundColor = bgColorSecondary
-            opt.tooltip.borderColor = borderColor
-            opt.tooltip.textStyle.color = textColor
-            opt.series[0].lineStyle.color = primaryColorLight
-            opt.series[0].itemStyle.color = primaryColor
-            opt.backgroundColor = bgColor
-          }
-
-          updateChartColors(chatOpt)
-          updateChartColors(callOpt)
-
-          chatChartInstance?.setOption(chatOpt)
-          callChartInstance?.setOption(callOpt)
-          chatChartInstance?.resize()
-          callChartInstance?.resize()
-        }
-      } else {
-        if (loading) message.error(resp.data.info)
-      }
-    },
-  ).finally(() => loading?.close())
-}
-
-function getChatAndCallCount(no_loading = false) {
-  let loading: ReturnType<typeof getLoading> | null = null
-  if (!no_loading) {
-    loading = getLoading('.char-cards')
-  }
-  getRequest(`${prefix}/dashboard/get_chat_and_call_count`).then(
-    (resp: { data: getChatAndCallCountResponse }) => {
-      if (resp.data.suc) {
-        if (resp.data.warning) {
-          if (loading) message.warning(resp.data.warning)
-        } else {
-          chatAndCall.value = resp.data.data
-        }
-      } else {
-        if (loading) message.error(resp.data.info)
-      }
-    },
-  ).finally(() => loading?.close())
+  chatChartInstance?.setOption(chatOpt)
+  callChartInstance?.setOption(callOpt)
+  chatChartInstance?.resize()
+  callChartInstance?.resize()
 }
 </script>
 

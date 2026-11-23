@@ -123,7 +123,13 @@ import { ref, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { message } from '@/utils/message'
-import { getCookie, clearCookie, setCookie, postRequest } from '@/utils/api'
+import {
+  getCookie,
+  clearCookie,
+  setCookie,
+  TOKEN_COOKIE_DAYS,
+  postRequest,
+} from '@/utils/api'
 
 const prefix = inject<string>('prefix')
 const router = useRouter()
@@ -173,7 +179,7 @@ const handleLogin = async () => {
         if (getCookie('tokenStr')) {
           clearCookie('tokenStr')
         }
-        setCookie('tokenStr', tokenStr)
+        setCookie('tokenStr', tokenStr, TOKEN_COOKIE_DAYS)
         const redirect = route.query.redirect as string
         router.replace(redirect && redirect !== '/' ? redirect : '/home')
       }

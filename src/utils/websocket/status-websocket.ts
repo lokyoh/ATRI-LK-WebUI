@@ -1,4 +1,4 @@
-import { getBaseUrl } from "@/utils/api";
+import { buildWsHandshake, getBaseUrl } from "@/utils/api";
 import { message } from "../message";
 
 /**
@@ -43,9 +43,11 @@ class StatusWebSocket {
     this.callback = callback;
     this.url = this.buildUrl();
     this.ws = new WebSocket(this.url);
-    this.startHeartbeat();
 
     this.ws.onopen = () => {
+      // 握手鉴权：首条消息必须携带 token；心跳在握手报文之后才允许发出
+      this.ws?.send(buildWsHandshake());
+      this.startHeartbeat();
       console.log("StatusWebSocket connected");
     };
 
