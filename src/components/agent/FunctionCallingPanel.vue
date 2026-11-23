@@ -21,6 +21,83 @@
         title="属于功能插件的功能调用在「功能插件」页管理，不在此页展示。"
       />
 
+      <div class="explain-box">
+        <div class="explain-header">
+          <span class="explain-title">权限查询</span>
+          <span class="explain-sub"
+            >查某个等级 / 某个用户为什么能用或不能用某个功能，走后端同一条求值链，不会写日志。</span
+          >
+        </div>
+        <div class="explain-form">
+          <el-select
+            v-model="explainForm.function"
+            size="small"
+            filterable
+            allow-create
+            default-first-option
+            placeholder="功能名"
+            class="explain-function"
+          >
+            <el-option v-for="item in allNames" :key="item" :label="item" :value="item" />
+          </el-select>
+          <el-select v-model="explainForm.level" size="small" class="explain-level">
+            <el-option
+              v-for="level in LEVEL_ORDER"
+              :key="level"
+              :label="LEVEL_LABELS[level]"
+              :value="level"
+            />
+            <el-option label="系统（无对话人）" value="system" />
+          </el-select>
+          <el-input
+            v-model="explainForm.userId"
+            size="small"
+            clearable
+            placeholder="用户 ID（可空）"
+            class="explain-input"
+          />
+          <el-input
+            v-model="explainForm.groupId"
+            size="small"
+            clearable
+            placeholder="群号（可空）"
+            class="explain-input"
+          />
+          <el-input
+            v-model="explainForm.action"
+            size="small"
+            clearable
+            placeholder="动作（可空）"
+            class="explain-input"
+          />
+          <el-checkbox v-model="explainForm.isPrivate" size="small">私聊</el-checkbox>
+          <el-button
+            size="small"
+            type="primary"
+            :loading="explainLoading"
+            :disabled="!explainForm.function.trim()"
+            @click="runExplain"
+            >查询</el-button
+          >
+        </div>
+        <div v-if="explainResult" class="explain-result">
+          <el-tag size="small" :type="explainResult.allowed ? 'success' : 'danger'">
+            {{ explainResult.allowed ? '允许' : '拒绝' }}
+          </el-tag>
+          <span class="explain-reason">{{ explainResult.reason }}</span>
+          <el-tag size="small" effect="plain">
+            作用域 {{ SCOPE_LABELS[explainResult.scope] || explainResult.scope }}
+          </el-tag>
+          <el-tag v-if="explainResult.action" size="small" effect="plain">
+            动作 {{ explainResult.action }}
+          </el-tag>
+          <ol v-if="explainResult.chain.length" class="explain-chain">
+            <li v-for="(step, index) in explainResult.chain" :key="index">{{ step }}</li>
+          </ol>
+          <div v-else class="explain-chain-empty">后端没有给出求值链。</div>
+        </div>
+      </div>
+
       <el-table
         v-loading="loading"
         :data="functionCallings"
@@ -128,7 +205,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, reactive, ref } from 'vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import {
   LEVEL_LABELS,
@@ -136,6 +213,7 @@ import {
   SCOPE_LABELS,
   type FunctionCallingArgInfo,
   type FunctionCallingInfo,
+  type PermissionDecisionInfo,
 } from '@/types/agent'
 import { getRequest, postRequest } from '@/utils/api'
 import { overflowTooltipOptions } from '@/utils/table'
@@ -151,7 +229,50 @@ interface ResultResponse<T> {
 const prefix = inject<string>('prefix', '/atri/api')
 const loading = ref(false)
 const functionCallings = ref<FunctionCallingInfo[]>([])
+const allFunctionNames = ref<string[]>([])
 const pending = ref(new Set<string>())
+
+const allNames = computed(() => {
+  const seen = new Set(allFunctionNames.value)
+  for (const item of functionCallings.value) seen.add(item.name)
+  return [...seen].sort()
+})
+
+const explainLoading = ref(false)
+const explainResult = ref<PermissionDecisionInfo | null>(null)
+const explainForm = reactive({
+  function: '',
+  level: 'user',
+  userId: '',
+  groupId: '',
+  action: '',
+  isPrivate: false,
+})
+
+async function runExplain() {
+  const name = explainForm.function.trim()
+  if (!name) return
+  explainLoading.value = true
+  try {
+    const response = await getRequest(`${prefix}/agent/explain_permission`, {
+      function: name,
+      level: explainForm.level,
+      user_id: explainForm.userId.trim(),
+      group_id: explainForm.groupId.trim(),
+      action: explainForm.action.trim(),
+      is_private: explainForm.isPrivate,
+    })
+    const payload = response.data as ResultResponse<PermissionDecisionInfo>
+    explainResult.value = payload.suc ? payload.data || null : null
+    if (!payload.suc) message.error(payload.info || '权限查询失败')
+  } catch (error) {
+    console.error('explainPermission error', error)
+    explainResult.value = null
+    message.error('权限查询失败，请检查接口状态')
+  } finally {
+    explainLoading.value = false
+  }
+}
 
 const listSkillsEnabled = computed(() => {
   const target = functionCallings.value.find((item) => item.name === 'list_skills')
@@ -174,6 +295,7 @@ const loadFunctionCallings = async () => {
     const payload = response.data as ResultResponse<FunctionCallingInfo[]>
     if (payload.suc) {
       const all = payload.data || []
+      allFunctionNames.value = all.map((item) => item.name)
       // 插件内常用功能在「功能插件」页管理；不常用功能只在这里可见，
       // 否则「call 能调什么」在 UI 上完全没有入口。
       functionCallings.value = all.filter((item) => !item.plugin || item.rare)
@@ -279,5 +401,78 @@ onMounted(loadFunctionCallings)
 
 .core-tag {
   margin-left: 6px;
+}
+
+.explain-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 10px;
+  background: var(--bg-color);
+}
+
+.explain-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.explain-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.explain-sub {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.explain-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.explain-function {
+  width: 180px;
+}
+
+.explain-level {
+  width: 140px;
+}
+
+.explain-input {
+  width: 150px;
+}
+
+.explain-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  border-top: 1px dashed var(--el-border-color-lighter);
+}
+
+.explain-reason {
+  font-size: 13px;
+}
+
+.explain-chain {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  width: 100%;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--el-text-color-regular);
+}
+
+.explain-chain-empty {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 </style>

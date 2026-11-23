@@ -72,6 +72,12 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/lkbot/LkbotUserPage.vue"),
         meta: { requiresAuth: true, title: "用户管理" },
       },
+      {
+        path: "/system",
+        name: "系统维护",
+        component: () => import("@/views/system/SystemPage.vue"),
+        meta: { requiresAuth: true, title: "系统维护" },
+      },
     ],
   },
 ];

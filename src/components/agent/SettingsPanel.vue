@@ -6,6 +6,9 @@
         <p>配置 Agent 插件参数。</p>
       </div>
       <div class="action-bar">
+        <span v-if="schemaInfo" class="schema-info" :title="schemaInfo">
+          {{ schemaInfo }}
+        </span>
         <el-button :loading="loading" :disabled="submitting" @click="loadSettings">刷新</el-button>
         <el-button
           type="primary"
@@ -71,6 +74,7 @@ const jsonDrafts = ref<Record<string, string>>({})
 const jsonErrors = ref<Record<string, string>>({})
 const loading = ref(false)
 const submitting = ref(false)
+const schemaInfo = ref('')
 
 onMounted(() => {
   void loadSettings()
@@ -91,6 +95,8 @@ async function loadSettings() {
 
     fields.value = payload.data.fields
     sections.value = payload.data.sections ?? []
+    // 配置版本来自 get_settings 的 schemaVersion，用来核对「保存后是否按新 schema 生效」
+    schemaInfo.value = `配置 v${payload.data.schemaVersion || '?'} · ${payload.data.service || ''}`.trim()
     jsonDrafts.value = {}
     jsonErrors.value = {}
     initializeJsonDrafts(fields.value)
@@ -299,6 +305,16 @@ async function saveSettings() {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.schema-info {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  padding: 2px 8px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  white-space: nowrap;
 }
 
 .settings-content {

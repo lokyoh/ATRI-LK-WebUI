@@ -6,10 +6,37 @@
         <p>管理 LLM Provider 与其对应的模型配置。</p>
       </div>
       <div class="action-bar">
-        <el-button @click="loadProviders" :loading="loading">刷新</el-button>
+        <el-button @click="refresh" :loading="loading">刷新</el-button>
         <el-button type="primary" @click="openProviderDialog()">添加 Provider</el-button>
       </div>
     </div>
+
+    <el-alert
+      v-if="healthProblems.length"
+      :type="missingRequired.length ? 'error' : 'warning'"
+      :closable="false"
+      show-icon
+      class="health-alert"
+    >
+      <template #title>
+        {{
+          missingRequired.length
+            ? `缺少 ${missingRequired.length} 个必需模型，聊天会被拒绝`
+            : '部分使用点没有可用模型，对应功能会不可用'
+        }}
+      </template>
+      <ul class="health-list">
+        <li v-for="item in healthProblems" :key="item.type">
+          <strong>{{ item.label }}</strong>
+          <span class="health-meta">{{ item.type }}</span>
+          <el-tag size="small" effect="plain" :type="item.required ? 'danger' : 'warning'">
+            {{ item.required ? '必需' : '可选' }}
+          </el-tag>
+          <span class="health-meta">{{ item.reason }}</span>
+        </li>
+      </ul>
+      <div class="health-hint">在「设置」标签里为这些使用点选择模型。</div>
+    </el-alert>
 
     <div v-if="providers.length" class="panel-body">
       <div class="provider-list">
@@ -330,7 +357,7 @@ import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { getRequest, postRequest } from '@/utils/api'
 import { message } from '@/utils/message'
-import type { ModelPricing } from '@/types/agent'
+import type { ModelHealthItem, ModelHealthSnapshot, ModelPricing } from '@/types/agent'
 
 interface LLMModel {
   name: string
@@ -390,6 +417,13 @@ interface TypeOptionsResponse {
   data?: TypeOption[]
 }
 
+interface HealthResponse {
+  suc: boolean
+  code: number
+  info: string
+  data?: ModelHealthSnapshot
+}
+
 const prefix = inject<string>('prefix', '/atri/api')
 const loading = ref(false)
 const submitting = ref(false)
@@ -399,6 +433,28 @@ const providers = ref<LLMProvider[]>([])
 const providerTypes = ref<TypeOption[]>([])
 const modelTypes = ref<TypeOption[]>([])
 const cacheFields = ref<TypeOption[]>([])
+const health = ref<ModelHealthSnapshot | null>(null)
+
+/** 后端把 12 个使用点按「必需 / 功能必需 / 可选」分好组，这里只摊平取坏的那些。 */
+const healthProblems = computed<ModelHealthItem[]>(() =>
+  (health.value?.groups ?? []).flatMap((group) => group.items).filter((item) => !item.ok),
+)
+
+const missingRequired = computed<string[]>(() => health.value?.missingRequired ?? [])
+
+const loadHealth = async () => {
+  try {
+    const resp = await getRequest(`${prefix}/agent/get_model_health`)
+    const payload = resp.data as HealthResponse
+    if (payload?.suc && payload.data) {
+      health.value = payload.data
+    } else {
+      console.error('loadHealth failed', payload?.info)
+    }
+  } catch (error) {
+    console.error('loadHealth error', error)
+  }
+}
 
 /** 显示名与配色全部来自后端；这里只做「值 → 选项」的查表。 */
 const typeOption = (options: TypeOption[], value: string) =>
@@ -551,6 +607,10 @@ const loadProviders = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const refresh = async () => {
+  await Promise.all([loadProviders(), loadHealth()])
 }
 
 const loadTypeOptions = async () => {
@@ -709,7 +769,7 @@ const handleSaveProvider = async () => {
       if (resp.data?.suc) {
         message.success(resp.data.info || '修改 Provider 成功')
         providerDialogVisible.value = false
-        await loadProviders()
+        await refresh()
       } else {
         message.error(resp.data?.info || '修改 Provider 失败')
       }
@@ -725,7 +785,7 @@ const handleSaveProvider = async () => {
       if (payload.data?.suc) {
         message.success(payload.data.info || '添加 Provider 成功')
         providerDialogVisible.value = false
-        await loadProviders()
+        await refresh()
       } else {
         message.error(payload.data?.info || '添加 Provider 失败')
       }
@@ -813,7 +873,7 @@ const handleSaveModel = async () => {
     if (payload.data?.suc) {
       message.success(payload.data.info || (modelEditMode.value ? '修改模型成功' : '添加模型成功'))
       modelDialogVisible.value = false
-      await loadProviders()
+      await refresh()
     } else {
       message.error(payload.data?.info || (modelEditMode.value ? '修改模型失败' : '添加模型失败'))
     }
@@ -846,7 +906,7 @@ const handleDeleteProvider = async () => {
     )
     if (payload.data?.suc) {
       message.success(payload.data.info || '删除 Provider 成功')
-      await loadProviders()
+      await refresh()
     } else {
       message.error(payload.data?.info || '删除 Provider 失败')
     }
@@ -873,7 +933,7 @@ const handleDeleteModel = async (modelName: string) => {
     )
     if (payload.data?.suc) {
       message.success(payload.data.info || '删除模型成功')
-      await loadProviders()
+      await refresh()
     } else {
       message.error(payload.data?.info || '删除模型失败')
     }
@@ -907,7 +967,7 @@ const handleTestModel = async (model: LLMModel) => {
 }
 
 onMounted(() => {
-  loadProviders()
+  refresh()
   loadTypeOptions()
 })
 </script>
@@ -1136,6 +1196,37 @@ onMounted(() => {
   color: var(--el-text-color-secondary);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.health-alert {
+  margin: 0;
+}
+
+.health-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.health-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.health-meta {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.health-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 .empty-state {

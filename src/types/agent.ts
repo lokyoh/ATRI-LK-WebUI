@@ -89,6 +89,12 @@ export type SkillSource = 'builtin' | 'user' | 'modified'
 export interface SkillInfo {
   name: string
   description: string
+  /** 什么时候该读这篇；进技能索引 */
+  when_to_use: string
+  tags: string[]
+  priority: number
+  /** 章节标题，可用 skill(section=...) 精确读取 */
+  sections: string[]
   source: SkillSource
   enabled: boolean
   embedded: boolean
@@ -98,6 +104,17 @@ export interface SkillInfo {
 
 export interface SkillDetail extends SkillInfo {
   content: string
+}
+
+/** /agent/get_skill_read 返回的按章节/偏移试读结果 */
+export interface SkillReadPreview {
+  name: string
+  text: string
+  /** 本次返回字符数 */
+  chars: number
+  /** 正文总字符数 */
+  total: number
+  sections: string[]
 }
 
 export interface SaveSkillPayload {
@@ -110,6 +127,34 @@ export interface SetSkillStatePayload {
   name: string
   enabled?: boolean
   embedded?: boolean
+}
+
+/** 一个模型使用点的健康状态 */
+export interface ModelHealthItem {
+  /** 使用点，如 think / chat / memory */
+  type: string
+  label: string
+  /** 缺失时是否直接让整轮对话失败 */
+  required: boolean
+  ok: boolean
+  /** 具备该能力的已注册模型名 */
+  registered: string[]
+  /** 配置里为该使用点指定的模型 */
+  preferred: string
+  reason: string
+}
+
+export interface ModelHealthGroup {
+  key: string
+  label: string
+  items: ModelHealthItem[]
+}
+
+/** /agent/get_model_health 返回的快照 */
+export interface ModelHealthSnapshot {
+  ok: boolean
+  missingRequired: string[]
+  groups: ModelHealthGroup[]
 }
 
 /** 模型计费单价，单位：元 / 每百万 Token */

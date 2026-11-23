@@ -157,7 +157,67 @@
             </el-tag>
             <span>描述：{{ viewSkill.description || '—' }}</span>
           </p>
-          <pre class="view-content">{{ viewSkill.content }}</pre>
+          <p v-if="viewSkill.when_to_use" class="view-meta">
+            何时使用：{{ viewSkill.when_to_use }}
+          </p>
+
+          <div class="read-toolbar">
+            <span class="read-label">试读</span>
+            <el-select
+              v-model="readSection"
+              size="small"
+              clearable
+              placeholder="全文"
+              class="read-section"
+              @change="() => loadRead()"
+            >
+              <el-option label="全文（按偏移截取）" value="" />
+              <el-option
+                v-for="section in viewSkill.sections"
+                :key="section"
+                :label="section"
+                :value="section"
+              />
+            </el-select>
+            <el-input-number
+              v-model="readOffset"
+              size="small"
+              :min="0"
+              :step="200"
+              controls-position="right"
+              :disabled="!!readSection"
+              class="read-number"
+            />
+            <el-input-number
+              v-model="readLimit"
+              size="small"
+              :min="0"
+              :step="200"
+              controls-position="right"
+              class="read-number"
+            />
+            <el-button size="small" type="primary" :loading="readLoading" @click="loadRead">
+              试读
+            </el-button>
+          </div>
+          <div class="read-hint">
+            与智能体实际读到的内容一致：章节读取会附带标题与截断提示；偏移读取会附带章节列表与续读提示。
+            字数上限由技能自身的 max_read_chars 决定。
+          </div>
+
+          <pre v-if="readPreview" class="view-content">{{ readPreview.text }}</pre>
+          <div v-if="readPreview" class="read-meta">
+            本次返回 {{ readPreview.chars }} 字（含标题），正文共 {{ readPreview.total }} 字
+            <span v-if="viewSkill.sections.length">
+              · 章节：{{ viewSkill.sections.join(' / ') }}
+            </span>
+          </div>
+
+          <el-collapse class="raw-collapse">
+            <el-collapse-item title="完整正文（编辑用）" name="raw">
+              <pre class="view-content">{{ viewSkill.content }}</pre>
+            </el-collapse-item>
+          </el-collapse>
         </div>
       </el-dialog>
     </div>
@@ -168,7 +228,7 @@
 import { computed, inject, onMounted, reactive, ref } from 'vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { ElMessageBox } from 'element-plus'
-import type { SkillDetail, SkillInfo, SkillSource } from '@/types/agent'
+import type { SkillDetail, SkillInfo, SkillReadPreview, SkillSource } from '@/types/agent'
 import { getRequest, postRequest } from '@/utils/api'
 import { overflowTooltipOptions } from '@/utils/table'
 import { message } from '@/utils/message'
@@ -193,6 +253,37 @@ const editorForm = reactive({ name: '', description: '', content: '' })
 
 const viewVisible = ref(false)
 const viewSkill = ref<SkillDetail | null>(null)
+
+const readSection = ref('')
+const readOffset = ref(0)
+const readLimit = ref(0)
+const readLoading = ref(false)
+const readPreview = ref<SkillReadPreview | null>(null)
+
+async function loadRead() {
+  if (!viewSkill.value) return
+  readLoading.value = true
+  try {
+    const response = await getRequest(`${prefix}/agent/get_skill_read`, {
+      name: viewSkill.value.name,
+      section: readSection.value || '',
+      offset: readSection.value ? 0 : readOffset.value || 0,
+      limit: readLimit.value || 0,
+    })
+    const payload = response.data as ResultResponse<SkillReadPreview>
+    if (payload.suc && payload.data) {
+      readPreview.value = payload.data
+    } else {
+      readPreview.value = null
+      message.error(payload.info || '试读失败')
+    }
+  } catch (error) {
+    console.error('loadSkillRead error', error)
+    message.error('试读失败，请检查接口状态')
+  } finally {
+    readLoading.value = false
+  }
+}
 
 const editorTitle = computed(() => (editorMode.value === 'create' ? '新建技能' : '编辑技能'))
 
@@ -409,7 +500,12 @@ const openViewDialog = async (name: string) => {
   const detail = await fetchSkill(name)
   if (!detail) return
   viewSkill.value = detail
+  readSection.value = ''
+  readOffset.value = 0
+  readLimit.value = 0
+  readPreview.value = null
   viewVisible.value = true
+  await loadRead()
 }
 
 onMounted(loadSkills)
@@ -482,5 +578,36 @@ onMounted(loadSkills)
   font-size: 12px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.read-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.read-label {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.read-section {
+  width: 220px;
+}
+
+.read-number {
+  width: 120px;
+}
+
+.read-hint,
+.read-meta {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.5;
+}
+
+.raw-collapse {
+  margin-top: 4px;
 }
 </style>

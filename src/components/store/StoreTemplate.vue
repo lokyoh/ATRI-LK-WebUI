@@ -35,6 +35,24 @@
 
       <!-- 右侧按钮组 -->
       <div class="search-actions flex flex-wrap items-center gap-3 justify-end w-full lg:w-auto">
+        <!-- 刷新索引：强制从远端重拉商店索引，不走本地缓存 -->
+        <div class="restart-button">
+          <my-button
+            icon="update"
+            text="刷新索引"
+            :iconHeight="18"
+            :height="34"
+            :width="96"
+            :loading="indexing"
+            @click="handleRefreshIndex"
+            type="primary"
+            rounded="full"
+            :style="{
+              borderColor: 'var(--el-border-color)',
+            }"
+          />
+        </div>
+
         <!-- 重启按钮 -->
         <div class="restart-button">
           <my-button
@@ -599,8 +617,31 @@ const getPluginVersionLabel = (plugin: PluginData) => {
 }
 
 const progressText = ref('')
+const indexing = ref(false)
 let progressTimer: ReturnType<typeof setInterval> | null = null
 let activeLoading: { setText: (t: string) => void } | null = null
+
+const handleRefreshIndex = async () => {
+  if (indexing.value) return
+  indexing.value = true
+  const loading = getLoading('.store-content-panel')
+  try {
+    const response = await postRequest(`${prefix}/store/refresh_plugin_store`, {})
+    const resp = response.data as APIResponse
+    if (resp?.suc) {
+      message?.success({ message: resp.info || '已刷新商店索引' })
+      getPluginList()
+    } else {
+      message?.error({ message: resp?.info || '刷新商店索引失败' })
+    }
+  } catch (error) {
+    console.error('[StoreTemplate] Refresh index error:', error)
+    message?.error({ message: '刷新商店索引失败' })
+  } finally {
+    loading.close()
+    indexing.value = false
+  }
+}
 
 const handleRestart = async () => {
   const result = await showCuteConfirm({

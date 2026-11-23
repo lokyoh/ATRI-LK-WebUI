@@ -302,12 +302,38 @@
                     @input="(v) => (editData.configs.parent = String(v) || null)"
                   />
                 </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">最低群权限等级</label>
+                  <NeonInput
+                    :model-value="editData.configs.min_level"
+                    type="number"
+                    placeholder="0 表示不限制"
+                    @input="
+                      (v) => (editData.configs.min_level = Math.max(0, Math.floor(Number(v) || 0)))
+                    "
+                  />
+                  <span
+                    class="block text-xs mt-1"
+                    :style="{ color: 'var(--text-color-secondary)' }"
+                    >只对群聊生效，且主人不受限；等级由「群权限」指令设置</span
+                  >
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mt-3">
                 <div
                   class="flex items-center justify-between p-3 rounded-lg"
                   :style="{ background: 'var(--bg-color)' }"
                 >
                   <span class="text-sm font-medium">跳过调用统计</span>
                   <MySwitch v-model="editData.configs.ignore_statistics" />
+                </div>
+                <div
+                  class="flex items-center justify-between p-3 rounded-lg"
+                  :style="{ background: 'var(--bg-color)' }"
+                >
+                  <span class="text-sm font-medium">跳过拒绝提示</span>
+                  <MySwitch v-model="editData.configs.ignore_prompt" />
                 </div>
               </div>
             </div>
@@ -401,6 +427,8 @@ interface PluginData {
     block_type?: string[]
     parent?: string | null
     ignore_statistics?: boolean
+    ignore_prompt?: boolean
+    min_level?: number
     withdraw_delay?: number
     concurrency?: number
   }
@@ -428,6 +456,8 @@ interface EditData {
     block_type: string[]
     parent: string | null
     ignore_statistics: boolean
+    ignore_prompt: boolean
+    min_level: number
     withdraw_delay: number
     concurrency: number
   }
@@ -446,6 +476,8 @@ const DEFAULT_CONFIGS = (): EditData['configs'] => ({
   block_type: [],
   parent: null,
   ignore_statistics: false,
+  ignore_prompt: false,
+  min_level: 0,
   withdraw_delay: 0,
   concurrency: 0,
 })
@@ -614,6 +646,8 @@ function fetchPluginConfig(pluginName: string) {
               block_type: [...(configs.block_type ?? [])],
               parent: configs.parent ?? null,
               ignore_statistics: configs.ignore_statistics ?? false,
+              ignore_prompt: configs.ignore_prompt ?? false,
+              min_level: configs.min_level ?? 0,
               withdraw_delay: configs.withdraw_delay ?? 0,
               concurrency: configs.concurrency ?? 0,
             },
@@ -655,6 +689,8 @@ async function handleDetailConfirm() {
     block_type: editData.value.configs.block_type,
     parent: editData.value.configs.parent,
     ignore_statistics: editData.value.configs.ignore_statistics,
+    ignore_prompt: editData.value.configs.ignore_prompt,
+    min_level: editData.value.configs.min_level,
     withdraw_delay: editData.value.configs.withdraw_delay,
     concurrency: editData.value.configs.concurrency,
   }

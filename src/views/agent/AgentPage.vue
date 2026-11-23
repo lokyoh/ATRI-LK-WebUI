@@ -50,6 +50,14 @@
       <div v-if="currentTab === 'home'" class="tab-panel">
         <HomePanel />
       </div>
+
+      <div v-if="currentTab === 'memory'" class="tab-panel">
+        <MemoryPanel />
+      </div>
+
+      <div v-if="currentTab === 'telemetry'" class="tab-panel">
+        <TelemetryPanel />
+      </div>
     </div>
   </div>
 </template>
@@ -65,6 +73,8 @@ import SkillsPanel from '@/components/agent/SkillsPanel.vue'
 import TasksPanel from '@/components/agent/TasksPanel.vue'
 import SchedulePanel from '@/components/agent/SchedulePanel.vue'
 import HomePanel from '@/components/agent/HomePanel.vue'
+import MemoryPanel from '@/components/agent/MemoryPanel.vue'
+import TelemetryPanel from '@/components/agent/TelemetryPanel.vue'
 import { getLoading } from '@/utils/loading'
 
 const tabs = [
@@ -77,6 +87,8 @@ const tabs = [
   { key: 'tasks', label: '定时任务' },
   { key: 'schedule', label: '日程' },
   { key: 'home', label: '家' },
+  { key: 'memory', label: '记忆' },
+  { key: 'telemetry', label: '埋点' },
 ]
 
 const currentTab = ref('settings')

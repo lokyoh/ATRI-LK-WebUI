@@ -22,6 +22,51 @@
       {{ location.text }}
     </el-alert>
 
+    <div class="outfit-card">
+      <div class="outfit-head">
+        <span class="outfit-title">穿搭</span>
+        <span class="outfit-now">
+          此刻穿：{{ outfit?.current || '未记录' }}
+          <template v-if="outfit && outfit.date !== today"> · {{ outfit.date }}</template>
+        </span>
+      </div>
+      <div class="outfit-row">
+        <label>白天</label>
+        <el-input
+          v-model="outfitForm.day"
+          size="small"
+          maxlength="120"
+          placeholder="如：白色连衣裙"
+          :disabled="savingOutfit !== ''"
+        />
+        <el-button
+          size="small"
+          :loading="savingOutfit === 'day'"
+          :disabled="!canEditOutfit"
+          @click="saveOutfit('day')"
+          >保存</el-button
+        >
+      </div>
+      <div class="outfit-row">
+        <label>晚上</label>
+        <el-input
+          v-model="outfitForm.night"
+          size="small"
+          maxlength="120"
+          placeholder="如：米色居家服"
+          :disabled="savingOutfit !== ''"
+        />
+        <el-button
+          size="small"
+          :loading="savingOutfit === 'night'"
+          :disabled="!canEditOutfit"
+          @click="saveOutfit('night')"
+          >保存</el-button
+        >
+      </div>
+      <div v-if="!canEditOutfit" class="outfit-hint">只能改今天（{{ today }}）的穿搭</div>
+    </div>
+
     <el-table
       v-loading="loading"
       :data="rows"
@@ -141,7 +186,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue'
+import { computed, inject, reactive, ref, watch } from 'vue'
 import { Delete } from '@element-plus/icons-vue'
 import { getRequest, postRequest } from '@/utils/api'
 import { message } from '@/utils/message'
@@ -167,6 +212,11 @@ const editorVisible = ref(false)
 const entries = ref<ScheduleEntryInfo[]>([])
 const location = ref<LocationInfo | null>(null)
 const outfit = ref<OutfitInfo | null>(null)
+const outfitForm = reactive({ day: '', night: '' })
+const savingOutfit = ref('')
+/** set_outfit 没有日期参数，永远写「今天」；日期选择器可能停在前一天，所以跟着刷新。 */
+const today = ref(formatDate(new Date()))
+const canEditOutfit = computed(() => date.value === today.value)
 const options = ref<LifeOptions>({
   kinds: [],
   note_labels: {},
@@ -235,11 +285,40 @@ function apply(data: {
   entries.value = data.schedule ?? []
   location.value = data.location ?? null
   outfit.value = data.outfit ?? null
+  outfitForm.day = outfit.value?.day ?? ''
+  outfitForm.night = outfit.value?.night ?? ''
   if (data.options) options.value = data.options
+}
+
+async function saveOutfit(period: 'day' | 'night') {
+  const text = outfitForm[period].trim()
+  if (!text) {
+    message?.warning('穿搭不能为空')
+    return
+  }
+  savingOutfit.value = period
+  try {
+    const response = await postRequest(`${prefix}/agent/set_outfit`, { period, text })
+    if (response.data.suc) {
+      // set_outfit 返回的「此刻穿」按后端默认切换点算，与 get_life 读配置的口径不同；
+      // 重新拉一次快照，保证界面只有一个来源。
+      await load()
+      message?.success(response.data.info || '已设置穿搭')
+    } else {
+      message?.error(response.data.info)
+    }
+  } catch (error) {
+    console.error('设置穿搭失败:', error)
+    message?.error('设置穿搭失败')
+  } finally {
+    savingOutfit.value = ''
+  }
 }
 
 async function load() {
   loading.value = true
+  // 页面开着过了零点时，按钮可用性要跟着刷新
+  today.value = formatDate(new Date())
   try {
     const response = await getRequest(`${prefix}/agent/get_life`, { date: date.value })
     if (response.data.suc) apply(response.data.data)
@@ -350,6 +429,51 @@ defineExpose({ rows, outfit })
 
 .location-alert {
   padding: 8px 12px;
+}
+
+.outfit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 10px;
+  background: var(--bg-color);
+}
+
+.outfit-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.outfit-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.outfit-now {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.outfit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.outfit-row label {
+  width: 32px;
+  flex: 0 0 32px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.outfit-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 .time-cell {
