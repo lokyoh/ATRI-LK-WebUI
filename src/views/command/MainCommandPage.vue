@@ -9,7 +9,7 @@
     <el-row :gutter="12" class="command-grid h-full">
       <el-col :xs="24" :sm="24" :md="8" :span="8" class="left-column h-full">
         <div class="base-info h-full">
-          <LeftInfo class="h-full" />
+          <CommandLeftInfo class="h-full" />
         </div>
       </el-col>
       <el-col :xs="24" :sm="24" :md="8" :span="8" class="middle-column h-full">
@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import LeftInfo from '@/components/command/LeftInfo.vue'
+import CommandLeftInfo from '@/components/command/CommandLeftInfo.vue'
 import BotServiceManage from '@/components/command/BotServiceManage.vue'
 import BotStatusConfig from '@/components/command/BotStatusConfig.vue'
 import LKPluginConfig from '@/components/command/LKPluginConfig.vue'

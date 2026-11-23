@@ -53,9 +53,16 @@ class StatusWebSocket {
 
     this.ws.onmessage = callback;
 
-    this.ws.onclose = () => {
+    this.ws.onclose = (event: CloseEvent) => {
       this.stopHeartbeat();
       if (this.manualClose) return;
+      // 握手鉴权被拒（1008）：登录已失效，重连也不会成功，停下来提示重新登录
+      if (event.code === 1008) {
+        this.callback = null;
+        console.error("[WS] 握手被拒绝(1008)，token 无效或未登记:", event.reason);
+        message.warning("登录已失效，请重新登录");
+        return;
+      }
       // 只在仍处于「活跃」状态时重连，避免离页后无限重试
       message.warning("StatusWebSocket disconnected, reconnecting...");
       this.reconnectTimer = setTimeout(() => {

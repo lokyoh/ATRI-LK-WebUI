@@ -6,7 +6,7 @@
     <el-row :gutter="16" class="dashboard-grid h-full">
       <el-col :xs="24" :sm="24" :md="8" :lg="6" class="h-full">
         <div class="dashboard-panel base-info h-full">
-          <LeftInfo class="h-full" />
+          <DashboardLeftInfo class="h-full" />
         </div>
       </el-col>
 
@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import LeftInfo from '@/components/dashboard/LeftInfo.vue'
+import DashboardLeftInfo from '@/components/dashboard/DashboardLeftInfo.vue'
 import MidInfo from '@/components/dashboard/MidInfo.vue'
 import RightInfo from '@/components/dashboard/RightInfo.vue'
 </script>

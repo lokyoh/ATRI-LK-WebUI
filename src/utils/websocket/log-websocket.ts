@@ -1,4 +1,5 @@
 import { getBaseUrl } from "@/utils/api";
+import { message } from "../message";
 
 /**
  * 日志 WebSocket。
@@ -65,8 +66,17 @@ class LogWebSocket {
       // onclose 一定会跟着触发，重连逻辑统一收口在 onclose
     };
 
-    this.ws.onclose = () => {
+    this.ws.onclose = (event: CloseEvent) => {
       if (this.manualClose) return;
+      // 握手鉴权被拒（1008）：登录已失效，重连也不会成功，停下来提示重新登录
+      if (event.code === 1008) {
+        this.onState?.("reconnecting");
+        this.callback = null;
+        this.onState = null;
+        console.error("[WS] 握手被拒绝(1008)，token 无效或未登记:", event.reason);
+        message.warning("登录已失效，请重新登录");
+        return;
+      }
       const delay = Math.min(1000 * 2 ** this.retry, LogWebSocket.MAX_RETRY_DELAY);
       this.retry += 1;
       console.warn(`LogWebSocket disconnected, retry in ${delay}ms`);

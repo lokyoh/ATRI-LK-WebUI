@@ -353,8 +353,8 @@ async function testConnection() {
 </script>
 
 <style>
-/* 添加自定义字体 */
-@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+/* 装饰字体：不引入外部字体源（Google Fonts 在大陆网络不可达，见
+   command/CommandLeftInfo.vue 同类处理）；本地装有则自动生效 */
 
 .font-comic {
   font-family: 'Comic Neue', cursive;

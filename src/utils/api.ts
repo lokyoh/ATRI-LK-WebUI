@@ -264,6 +264,30 @@ export const clearCookie = (name: string): void => {
 // WebSocket 握手鉴权：连接建立后的首条消息必须为 {"token": "<jwt>", ...extra}
 //（cookie 里存的是 "Bearer <jwt>"，后端会剥掉前缀）
 export const buildWsHandshake = (extra?: Record<string, unknown>): string => {
-  const token = getCookie("tokenStr") ?? "";
+  // 剥掉 scheme 前缀，握手只发纯 JWT（登录响应的 token_type 是小写 "bearer"）
+  const token = (getCookie("tokenStr") ?? "").replace(/^bearer\s+/i, "");
+  // 诊断：解出 JWT 的过期时间打进控制台（不打印 token 本体）
+  try {
+    const raw = token.replace(/^Bearer\s+/i, "");
+    const payloadB64 = raw.split(".")[1];
+    if (payloadB64) {
+      const payload = JSON.parse(
+        atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")),
+      );
+      const exp = payload?.exp;
+      console.debug(
+        "[WS] 握手 token 过期时间:",
+        exp
+          ? `${new Date(exp * 1000).toLocaleString()}${
+              exp * 1000 < Date.now() ? "（已过期）" : ""
+            }`
+          : "无 exp 字段",
+      );
+    } else {
+      console.debug("[WS] 握手 token 格式异常（缺少 payload 段）");
+    }
+  } catch {
+    console.debug("[WS] 握手 token 为空或无法解析");
+  }
   return JSON.stringify({ token, ...extra });
 };

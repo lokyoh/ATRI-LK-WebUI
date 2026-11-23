@@ -123,11 +123,8 @@
 
       <!-- 退出登录（切换账号已移至 BOT控制台左侧信息卡） -->
       <button
-        class="header-logout flex items-center rounded-full transition-all duration-300 shadow-sm text-md"
-        :style="{
-          background: `linear-gradient(to right, var(--primary-color-light-9), var(--primary-color-light-8))`,
-          color: 'var(--danger-color)',
-        }"
+        class="header-logout flex items-center rounded-full transition-all duration-300 text-md"
+        title="退出登录并吊销当前令牌"
         @click="handleLogout"
       >
         <el-icon color="var(--danger-color)">
@@ -225,6 +222,13 @@ function handleLogout() {
   gap: 6px;
   padding: 0 12px;
   cursor: pointer;
-  border: none;
+  border: 1px solid var(--el-color-danger-light-7);
+  background: transparent;
+  color: var(--danger-color);
+}
+
+.header-logout:hover {
+  background: var(--el-color-danger-light-9);
+  border-color: var(--el-color-danger-light-5);
 }
 </style>

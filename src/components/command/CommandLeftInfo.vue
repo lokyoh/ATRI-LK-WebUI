@@ -74,11 +74,11 @@
             <p class="text-xxs mt-1" :style="{ color: 'var(--text-color-secondary)' }">群组数量</p>
           </div>
         </div>
+
+        <!-- 切换账号：嵌在信息卡底部的通栏入口 -->
+        <BotSwitcher />
       </div>
     </div>
-
-    <!-- 切换账号：原页首右上角入口，移至控制台信息卡 -->
-    <BotSwitcher />
 
     <BotStatusConfig scope="bot" :bot-id="botInfo?.self_id" />
 
@@ -129,9 +129,8 @@ function handleBotStatus() {
 </script>
 
 <style scoped>
-/* 自定义字体 */
-@import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+P+One&display=swap');
-
+/* 装饰字体：不引入外部字体源（Google Fonts 在大陆网络不可达，公网 HTTP 下
+   还会触发浏览器 PNA 拦截报错）；本地装有该字体的用户自动生效，否则回退 */
 .switch-border {
   display: flex;
   flex-direction: column;
@@ -158,7 +157,7 @@ function handleBotStatus() {
 
 /* 使用全局字体变量 */
 .anime-font {
-  font-family: 'Mochiy Pop P One', sans-serif;
+  font-family: 'Mochiy Pop P One', var(--font-family, sans-serif);
   font-size: var(--font-size-xl);
   line-height: var(--line-height-dense);
 }
