@@ -3,9 +3,32 @@
     <div class="panel-header">
       <div>
         <h4>长期记忆</h4>
-        <p>只读浏览：她在什么时间、哪个会话记下了什么，以及哪些已经退出检索。</p>
+        <p>
+          只读浏览：她在什么时间、哪个会话记下了什么，以及哪些已经退出检索。
+          向量缺失或换过模型时，记忆检索会漏掉这些条目，可在这里一次性补算。
+        </p>
       </div>
       <div class="header-actions">
+        <el-tooltip
+          v-if="vectorStatus && !vectorStatus.has_model"
+          content="还没配置 atri-embedding 使用点的向量模型，补算不可用"
+          placement="bottom"
+        >
+          <span>
+            <el-button size="small" disabled>补算向量</el-button>
+          </span>
+        </el-tooltip>
+        <el-button
+          v-else
+          size="small"
+          type="primary"
+          plain
+          :loading="backfilling"
+          :disabled="!vectorStatus || vectorStatus.pending === 0"
+          @click="handleBackfill"
+        >
+          补算向量{{ vectorStatus?.pending ? `（${vectorStatus.pending}）` : '' }}
+        </el-button>
         <el-button size="small" :loading="loading" @click="refresh">刷新</el-button>
       </div>
     </div>
@@ -22,6 +45,17 @@
       <el-tag v-if="stats?.without_vector" type="info" effect="plain">
         无向量 {{ stats.without_vector }}
       </el-tag>
+      <el-tooltip
+        v-if="vectorStatus"
+        :disabled="!vectorStatus.has_model"
+        :content="`向量模型：${vectorStatus.model_id || '(未解析出标识)'}`"
+        placement="top"
+      >
+        <el-tag v-if="vectorStatus.has_model" :type="vectorStatus.pending ? 'warning' : 'success'" effect="plain">
+          向量：{{ vectorStatus.pending ? `待补 ${vectorStatus.pending}` : '已齐全' }}
+        </el-tag>
+        <el-tag v-else type="danger" effect="plain">未配置向量模型</el-tag>
+      </el-tooltip>
     </div>
 
     <div class="filter-bar">
@@ -136,10 +170,16 @@
 
 <script setup lang="ts">
 import { inject, onMounted, reactive, ref } from 'vue'
-import { getRequest } from '@/utils/api'
+import { ElMessageBox } from 'element-plus'
+import { getRequest, postRequest } from '@/utils/api'
 import { overflowTooltipOptions } from '@/utils/table'
 import { message } from '@/utils/message'
-import type { MemoryPage, MemoryStats } from '@/types/system'
+import type {
+  MemoryPage,
+  MemoryStats,
+  MemoryVectorBackfill,
+  MemoryVectorStatus,
+} from '@/types/system'
 
 interface ResultResponse<T> {
   suc: boolean
@@ -152,8 +192,12 @@ const prefix = inject<string>('prefix', '/atri/api')
 const loading = ref(false)
 const page = ref<MemoryPage | null>(null)
 const stats = ref<MemoryStats | null>(null)
+/** 一次最多补多少条；每条都是一次 embedding 调用，别让按钮变成扣款键 */
+const BACKFILL_BATCH = 20
 const pageIndex = ref(1)
 const pageSize = 25
+const vectorStatus = ref<MemoryVectorStatus | null>(null)
+const backfilling = ref(false)
 
 const filters = reactive({
   keyword: '',
@@ -200,11 +244,74 @@ const loadStats = async () => {
   if (payload.suc && payload.data) stats.value = payload.data
 }
 
+const loadVectorStatus = async () => {
+  try {
+    const response = await getRequest(`${prefix}/agent/get_memory_vector_status`)
+    const payload = response.data as ResultResponse<MemoryVectorStatus>
+    if (payload.suc && payload.data) vectorStatus.value = payload.data
+  } catch (error) {
+    console.error('loadVectorStatus error', error)
+  }
+}
+
+const handleBackfill = async () => {
+  const pending = vectorStatus.value?.pending ?? 0
+  if (!pending) {
+    message.info('所有记忆的向量都已齐全')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `将为最多 ${Math.min(pending, BACKFILL_BATCH)} 条记忆补算向量，每条生成一次 embedding，会产生 token 费用。确定继续吗？`,
+      '补算记忆向量',
+      { confirmButtonText: '开始补算', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch (error) {
+    if (error !== 'cancel') console.error('backfill confirm error', error)
+    return
+  }
+
+  backfilling.value = true
+  try {
+    const response = await postRequest(
+      `${prefix}/agent/backfill_memory_vectors?limit=${BACKFILL_BATCH}`,
+      {},
+    )
+    const payload = response.data as ResultResponse<MemoryVectorBackfill>
+    if (!payload.suc || !payload.data) {
+      message.error(payload.info || '补算失败')
+      return
+    }
+    const result = payload.data
+    if (result.stopped) {
+      message.warning(
+        `补算中断：已补 ${result.filled} 条，还剩 ${result.pending} 条（${result.reason || '模型调用失败'}）`,
+      )
+    } else if (result.pending > 0) {
+      message.success(
+        `已补 ${result.filled} 条，还剩 ${result.pending} 条，可再点一次继续`,
+      )
+    } else {
+      message.success(`已补 ${result.filled} 条，向量已全部补齐`)
+    }
+    vectorStatus.value = {
+      ...(vectorStatus.value as MemoryVectorStatus),
+      pending: result.pending,
+    }
+    await Promise.all([loadPage(), loadStats()])
+  } catch (error) {
+    console.error('backfillVectors error', error)
+    message.error('补算失败，请检查接口状态')
+  } finally {
+    backfilling.value = false
+  }
+}
+
 const refresh = async () => {
   loading.value = true
   pageIndex.value = 1
   try {
-    await Promise.all([loadPage(), loadStats()])
+    await Promise.all([loadPage(), loadStats(), loadVectorStatus()])
   } catch (error) {
     console.error('loadMemories error', error)
     message.error('获取记忆失败，请检查接口状态')

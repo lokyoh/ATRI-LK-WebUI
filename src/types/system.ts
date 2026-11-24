@@ -68,6 +68,25 @@ export interface MemoryStats {
   by_chat: Array<{ chat_id: string; count: number }>
 }
 
+export interface MemoryVectorStatus {
+  /** 是否配置了可用的向量模型 */
+  has_model: boolean
+  /** 当前向量模型的真实 id；空表示还没解析出来 */
+  model_id: string
+  /** 向量不可信（缺失或来自别的模型）的条数 */
+  pending: number
+}
+
+export interface MemoryVectorBackfill {
+  /** 本次补算成功的条数 */
+  filled: number
+  /** 补算后仍未补齐的条数 */
+  pending: number
+  /** 中途出错被中止 */
+  stopped: boolean
+  reason: string
+}
+
 export interface TelemetryCount {
   event: string
   count: number
