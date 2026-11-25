@@ -35,6 +35,24 @@
 
       <!-- 右侧按钮组 -->
       <div class="search-actions flex flex-wrap items-center gap-3 justify-end w-full lg:w-auto">
+        <!-- 检查更新：逐条比对已装插件的本地与远端版本，结果回填到列表 -->
+        <div class="restart-button">
+          <my-button
+            icon="check"
+            text="检查更新"
+            :iconHeight="18"
+            :height="34"
+            :width="96"
+            :loading="checkingUpdates"
+            @click="handleCheckUpdates"
+            type="success"
+            rounded="full"
+            :style="{
+              borderColor: 'var(--el-border-color)',
+            }"
+          />
+        </div>
+
         <!-- 刷新索引：强制从远端重拉商店索引，不走本地缓存 -->
         <div class="restart-button">
           <my-button
@@ -618,8 +636,33 @@ const getPluginVersionLabel = (plugin: PluginData) => {
 
 const progressText = ref('')
 const indexing = ref(false)
+const checkingUpdates = ref(false)
 let progressTimer: ReturnType<typeof setInterval> | null = null
 let activeLoading: { setText: (t: string) => void } | null = null
+
+const handleCheckUpdates = async () => {
+  if (checkingUpdates.value) return
+  checkingUpdates.value = true
+  const loading = getLoading('.store-content-panel', { text: '正在检查更新喵...' })
+  try {
+    const response = await postRequest(`${prefix}/store/check_updates`, {})
+    const resp = response.data as APIResponse
+    if (resp?.suc) {
+      const result = (resp.data || {}) as Record<string, [string, string] | null>
+      const count = Object.values(result).filter(Boolean).length
+      message?.success({ message: count ? `有 ${count} 个插件可更新` : '全部插件都是最新的' })
+      getPluginList()
+    } else {
+      message?.error({ message: resp?.info || '检查更新失败' })
+    }
+  } catch (error) {
+    console.error('[StoreTemplate] Check updates error:', error)
+    message?.error({ message: '检查更新失败' })
+  } finally {
+    loading.close()
+    checkingUpdates.value = false
+  }
+}
 
 const handleRefreshIndex = async () => {
   if (indexing.value) return
